@@ -1,0 +1,46 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Pagination from '@/components/Pagination.astro';
+import gallery from '@/data/gallery.json';
+import { pageCount, pageRouteParam, paginateItems } from '@/utils/pagination';
+
+const PAGE_SIZE = 30;
+const BASE_PATH = '/life/gallery/';
+
+export function getStaticPaths() {
+  const totalPages = pageCount(gallery.length, 30);
+  return Array.from({ length: totalPages }, (_, index) => {
+    const page = index + 1;
+    return {
+      params: { page: pageRouteParam(page) },
+      props: { page }
+    };
+  });
+}
+
+const current = paginateItems(gallery, Astro.props.page, PAGE_SIZE, BASE_PATH);
+---
+
+<BaseLayout title="Gallery" description="Hydroxy Wiki 的图片页。">
+  <header class="page-hero pixel-panel">
+    <p class="section-kicker">/life/gallery</p>
+    <h1 class="section-title">Gallery</h1>
+    <p class="section-copy">按原比例展示图片，只保留图片名。当前第 {current.currentPage} / {current.totalPages} 页，共 {current.totalItems} 张。</p>
+  </header>
+
+  <section class="gallery-masonry" aria-label="Gallery images">
+    {current.items.map((item) => (
+      <figure class="gallery-tile">
+        <img src={item.src} alt={item.alt || item.title} loading="lazy" />
+        <figcaption>{item.title}</figcaption>
+      </figure>
+    ))}
+  </section>
+
+  <Pagination
+    label="Gallery pagination"
+    previousHref={current.previousHref}
+    nextHref={current.nextHref}
+    pages={current.pages}
+  />
+</BaseLayout>

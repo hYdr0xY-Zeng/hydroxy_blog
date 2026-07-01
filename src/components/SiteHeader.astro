@@ -2,6 +2,11 @@
 import { SITE } from '@/utils/site';
 
 const currentPath = Astro.url.pathname;
+
+function isCurrent(href: string) {
+  if (href === '/') return currentPath === href;
+  return currentPath === href || currentPath.startsWith(href);
+}
 ---
 
 <header class="site-header">
@@ -13,7 +18,7 @@ const currentPath = Astro.url.pathname;
 
     <nav class="site-nav" data-site-nav aria-label="Primary navigation">
       {SITE.nav.map((item) => (
-        <a href={item.href} aria-current={currentPath === item.href ? 'page' : undefined}>
+        <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
           {item.label}
         </a>
       ))}

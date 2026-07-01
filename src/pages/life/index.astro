@@ -3,71 +3,55 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import anime from '@/data/anime.json';
 import gallery from '@/data/gallery.json';
-import { entryHref } from '@/utils/content';
-import { isPublished, sortEntriesByDate } from '@/utils/wiki';
-import { formatDate } from '@/utils/site';
+import { isPublished } from '@/utils/wiki';
 
-const essays = sortEntriesByDate((await getCollection('essays')).filter(isPublished));
+const essays = (await getCollection('essays')).filter(isPublished);
+
+const gates = [
+  {
+    title: 'Anime Log',
+    href: '/life/anime/',
+    count: anime.length,
+    copy: '用密集列表记录看过和正在看的番剧，适合长期维护大列表。'
+  },
+  {
+    title: 'Essays',
+    href: '/life/essays/',
+    count: essays.length,
+    copy: '技术之外的随笔、低频想法和生活片段。'
+  },
+  {
+    title: 'Gallery',
+    href: '/life/gallery/',
+    count: gallery.length,
+    copy: '按原比例摆放图片，只保留图片名，轻量浏览。'
+  }
+];
 ---
 
-<BaseLayout title="Life" description="Hydroxy Wiki 的生活页：个人简介、追番、随笔和图片。">
+<BaseLayout title="Life" description="Hydroxy Wiki 的生活页入口：个人简介、追番、随笔和图片。">
   <header class="page-hero pixel-panel">
     <p class="section-kicker">/life</p>
     <h1 class="section-title">Life Pages</h1>
-    <p class="section-copy">技术之外的个人页。这里放简介、追番、随笔和图片，保持和学习区分开。</p>
+    <p class="section-copy">技术之外的个人页。这里保留简介，并把追番、随笔和图片拆成独立子界面。</p>
   </header>
 
-  <div class="life-grid">
-    <section class="content-card">
+  <div class="life-hub">
+    <section class="content-card profile-card">
       <h2>Profile</h2>
       <p class="section-copy">
         Hydroxy。长期维护这个 Wiki，记录学习路径、技术实验和一些生活里的低频信号。
       </p>
     </section>
 
-    <section class="content-card">
-      <h2>Essays</h2>
-      <ul class="article-list">
-        {essays.slice(0, 5).map((entry) => (
-          <li>
-            <a class="article-link" href={entryHref(entry)}>
-              <strong>{entry.data.title}</strong>
-              <span>{formatDate(entry.data.date)}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <section class="content-card life-wide">
-      <h2>Anime Log</h2>
-      <div class="anime-grid">
-        {anime.map((item) => (
-          <article class="media-card">
-            <img src={item.cover} alt="" loading="lazy" />
-            <div class="media-card__body">
-              <h3>{item.title}</h3>
-              <p>{item.status} / {item.score}/10</p>
-              <p>{item.note}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section class="content-card life-wide">
-      <h2>Gallery</h2>
-      <div class="gallery-grid">
-        {gallery.map((item) => (
-          <article class="media-card">
-            <img src={item.src} alt={item.alt} loading="lazy" />
-            <div class="media-card__body">
-              <h3>{item.title}</h3>
-              <p>{item.caption}</p>
-            </div>
-          </article>
-        ))}
-      </div>
+    <section class="life-gates" aria-label="Life sections">
+      {gates.map((gate) => (
+        <a class="life-gate article-card" href={gate.href}>
+          <span class="life-gate__count">{gate.count}</span>
+          <h2>{gate.title}</h2>
+          <p>{gate.copy}</p>
+        </a>
+      ))}
     </section>
   </div>
 </BaseLayout>

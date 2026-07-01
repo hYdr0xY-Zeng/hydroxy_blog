@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { entryHref } from '@/utils/content';
+import { isPublished, sortEntriesByDate } from '@/utils/wiki';
+import { formatDate } from '@/utils/site';
+
+const essays = sortEntriesByDate((await getCollection('essays')).filter(isPublished));
+---
+
+<BaseLayout title="Essays" description="Hydroxy Wiki 的生活随笔列表。">
+  <header class="page-hero pixel-panel">
+    <p class="section-kicker">/life/essays</p>
+    <h1 class="section-title">Essays</h1>
+    <p class="section-copy">技术之外的随笔、低频想法和生活片段，按发布时间倒序排列。</p>
+  </header>
+
+  <section class="content-card">
+    <ul class="article-list">
+      {essays.map((entry) => (
+        <li>
+          <a class="article-link" href={entryHref(entry)}>
+            <strong>{entry.data.title}</strong>
+            <span>{formatDate(entry.data.date)} / {entry.data.mood || 'quiet'}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>

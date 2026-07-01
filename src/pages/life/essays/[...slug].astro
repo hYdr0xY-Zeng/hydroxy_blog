@@ -22,29 +22,14 @@ const { Content, headings } = await render(entry);
     <p class="section-kicker">/life/essays</p>
     <h1 class="section-title">{entry.data.title}</h1>
     <p class="section-copy">{entry.data.description}</p>
+    <div class="article-meta">
+      <span>{formatDate(entry.data.date)}</span>
+      <span>{entry.data.mood || 'quiet'}</span>
+      {entry.data.tags.map((tag) => <span>{tag}</span>)}
+    </div>
   </header>
 
   <div class="article-shell">
-    <aside class="article-side pixel-panel">
-      <dl>
-        <div>
-          <dt>Date</dt>
-          <dd>{formatDate(entry.data.date)}</dd>
-        </div>
-        <div>
-          <dt>Mood</dt>
-          <dd>{entry.data.mood || 'quiet'}</dd>
-        </div>
-        <div>
-          <dt>Tags</dt>
-          <dd>
-            <ul class="tag-list">
-              {entry.data.tags.map((tag) => <li class="tag">{tag}</li>)}
-            </ul>
-          </dd>
-        </div>
-      </dl>
-    </aside>
     <article class="article-body pixel-panel prose">
       <Content />
     </article>

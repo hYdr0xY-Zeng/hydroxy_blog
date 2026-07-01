@@ -1,0 +1,26 @@
+---
+import type { PaginationLink } from '@/utils/pagination';
+
+type Props = {
+  previousHref?: string;
+  nextHref?: string;
+  pages: PaginationLink[];
+  label: string;
+};
+
+const { previousHref, nextHref, pages, label } = Astro.props;
+---
+
+<nav class="pagination" aria-label={label}>
+  {previousHref ? <a href={previousHref}>Prev</a> : <span aria-disabled="true">Prev</span>}
+  <div class="pagination__pages">
+    {pages.map((page) => (
+      page.current ? (
+        <span aria-current="page">{page.label}</span>
+      ) : (
+        <a href={page.href}>{page.label}</a>
+      )
+    ))}
+  </div>
+  {nextHref ? <a href={nextHref}>Next</a> : <span aria-disabled="true">Next</span>}
+</nav>

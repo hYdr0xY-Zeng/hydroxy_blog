@@ -1,0 +1,59 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Pagination from '@/components/Pagination.astro';
+import anime from '@/data/anime.json';
+import { pageCount, pageRouteParam, paginateItems } from '@/utils/pagination';
+
+const PAGE_SIZE = 20;
+const BASE_PATH = '/life/anime/';
+
+export function getStaticPaths() {
+  const totalPages = pageCount(anime.length, 20);
+  return Array.from({ length: totalPages }, (_, index) => {
+    const page = index + 1;
+    return {
+      params: { page: pageRouteParam(page) },
+      props: { page }
+    };
+  });
+}
+
+const current = paginateItems(anime, Astro.props.page, PAGE_SIZE, BASE_PATH);
+---
+
+<BaseLayout title="Anime Log" description="Hydroxy Wiki 的追番记录。">
+  <header class="page-hero pixel-panel">
+    <p class="section-kicker">/life/anime</p>
+    <h1 class="section-title">Anime Log</h1>
+    <p class="section-copy">像 Bangumi 列表一样密集浏览追番记录。当前第 {current.currentPage} / {current.totalPages} 页，共 {current.totalItems} 部。</p>
+  </header>
+
+  <section class="content-card list-surface">
+    <div class="anime-list">
+      {current.items.map((item) => (
+        <article class="anime-row">
+          <img src={item.cover} alt="" loading="lazy" />
+          <div class="anime-row__body">
+            <div class="anime-row__title">
+              <h2>{item.cnTitle || item.title}</h2>
+              {item.cnTitle && <span>{item.title}</span>}
+            </div>
+            <div class="anime-row__meta">
+              {item.year && <span>{item.year}</span>}
+              {item.status && <span>{item.status}</span>}
+              {typeof item.score === 'number' && <span>{item.score}/10</span>}
+            </div>
+            {item.note && <p>{item.note}</p>}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <Pagination
+    label="Anime pagination"
+    previousHref={current.previousHref}
+    nextHref={current.nextHref}
+    pages={current.pages}
+  />
+</BaseLayout>
