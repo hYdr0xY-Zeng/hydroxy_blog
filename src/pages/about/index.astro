@@ -1,0 +1,20 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About" description="About Hydroxy Wiki.">
+  <header class="page-hero pixel-panel">
+    <p class="section-kicker">/about</p>
+    <h1 class="section-title">About Hydroxy Wiki</h1>
+    <p class="section-copy">
+      这是一个由 GitHub 文件树驱动的个人 Wiki。学习内容归入 Learn，生活内容归入 Life，所有公开页面都可以静态部署到 Cloudflare Pages。
+    </p>
+  </header>
+
+  <section class="content-card prose">
+    <h2>How To Maintain</h2>
+    <p>学习内容放在 <code>src/content/learn</code>。目录和文件建议使用英文 kebab-case，并用数字前缀控制排序。</p>
+    <p>生活随笔放在 <code>src/content/life/essays</code>。追番和图片分别维护 <code>src/data/anime.json</code> 与 <code>src/data/gallery.json</code>。</p>
+    <p>重要旧链接迁移时，在 <code>public/_redirects</code> 手动添加重定向。</p>
+  </section>
+</BaseLayout>

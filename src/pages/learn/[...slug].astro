@@ -1,0 +1,108 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import WikiTree from '@/components/WikiTree.astro';
+import TableOfContents from '@/components/TableOfContents.astro';
+import { buildCrumbs, buildLearnTree, findChildrenForSlug, findNodeBySlug, flattenTree, isPublished, learnSlugFromId } from '@/utils/wiki';
+import { formatDate } from '@/utils/site';
+
+export async function getStaticPaths() {
+  const entries = (await getCollection('learn')).filter(isPublished);
+  const tree = buildLearnTree(entries);
+  const nodes = flattenTree(tree);
+
+  return nodes.map((node) => ({
+    params: { slug: node.key },
+    props: { slug: node.key }
+  }));
+}
+
+const entries = (await getCollection('learn')).filter(isPublished);
+const tree = buildLearnTree(entries);
+const slug = Astro.props.slug as string;
+const node = findNodeBySlug(tree, slug);
+
+if (!node) return Astro.redirect('/learn/');
+
+const children = findChildrenForSlug(tree, slug);
+const entry = node.entry;
+const crumbs = buildCrumbs(slug);
+let Content;
+let headings = [];
+
+if (entry) {
+  const rendered = await render(entry);
+  Content = rendered.Content;
+  headings = rendered.headings;
+}
+---
+
+<BaseLayout title={entry?.data.title || node.label} description={entry?.data.description || `Hydroxy Wiki directory ${node.label}`}>
+  <div class="learn-layout">
+    <WikiTree tree={tree} activeSlug={slug} />
+    <section class="learn-content">
+      <nav aria-label="Breadcrumb">
+        <ol class="crumbs">
+          {crumbs.map((crumb, index) => (
+            <li><a href={crumb.href}>{crumb.label}</a>{index < crumbs.length - 1 ? ' /' : ''}</li>
+          ))}
+        </ol>
+      </nav>
+
+      {entry ? (
+        <>
+          <header class="article-hero pixel-panel">
+            <p class="section-kicker">/learn/{learnSlugFromId(entry.id)}</p>
+            <h1 class="section-title">{entry.data.title}</h1>
+            <p class="section-copy">{entry.data.description}</p>
+          </header>
+
+          <div class="article-shell">
+            <aside class="article-side pixel-panel">
+              <dl>
+                <div>
+                  <dt>Date</dt>
+                  <dd>{formatDate(entry.data.date)}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>{entry.data.draft ? 'Draft' : 'Published'}</dd>
+                </div>
+                <div>
+                  <dt>Tags</dt>
+                  <dd>
+                    <ul class="tag-list">
+                      {entry.data.tags.map((tag) => <li class="tag">{tag}</li>)}
+                    </ul>
+                  </dd>
+                </div>
+              </dl>
+            </aside>
+
+            <article class="article-body pixel-panel prose">
+              <Content />
+            </article>
+
+            <TableOfContents headings={headings} />
+          </div>
+        </>
+      ) : (
+        <>
+          <header class="directory-hero pixel-panel">
+            <p class="section-kicker">/learn/{slug}</p>
+            <h1 class="section-title">{node.label}</h1>
+            <p class="section-copy">自动目录页。继续沿着文件树进入子目录或文章。</p>
+          </header>
+          <div class="directory-grid">
+            {children.map((child) => (
+              <a class="article-card" href={child.href}>
+                <h2>{child.children.length ? '[DIR]' : '[MD]'} {child.label}</h2>
+                <p>{child.entry?.data.description || `${child.children.length} child nodes`}</p>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import WikiTree from '@/components/WikiTree.astro';
+import { buildLearnTree, isPublished, flattenTree } from '@/utils/wiki';
+
+const entries = (await getCollection('learn')).filter(isPublished);
+const tree = buildLearnTree(entries);
+const nodes = flattenTree(tree).filter((node) => node.key.split('/').length === 1 || node.entry);
+---
+
+<BaseLayout title="Learn" description="学习 Wiki：技术文章、课程笔记和实验记录。">
+  <div class="learn-layout">
+    <WikiTree tree={tree} />
+    <section class="learn-content">
+      <div class="directory-hero pixel-panel">
+        <p class="section-kicker">/learn</p>
+        <h1 class="section-title">Learning File System</h1>
+        <p class="section-copy">
+          这里镜像 `src/content/learn` 的文件树。通过 GitHub 新建、删除或移动 Markdown 文件，页面结构会跟着变化。
+        </p>
+      </div>
+      <div class="directory-grid">
+        {nodes.map((node) => (
+          <a class="article-card" href={node.href}>
+            <h2>{node.children.length ? '[DIR]' : '[MD]'} {node.label}</h2>
+            <p>{node.entry?.data.description || `${node.children.length} child nodes`}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

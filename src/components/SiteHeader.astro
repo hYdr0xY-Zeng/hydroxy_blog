@@ -1,0 +1,40 @@
+---
+import { SITE } from '@/utils/site';
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="/" aria-label="Hydroxy Wiki home">
+      <span class="brand__mark" aria-hidden="true"></span>
+      <span>{SITE.title}</span>
+    </a>
+
+    <nav class="site-nav" data-site-nav aria-label="Primary navigation">
+      {SITE.nav.map((item) => (
+        <a href={item.href} aria-current={currentPath === item.href ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="icon-button" type="button" data-search-open aria-label="Open search" title="Search">
+        /
+      </button>
+      <button class="icon-button mobile-menu-button" type="button" data-menu-toggle aria-label="Open menu" title="Menu">
+        =
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const menuButton = document.querySelector('[data-menu-toggle]');
+  const nav = document.querySelector('[data-site-nav]');
+  menuButton?.addEventListener('click', () => {
+    const next = nav?.getAttribute('data-open') !== 'true';
+    nav?.setAttribute('data-open', String(next));
+  });
+</script>

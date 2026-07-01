@@ -1,0 +1,26 @@
+---
+type Heading = {
+  depth: number;
+  slug: string;
+  text: string;
+};
+
+const headings = (Astro.props.headings ?? []).filter((heading: Heading) => heading.depth > 1 && heading.depth < 4);
+---
+
+<aside class="toc pixel-panel">
+  <h2>Contents</h2>
+  {
+    headings.length ? (
+      <ol>
+        {headings.map((heading: Heading) => (
+          <li style={`padding-left: ${(heading.depth - 2) * 12}px`}>
+            <a href={`#${heading.slug}`}>{heading.text}</a>
+          </li>
+        ))}
+      </ol>
+    ) : (
+      <p class="section-copy">No headings</p>
+    )
+  }
+</aside>

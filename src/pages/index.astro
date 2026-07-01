@@ -1,0 +1,53 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import RpgStatus from '@/components/RpgStatus.astro';
+import MiniShell from '@/components/MiniShell.astro';
+import { entryHref, allTags } from '@/utils/content';
+import { isPublished, sortEntriesByDate } from '@/utils/wiki';
+import { formatDate } from '@/utils/site';
+
+const learn = (await getCollection('learn')).filter(isPublished);
+const essays = (await getCollection('essays')).filter(isPublished);
+const recent = sortEntriesByDate([...learn, ...essays]).slice(0, 6);
+const tags = allTags([...learn, ...essays]);
+---
+
+<BaseLayout>
+  <div class="home-grid">
+    <RpgStatus learnCount={learn.length} essayCount={essays.length} tagCount={tags.length} />
+    <MiniShell />
+  </div>
+
+  <section class="dashboard" aria-label="Hydroxy Wiki dashboard">
+    <div class="dashboard-section pixel-panel">
+      <h2>Recent Updates</h2>
+      <ul class="article-list">
+        {recent.map((entry) => (
+          <li>
+            <a class="article-link" href={entryHref(entry)}>
+              <strong>{entry.data.title}</strong>
+              <span>{formatDate(entry.data.date)} / {entry.collection}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="dashboard-section pixel-panel">
+      <h2>Primary Gates</h2>
+      <ul class="article-list">
+        <li><a class="article-link" href="/learn/"><strong>Learn</strong><span>技术文章、课程笔记、实验记录。</span></a></li>
+        <li><a class="article-link" href="/life/"><strong>Life</strong><span>个人简介、追番、随笔、图片。</span></a></li>
+        <li><a class="article-link" href="/archive/"><strong>Archive</strong><span>按时间回看全部公开内容。</span></a></li>
+      </ul>
+    </div>
+
+    <div class="dashboard-section pixel-panel">
+      <h2>Tags</h2>
+      <ul class="tag-list">
+        {tags.slice(0, 18).map((tag) => <li class="tag">{tag}</li>)}
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

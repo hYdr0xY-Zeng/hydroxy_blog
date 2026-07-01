@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { entryHref } from '@/utils/content';
+import { isPublished, sortEntriesByDate } from '@/utils/wiki';
+import { formatDate } from '@/utils/site';
+
+const entries = sortEntriesByDate([
+  ...(await getCollection('learn')).filter(isPublished),
+  ...(await getCollection('essays')).filter(isPublished)
+]);
+---
+
+<BaseLayout title="Archive" description="Hydroxy Wiki 的公开内容归档。">
+  <header class="page-hero pixel-panel">
+    <p class="section-kicker">/archive</p>
+    <h1 class="section-title">Archive</h1>
+    <p class="section-copy">全部公开学习文章和生活随笔，按发布时间倒序排列。</p>
+  </header>
+
+  <section class="content-card">
+    <div class="archive-list">
+      {entries.map((entry) => (
+        <div class="archive-row">
+          <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+          <a href={entryHref(entry)}>{entry.data.title}</a>
+        </div>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

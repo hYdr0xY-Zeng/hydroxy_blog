@@ -1,0 +1,26 @@
+---
+import type { TreeNode } from '@/utils/wiki';
+
+type Props = {
+  nodes: TreeNode[];
+  activeSlug?: string;
+};
+
+const { nodes, activeSlug = '' } = Astro.props;
+
+function isOpen(node: TreeNode) {
+  return activeSlug === node.key || activeSlug.startsWith(`${node.key}/`);
+}
+---
+
+<ul class="tree-list">
+  {nodes.map((node) => (
+    <li>
+      <a class="tree-link" href={node.href} aria-current={activeSlug === node.key ? 'page' : undefined}>
+        <span class="tree-link__icon" aria-hidden="true">{node.children.length ? (isOpen(node) ? '[-]' : '[+]') : '[*]'}</span>
+        <span>{node.label}</span>
+      </a>
+      {node.children.length > 0 && isOpen(node) && <Astro.self nodes={node.children} activeSlug={activeSlug} />}
+    </li>
+  ))}
+</ul>

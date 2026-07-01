@@ -1,0 +1,99 @@
+<section class="terminal-panel pixel-panel" aria-label="Hydroxy shell">
+  <div class="terminal-screen" data-shell>
+    <div class="terminal-output" data-shell-output>
+      <p class="terminal-line">HYDROXY SHELL v0.1</p>
+      <p class="terminal-line">BOOT: OK</p>
+      <p class="terminal-line">PATH: /</p>
+    </div>
+    <form class="terminal-form" data-shell-form>
+      <span data-shell-prompt>hydroxy:/ $</span>
+      <input data-shell-input name="command" autocomplete="off" spellcheck="false" aria-label="Shell command" />
+    </form>
+  </div>
+</section>
+
+<script>
+  const shell = document.querySelector('[data-shell]');
+  const output = shell?.querySelector('[data-shell-output]');
+  const form = shell?.querySelector('[data-shell-form]');
+  const input = shell?.querySelector('[data-shell-input]');
+  const prompt = shell?.querySelector('[data-shell-prompt]');
+
+  const routes = {
+    home: '/',
+    learn: '/learn/',
+    life: '/life/',
+    archive: '/archive/',
+    search: '/search/',
+    about: '/about/'
+  };
+
+  let cwd = '/';
+
+  function write(text, type = '') {
+    if (!output) return;
+    const line = document.createElement('p');
+    line.className = `terminal-line ${type}`;
+    line.textContent = text;
+    output.append(line);
+    output.scrollTop = output.scrollHeight;
+  }
+
+  function updatePrompt() {
+    if (prompt) prompt.textContent = `hydroxy:${cwd} $`;
+  }
+
+  function go(path) {
+    window.location.href = path;
+  }
+
+  function handle(commandLine) {
+    const [command = '', ...args] = commandLine.trim().split(/\s+/);
+    const target = args.join(' ');
+
+    if (!command) return;
+    write(`${prompt?.textContent || 'hydroxy:/ $'} ${commandLine}`, 'terminal-line--command');
+
+    switch (command) {
+      case 'help':
+        write('help ls cd open search clear');
+        break;
+      case 'ls':
+        write(Object.keys(routes).join('  '));
+        break;
+      case 'cd': {
+        const next = target.replace(/^\//, '') || 'home';
+        if (routes[next]) {
+          cwd = next === 'home' ? '/' : `/${next}`;
+          updatePrompt();
+          write(`PATH: ${cwd}`);
+        } else {
+          write(`NO SUCH PATH: ${target}`, 'terminal-line--error');
+        }
+        break;
+      }
+      case 'open': {
+        const next = target.replace(/^\//, '') || 'home';
+        if (routes[next]) go(routes[next]);
+        else write(`NO SUCH ROUTE: ${target}`, 'terminal-line--error');
+        break;
+      }
+      case 'search':
+        window.dispatchEvent(new CustomEvent('hydroxy:search', { detail: { query: target } }));
+        break;
+      case 'clear':
+        if (output) output.innerHTML = '';
+        break;
+      default:
+        if (routes[command]) go(routes[command]);
+        else write(`UNKNOWN COMMAND: ${command}`, 'terminal-line--error');
+    }
+  }
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!(input instanceof HTMLInputElement)) return;
+    handle(input.value);
+    input.value = '';
+  });
+</script>

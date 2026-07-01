@@ -1,0 +1,31 @@
+---
+const { learnCount = 0, essayCount = 0, tagCount = 0 } = Astro.props;
+---
+
+<section class="rpg-status pixel-panel" aria-labelledby="status-title">
+  <div class="rpg-status__top">
+    <div>
+      <p class="section-kicker">Hydroxy Wiki</p>
+      <h1 id="status-title" class="section-title">Personal Knowledge Console</h1>
+      <p class="section-copy">
+        深色像素风个人 Wiki，用来沉淀课程笔记、技术文章、实验记录和生活切片。
+      </p>
+    </div>
+    <div class="rpg-avatar" aria-hidden="true"></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <span>Learn Nodes</span>
+      <strong>{learnCount}</strong>
+    </div>
+    <div class="stat">
+      <span>Essays</span>
+      <strong>{essayCount}</strong>
+    </div>
+    <div class="stat">
+      <span>Tags</span>
+      <strong>{tagCount}</strong>
+    </div>
+  </div>
+</section>

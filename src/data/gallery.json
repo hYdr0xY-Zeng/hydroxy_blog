@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Desk Light",
+    "src": "/images/gallery/desk-light.svg",
+    "alt": "A pixel-styled desk with a terminal glow",
+    "caption": "适合写夜间笔记的桌面光线。"
+  },
+  {
+    "title": "Night Walk",
+    "src": "/images/gallery/night-walk.svg",
+    "alt": "A pixel-styled night street",
+    "caption": "一些不适合进 commit message 的散步想法。"
+  }
+]

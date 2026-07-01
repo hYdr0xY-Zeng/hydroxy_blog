@@ -1,0 +1,26 @@
+---
+import TreeBranch from './TreeBranch.astro';
+import type { TreeNode } from '@/utils/wiki';
+
+type Props = {
+  tree: TreeNode[];
+  activeSlug?: string;
+};
+
+const { tree, activeSlug = '' } = Astro.props;
+---
+
+<button class="text-button tree-drawer-toggle" type="button" data-tree-toggle>FILES</button>
+<aside class="wiki-tree pixel-panel" data-wiki-tree>
+  <h2>Learn Tree</h2>
+  <TreeBranch nodes={tree} activeSlug={activeSlug} />
+</aside>
+
+<script>
+  const treeToggle = document.querySelector('[data-tree-toggle]');
+  const wikiTree = document.querySelector('[data-wiki-tree]');
+  treeToggle?.addEventListener('click', () => {
+    const open = wikiTree?.getAttribute('data-open') !== 'true';
+    wikiTree?.setAttribute('data-open', String(open));
+  });
+</script>

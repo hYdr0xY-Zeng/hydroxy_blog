@@ -1,0 +1,129 @@
+---
+const isPage = Astro.props.isPage ?? false;
+---
+
+{
+  isPage ? (
+    <section class="search-surface pixel-panel" data-search-surface>
+      <form class="search-form" data-search-form>
+        <input class="search-input" data-search-input type="search" name="q" autocomplete="off" placeholder="search Hydroxy Wiki" />
+        <button class="text-button" type="submit">GO</button>
+      </form>
+      <div class="search-results" data-search-results></div>
+    </section>
+  ) : (
+    <dialog class="search-modal" data-search-modal aria-label="Search Hydroxy Wiki">
+      <section class="search-surface pixel-panel" data-search-surface>
+        <form class="search-form" data-search-form>
+          <input class="search-input" data-search-input type="search" name="q" autocomplete="off" placeholder="search Hydroxy Wiki" />
+          <button class="text-button" type="submit">GO</button>
+        </form>
+        <div class="search-results" data-search-results></div>
+      </section>
+    </dialog>
+  )
+}
+
+<script>
+  const surfaces = Array.from(document.querySelectorAll('[data-search-surface]'));
+  let pagefindPromise;
+
+  async function loadPagefind() {
+    if (!pagefindPromise) {
+      const runtimeImport = new Function('specifier', 'return import(specifier)');
+      pagefindPromise = runtimeImport('/pagefind/pagefind.js').catch(() => null);
+    }
+    return pagefindPromise;
+  }
+
+  function renderMessage(surface, message) {
+    const results = surface.querySelector('[data-search-results]');
+    if (results) results.innerHTML = `<p class="search-result">${message}</p>`;
+  }
+
+  function resultTemplate(data) {
+    const excerpt = data.excerpt ? data.excerpt.replace(/<[^>]*>/g, '') : data.url;
+    return `
+      <a class="search-result" href="${data.url}">
+        <strong>${data.meta?.title || data.url}</strong>
+        <span>${excerpt}</span>
+      </a>
+    `;
+  }
+
+  async function runSearch(surface, query) {
+    if (!query.trim()) {
+      renderMessage(surface, 'READY');
+      return;
+    }
+
+    const pagefind = await loadPagefind();
+    if (!pagefind) {
+      renderMessage(surface, 'SEARCH INDEX MISSING. RUN pnpm build FIRST.');
+      return;
+    }
+
+    const search = await pagefind.search(query);
+    const items = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
+    const results = surface.querySelector('[data-search-results]');
+    if (!results) return;
+    results.innerHTML = items.length ? items.map(resultTemplate).join('') : '<p class="search-result">NO MATCH</p>';
+  }
+
+  surfaces.forEach((surface) => {
+    const form = surface.querySelector('[data-search-form]');
+    const input = surface.querySelector('[data-search-input]');
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = params.get('q');
+
+    if (initialQuery && input instanceof HTMLInputElement) {
+      input.value = initialQuery;
+      runSearch(surface, initialQuery);
+    } else {
+      renderMessage(surface, 'READY');
+    }
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (input instanceof HTMLInputElement) runSearch(surface, input.value);
+    });
+  });
+
+  const modal = document.querySelector('[data-search-modal]');
+  document.querySelectorAll('[data-search-open]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (!(modal instanceof HTMLDialogElement)) return;
+      modal.showModal();
+      const input = modal.querySelector('[data-search-input]');
+      if (input instanceof HTMLInputElement) input.focus();
+    });
+  });
+
+  window.addEventListener('hydroxy:search', (event) => {
+    const query = event.detail?.query || '';
+    if (!(modal instanceof HTMLDialogElement)) {
+      window.location.href = `/search/?q=${encodeURIComponent(query)}`;
+      return;
+    }
+    modal.showModal();
+    const surface = modal.querySelector('[data-search-surface]');
+    const input = modal.querySelector('[data-search-input]');
+    if (input instanceof HTMLInputElement) {
+      input.value = query;
+      input.focus();
+    }
+    if (surface) runSearch(surface, query);
+  });
+
+  modal?.addEventListener('click', (event) => {
+    if (event.target === modal && modal instanceof HTMLDialogElement) modal.close();
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal instanceof HTMLDialogElement && modal.open) modal.close();
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (modal instanceof HTMLDialogElement) modal.showModal();
+    }
+  });
+</script>

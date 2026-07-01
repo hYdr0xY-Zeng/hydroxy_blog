@@ -1,0 +1,61 @@
+---
+import '@/styles/global.css';
+import SiteHeader from '@/components/SiteHeader.astro';
+import SearchModal from '@/components/SearchModal.astro';
+import Analytics from '@/components/Analytics.astro';
+import { SITE } from '@/utils/site';
+
+type Props = {
+  title?: string;
+  description?: string;
+};
+
+const title = Astro.props.title ? `${Astro.props.title} | ${SITE.title}` : SITE.title;
+const description = Astro.props.description ?? SITE.description;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="Hydroxy Wiki RSS" href="/rss.xml" />
+    <Analytics />
+  </head>
+  <body>
+    <div class="page-shell">
+      <SiteHeader />
+      <main class="site-main" data-pagefind-body>
+        <slot />
+      </main>
+      <footer class="site-footer">
+        Hydroxy Wiki / built with Astro / content lives in GitHub.
+      </footer>
+    </div>
+    <SearchModal />
+    <script>
+      document.querySelectorAll('.prose pre').forEach((pre) => {
+        const button = document.createElement('button');
+        button.className = 'copy-code';
+        button.type = 'button';
+        button.textContent = 'COPY';
+        button.addEventListener('click', async () => {
+          const code = pre.querySelector('code')?.textContent || '';
+          await navigator.clipboard.writeText(code);
+          button.textContent = 'DONE';
+          window.setTimeout(() => {
+            button.textContent = 'COPY';
+          }, 1200);
+        });
+        pre.append(button);
+      });
+    </script>
+  </body>
+</html>
