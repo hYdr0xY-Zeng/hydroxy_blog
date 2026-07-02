@@ -1,20 +1,1691 @@
 [
   {
-    "title": "Frieren: Beyond Journey's End",
-    "cnTitle": "葬送的芙莉莲",
-    "status": "watching",
-    "year": 2023,
-    "score": 9,
-    "cover": "/images/anime/frieren.svg",
-    "note": "慢节奏旅途、记忆与时间感，很适合放在夜间更新列表里。"
+    "title": "スーパーの裏でヤニ吸うふたり",
+    "cnTitle": "在超市后门吸烟的二人",
+    "status": "finished",
+    "year": 2026,
+    "score": 7.1,
+    "cover": "/images/anime/571784.jpg",
+    "note": "byd快尝尝,我现在肺痒痒~(真有人看这个去吸烟啊,onp"
   },
   {
-    "title": "Steins;Gate",
+    "title": "ゾンビランドサガ ゆめぎんがパラダイス",
+    "cnTitle": "佐贺偶像是传奇 梦想银河乐园",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.9,
+    "cover": "/images/anime/353181.jpg",
+    "note": "依旧神经, 但怎么真的按灾难片的剧本正经拍偶像片了? 感觉又落了俗套"
+  },
+  {
+    "title": "グノーシア",
+    "cnTitle": "古诺希亚",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.8,
+    "cover": "/images/anime/526448.jpg",
+    "note": "花田魔法是对的"
+  },
+  {
+    "title": "Dr.STONE SCIENCE FUTURE 第3クール",
+    "cnTitle": "石纪元 科学与未来 第3部分",
+    "status": "finished",
+    "year": 2026,
+    "score": 7.4,
+    "cover": "/images/anime/508004.jpg",
+    "note": "飞起来!"
+  },
+  {
+    "title": "Re:ゼロから始める異世界生活 4th season 喪失編",
+    "cnTitle": "Re：从零开始的异世界生活 第四季 丧失篇",
+    "status": "finished",
+    "year": 2026,
+    "score": 8,
+    "cover": "/images/anime/547888.jpg",
+    "note": "486完美风评大逆转"
+  },
+  {
+    "title": "上伊那ぼたん、酔へる姿は百合の花",
+    "cnTitle": "上伊那牡丹，酒醉身姿似百合花般",
+    "status": "finished",
+    "year": 2026,
+    "score": 6,
+    "cover": "/images/anime/543360.jpg",
+    "note": "General Tso's Yuri, 利群与青岛, 看来还是轻百更适合我"
+  },
+  {
+    "title": "日本三國",
+    "cnTitle": "日本三国",
+    "status": "finished",
+    "year": 2026,
+    "score": 6.9,
+    "cover": "/images/anime/623851.jpg",
+    "note": "虽然无论怎么想都很难绷但你演出确实太好了"
+  },
+  {
+    "title": "女神『異世界転生何になりたいですか』俺「勇者の肋骨で」",
+    "cnTitle": "女神“异世界转生想成为什么”我“勇者的肋骨”",
+    "status": "finished",
+    "year": 2026,
+    "score": 7.6,
+    "cover": "/images/anime/623854.jpg",
+    "note": "有趣,有糖,有美少女,美哉"
+  },
+  {
+    "title": "ポンコツ風紀委員とスカート丈が不適切なJKの話",
+    "cnTitle": "木头风纪委员和迷你裙JK的故事",
+    "status": "finished",
+    "year": 2026,
+    "score": 8,
+    "cover": "/images/anime/551123.jpg",
+    "note": "就爱看神人校园恋爱喜剧,而且一股子扳机味,很难不喜欢"
+  },
+  {
+    "title": "スティール・ボール・ラン ジョジョの奇妙な冒険 1st STAGE",
+    "cnTitle": "飙马野郎 JOJO的奇妙冒险 第一赛段",
+    "status": "finished",
+    "year": 2026,
+    "score": 7.8,
+    "cover": "/images/anime/551918.jpg",
+    "note": "菅野佑吾C麻了"
+  },
+  {
+    "title": "【推しの子】 第3期",
+    "cnTitle": "【我推的孩子】 第三季",
+    "status": "finished",
+    "year": 2026,
+    "score": 6.8,
+    "cover": "/images/anime/517057.jpg",
+    "note": "兄妹相认还是不错的,可惜整个作品已经被cbm浇了一桶大份,入味了(什么时候才能看到水鬼阿夸)"
+  },
+  {
+    "title": "地獄楽 第二期",
+    "cnTitle": "地狱乐 第二季",
+    "status": "finished",
+    "year": 2026,
+    "score": 6.8,
+    "cover": "/images/anime/443446.jpg",
+    "note": "你怎么又和咒回同期了,被MAPPA献祭了吧"
+  },
+  {
+    "title": "勇者刑に処す 懲罰勇者9004隊刑務記録",
+    "cnTitle": "判处勇者刑 惩罚勇者9004队刑务纪录",
+    "status": "finished",
+    "year": 2026,
+    "score": 6.7,
+    "cover": "/images/anime/445905.jpg",
+    "note": "依旧第一集加长猛猛塞料"
+  },
+  {
+    "title": "呪術廻戦 死滅回游 前編",
+    "cnTitle": "咒术回战 死灭回游 前篇",
+    "status": "finished",
+    "year": 2026,
+    "score": 8.3,
+    "cover": "/images/anime/472741.jpg",
+    "note": "我大概一辈子都不会忘记你这部番了"
+  },
+  {
+    "title": "Fate/strange Fake",
+    "cnTitle": "Fate/strange Fake",
+    "status": "finished",
+    "year": 2026,
+    "score": 7,
+    "cover": "/images/anime/443831.jpg",
+    "note": "我为看到你这样帅气的番剧而感到喜悦"
+  },
+  {
+    "title": "メダリスト 第2期",
+    "cnTitle": "金牌得主 第二季",
+    "status": "finished",
+    "year": 2026,
+    "score": 8,
+    "cover": "/images/anime/548818.jpg",
+    "note": "好"
+  },
+  {
+    "title": "葬送のフリーレン 第2期",
+    "cnTitle": "葬送的芙莉莲 第二季",
+    "status": "finished",
+    "year": 2026,
+    "score": 7.5,
+    "cover": "/images/anime/515759.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "違国日記",
+    "cnTitle": "异国日记",
+    "status": "finished",
+    "year": 2026,
+    "score": 9.2,
+    "cover": "/images/anime/493016.jpg",
+    "note": "绕过悲伤,直接触及灵魂,让人不由得的顺着它的心流泪崩"
+  },
+  {
+    "title": "正反対な君と僕",
+    "cnTitle": "相反的你和我",
+    "status": "finished",
+    "year": 2026,
+    "score": 8,
+    "cover": "/images/anime/525565.jpg",
+    "note": "太有活人感了,作者是真上过学的"
+  },
+  {
+    "title": "超かぐや姫！",
+    "cnTitle": "超时空辉夜姬！",
+    "status": "finished",
+    "year": 2026,
+    "score": 8.1,
+    "cover": "/images/anime/604826.jpg",
+    "note": "这姛劲真大吧!我是说, 蓬莱山辉夜和mokou"
+  },
+  {
+    "title": "メダリスト",
+    "cnTitle": "金牌得主",
+    "status": "finished",
+    "year": 2025,
+    "score": 8,
+    "cover": "/images/anime/430699.jpg",
+    "note": "运动番当如是也!"
+  },
+  {
+    "title": "かぐや様は告らせたい 大人への階段",
+    "cnTitle": "辉夜大小姐想让我告白 通往大人的阶梯",
+    "status": "finished",
+    "year": 2025,
+    "score": 8.4,
+    "cover": "/images/anime/565802.jpg",
+    "note": "A1 它还在C, 你连cbm的老冯也要挽救吗?你这家伙"
+  },
+  {
+    "title": "かぐや様は告らせたい～天才たちの恋愛頭脳戦～",
+    "cnTitle": "辉夜大小姐想让我告白～天才们的恋爱头脑战～",
+    "status": "finished",
+    "year": 2019,
+    "score": 8,
+    "cover": "/images/anime/248175.jpg",
+    "note": "A1辉煌的开始"
+  },
+  {
+    "title": "かぐや様は告らせたい-ファーストキッスは終わらない- 映画",
+    "cnTitle": "辉夜大小姐想让我告白-初吻不会结束- 电影",
+    "status": "finished",
+    "year": 2022,
+    "score": 8,
+    "cover": "/images/anime/389474.jpg",
+    "note": "A1无敌了"
+  },
+  {
+    "title": "ウマ娘 シンデレラグレイ 第2クール",
+    "cnTitle": "赛马娘 芦毛灰姑娘 第2部分",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.8,
+    "cover": "/images/anime/530377.jpg",
+    "note": "不过不失,但以原作的底子我觉得你本应做得更好"
+  },
+  {
+    "title": "藤本タツキ17-26",
+    "cnTitle": "藤本树17-26",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.5,
+    "cover": "/images/anime/582501.jpg",
+    "note": "有点意思,很多令人感到惊艳的小巧思,然后树哥我请问了你现在这是在干什么呢?"
+  },
+  {
+    "title": "劇場版 チェンソーマン レゼ篇",
+    "cnTitle": "剧场版 链锯人 蕾塞篇",
+    "status": "finished",
+    "year": 2025,
+    "score": 8.2,
+    "cover": "/images/anime/470660.jpg",
+    "note": "龙哥学学吧"
+  },
+  {
+    "title": "銀河特急 ミルキー☆サブウェイ",
+    "cnTitle": "银河特急 银河☆地铁",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.8,
+    "cover": "/images/anime/545328.jpg",
+    "note": "极致追番性价比"
+  },
+  {
+    "title": "〈物語〉シリーズ セカンドシーズン",
+    "cnTitle": "物语系列 第二季",
+    "status": "finished",
+    "year": 2013,
+    "score": 9.3,
+    "cover": "/images/anime/68812.jpg",
+    "note": "恋物语最好康,真正的爱猫TV"
+  },
+  {
+    "title": "プロメア",
+    "cnTitle": "普罗米亚",
+    "status": "finished",
+    "year": 2019,
+    "score": 7.4,
+    "cover": "/images/anime/218713.jpg",
+    "note": "大哥回来了吗"
+  },
+  {
+    "title": "僕の心のヤバイやつ 第2期",
+    "cnTitle": "我心里危险的东西 第二季",
+    "status": "finished",
+    "year": 2024,
+    "score": 8,
+    "cover": "/images/anime/441795.jpg",
+    "note": "我扭,我扭,我扭扭扭~"
+  },
+  {
+    "title": "フリクリ",
+    "cnTitle": "FLCL",
+    "status": "finished",
+    "year": 2000,
+    "score": 8.9,
+    "cover": "/images/anime/822.jpg",
+    "note": "看不懂,但是很厉害的样子. 就凭作画,演出,脑洞它也值这个分"
+  },
+  {
+    "title": "蟲師",
+    "cnTitle": "虫师",
+    "status": "finished",
+    "year": 2005,
+    "score": 9.2,
+    "cover": "/images/anime/340.jpg",
+    "note": "虽然不是很喜欢日本民俗相关的主题,但这个番的氛围很好,让人愿意静静地听一个个小故事"
+  },
+  {
+    "title": "Fate/stay night [Unlimited Blade Works] 2ndシーズン",
+    "cnTitle": "Fate/stay night [Unlimited Blade Works] 第二季",
+    "status": "finished",
+    "year": 2015,
+    "score": 7,
+    "cover": "/images/anime/109386.jpg",
+    "note": "帅"
+  },
+  {
+    "title": "Fate/kaleid liner プリズマ☆イリヤ",
+    "cnTitle": "Fate/kaleid liner 魔法少女☆伊莉雅",
+    "status": "finished",
+    "year": 2013,
+    "score": 7.4,
+    "cover": "/images/anime/43951.jpg",
+    "note": "我也要当月丑吗"
+  },
+  {
+    "title": "フードコートで、また明日。",
+    "cnTitle": "明天，美食广场见。",
+    "status": "finished",
+    "year": 2025,
+    "score": 8.5,
+    "cover": "/images/anime/528438.jpg",
+    "note": "纯聊天,但好看"
+  },
+  {
+    "title": "ゲーセン少女と異文化交流",
+    "cnTitle": "与游戏中心的少女异文化交流的故事",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.8,
+    "cover": "/images/anime/510256.jpg",
+    "note": "tpz写的ed!?有点意思"
+  },
+  {
+    "title": "Dr.STONE SCIENCE FUTURE 第2クール",
+    "cnTitle": "石纪元 科学与未来 第2部分",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.3,
+    "cover": "/images/anime/508003.jpg",
+    "note": "要结束了吗?"
+  },
+  {
+    "title": "Panty & Stocking with Garterbelt",
+    "cnTitle": "吊带袜天使",
+    "status": "finished",
+    "year": 2010,
+    "score": 8.2,
+    "cover": "/images/anime/8402.jpg",
+    "note": "大于第二季"
+  },
+  {
+    "title": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+    "cnTitle": "青春猪头少年不会梦到兔女郎学姐",
+    "status": "finished",
+    "year": 2018,
+    "score": 7.6,
+    "cover": "/images/anime/240038.jpg",
+    "note": "听说原作更好但我没看("
+  },
+  {
+    "title": "青春ブタ野郎はサンタクロースの夢を見ない",
+    "cnTitle": "青春猪头少年不会梦到圣诞服女郎",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.5,
+    "cover": "/images/anime/467930.jpg",
+    "note": "这谁?这又是谁?"
+  },
+  {
+    "title": "ダンダダン 第2期",
+    "cnTitle": "胆大党 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.8,
+    "cover": "/images/anime/529431.jpg",
+    "note": "其实作画和演出还是很不错的"
+  },
+  {
+    "title": "ぷにるはかわいいスライム 第2期",
+    "cnTitle": "噗妮露是可爱史莱姆 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.2,
+    "cover": "/images/anime/530115.jpg",
+    "note": "依旧爽吃子供向动画("
+  },
+  {
+    "title": "CITY THE ANIMATION",
+    "cnTitle": "小城日常",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.4,
+    "cover": "/images/anime/514358.jpg",
+    "note": "京阿尼在京阿尼模仿大赛中获得了第二名(悲)"
+  },
+  {
+    "title": "タコピーの原罪",
+    "cnTitle": "章鱼哔的原罪",
+    "status": "finished",
+    "year": 2025,
+    "score": 6,
+    "cover": "/images/anime/527620.jpg",
+    "note": "何必看这个折磨自己呢?"
+  },
+  {
+    "title": "よふかしのうた Season 2",
+    "cnTitle": "彻夜之歌 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 8,
+    "cover": "/images/anime/484623.jpg",
+    "note": "我也能在夜晚出去散步然后碰上漂亮吸血鬼姐姐吗"
+  },
+  {
+    "title": "瑠璃の宝石",
+    "cnTitle": "琉璃的宝石",
+    "status": "finished",
+    "year": 2025,
+    "score": 8,
+    "cover": "/images/anime/512190.jpg",
+    "note": "bind你还做无职吗"
+  },
+  {
+    "title": "ぐらんぶる Season 2",
+    "cnTitle": "碧蓝之海 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.9,
+    "cover": "/images/anime/515880.jpg",
+    "note": "即便几乎照着原作抄也依旧好看"
+  },
+  {
+    "title": "その着せ替え人形は恋をする Season 2",
+    "cnTitle": "更衣人偶坠入爱河 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 7,
+    "cover": "/images/anime/398951.jpg",
+    "note": "杀必死少了还更好看了,然后力大砖飞("
+  },
+  {
+    "title": "ぬきたし THE ANIMATION",
+    "cnTitle": "拔作岛",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.6,
+    "cover": "/images/anime/477825.jpg",
+    "note": "除了黄真没啥意思"
+  },
+  {
+    "title": "New PANTY & STOCKING with GARTERBELT",
+    "cnTitle": "新 吊带袜天使",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.8,
+    "cover": "/images/anime/390555.jpg",
+    "note": "看不懂梗. 但无厘头爽就是了, 这就是扳机"
+  },
+  {
+    "title": "アポカリプスホテル",
+    "cnTitle": "末日后酒店",
+    "status": "finished",
+    "year": 2025,
+    "score": 9.1,
+    "cover": "/images/anime/509986.jpg",
+    "note": "想象力的盛宴"
+  },
+  {
+    "title": "月刊少女野崎くん",
+    "cnTitle": "月刊少女野崎君",
+    "status": "finished",
+    "year": 2014,
+    "score": 8.1,
+    "cover": "/images/anime/100449.jpg",
+    "note": "已经……称不上是木头男主了……"
+  },
+  {
+    "title": "ニンジャスレイヤー フロムアニメイシヨン",
+    "cnTitle": "忍者杀手",
+    "status": "finished",
+    "year": 2015,
+    "score": 8.3,
+    "cover": "/images/anime/101437.jpg",
+    "note": "Aiiieeeeeeee?! 忍者!? 忍者为何!? 实际便宜(和蕾忍相性也很好啊"
+  },
+  {
+    "title": "忍者と殺し屋のふたりぐらし",
+    "cnTitle": "忍者与杀手二人组的日常生活",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.5,
+    "cover": "/images/anime/491569.jpg",
+    "note": "物语演出风格,实际好看,改编已经尽力了(DOMO Ninja & Slayer =san"
+  },
+  {
+    "title": "mono",
+    "cnTitle": "mono女孩",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.2,
+    "cover": "/images/anime/485936.jpg",
+    "note": "阿姨们戏份是不是多了点"
+  },
+  {
+    "title": "かぐや様は告らせたい?～天才たちの恋愛頭脳戦～",
+    "cnTitle": "辉夜大小姐想让我告白?～天才们的恋爱头脑战～",
+    "status": "finished",
+    "year": 2020,
+    "score": 8,
+    "cover": "/images/anime/293049.jpg",
+    "note": "cbm你就该多写点这些,少打apex"
+  },
+  {
+    "title": "我的三体 章北海传",
+    "status": "finished",
+    "year": 2020,
+    "score": 8,
+    "cover": "/images/anime/246001.jpg",
+    "note": "三体影视作品唯一荣光"
+  },
+  {
+    "title": "はたらく細胞!!",
+    "cnTitle": "工作细胞！！",
+    "status": "finished",
+    "year": 2021,
+    "score": 7.8,
+    "cover": "/images/anime/278815.jpg",
+    "note": "史上最强科普动画片"
+  },
+  {
+    "title": "ワンダーエッグ・プライオリティ",
+    "cnTitle": "奇蛋物语",
+    "status": "finished",
+    "year": 2021,
+    "score": 6,
+    "cover": "/images/anime/316607.jpg",
+    "note": "世界名画"
+  },
+  {
+    "title": "古見さんは、コミュ症です。",
+    "cnTitle": "古见同学有交流障碍症",
+    "status": "finished",
+    "year": 2021,
+    "score": 7.6,
+    "cover": "/images/anime/335225.jpg",
+    "note": "看啊,多么青春,多么热闹(扭过头去,失声痛哭)"
+  },
+  {
+    "title": "はたらく細胞BLACK",
+    "cnTitle": "工作细胞BLACK",
+    "status": "finished",
+    "year": 2021,
+    "score": 7.1,
+    "cover": "/images/anime/304065.jpg",
+    "note": "哈人"
+  },
+  {
+    "title": "鬼滅の刃 遊郭編",
+    "cnTitle": "鬼灭之刃 游郭篇",
+    "status": "finished",
+    "year": 2021,
+    "score": 7.5,
+    "cover": "/images/anime/328195.jpg",
+    "note": "太华丽了"
+  },
+  {
+    "title": "86―エイティシックス―",
+    "cnTitle": "86 -不存在的战区-",
+    "status": "finished",
+    "year": 2021,
+    "score": 8,
+    "cover": "/images/anime/302189.jpg",
+    "note": "刀不动了就开始给糖了对吗"
+  },
+  {
+    "title": "ゆるキャン△ SEASON 2",
+    "cnTitle": "摇曳露营△ 第二季",
+    "status": "finished",
+    "year": 2021,
+    "score": 8.2,
+    "cover": "/images/anime/262897.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "チェンソーマン",
+    "cnTitle": "链锯人",
+    "status": "finished",
+    "year": 2022,
+    "score": 6.3,
+    "cover": "/images/anime/321885.jpg",
+    "note": "龙哥就是龙!"
+  },
+  {
+    "title": "パリピ孔明",
+    "cnTitle": "派对浪客诸葛孔明",
+    "status": "finished",
+    "year": 2022,
+    "score": 8,
+    "cover": "/images/anime/356756.jpg",
+    "note": "你比新三懂孔明"
+  },
+  {
+    "title": "陰の実力者になりたくて！",
+    "cnTitle": "想要成为影之实力者！",
+    "status": "finished",
+    "year": 2022,
+    "score": 8.5,
+    "cover": "/images/anime/329114.jpg",
+    "note": "最帅,最会装"
+  },
+  {
+    "title": "その着せ替え人形は恋をする",
+    "cnTitle": "更衣人偶坠入爱河",
+    "status": "finished",
+    "year": 2022,
+    "score": 7.1,
+    "cover": "/images/anime/333158.jpg",
+    "note": "杀必死太多了一点吧"
+  },
+  {
+    "title": "よふかしのうた",
+    "cnTitle": "彻夜之歌",
+    "status": "finished",
+    "year": 2022,
+    "score": 8.1,
+    "cover": "/images/anime/356774.jpg",
+    "note": "Creepy Nut牛逼"
+  },
+  {
+    "title": "サマータイムレンダ",
+    "cnTitle": "夏日重现",
+    "status": "finished",
+    "year": 2022,
+    "score": 7.6,
+    "cover": "/images/anime/326895.jpg",
+    "note": "音监在干嘛?"
+  },
+  {
+    "title": "であいもん",
+    "cnTitle": "相合之物",
+    "status": "finished",
+    "year": 2022,
+    "score": 8,
+    "cover": "/images/anime/333664.jpg",
+    "note": "果力膨胀"
+  },
+  {
+    "title": "白聖女と黒牧師",
+    "cnTitle": "白圣女与黑牧师",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.4,
+    "cover": "/images/anime/387822.jpg",
+    "note": "塞西莉亚可爱捏"
+  },
+  {
+    "title": "デキる猫は今日も憂鬱",
+    "cnTitle": "能干的猫今天也忧郁",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.3,
+    "cover": "/images/anime/384672.jpg",
+    "note": "起码没有拉面头发和神必蟑螂运镜"
+  },
+  {
+    "title": "神無き世界のカミサマ活動",
+    "cnTitle": "无神世界的神明活动",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.7,
+    "cover": "/images/anime/377607.jpg",
+    "note": "神经"
+  },
+  {
+    "title": "この素晴らしい世界に爆焔を！",
+    "cnTitle": "为美好的世界献上爆焰！",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.3,
+    "cover": "/images/anime/385209.jpg",
+    "note": "差了个吐槽位啊"
+  },
+  {
+    "title": "呪術廻戦 懐玉・玉折／渋谷事変",
+    "cnTitle": "咒术回战 怀玉･玉折 / 涩谷事变",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.5,
+    "cover": "/images/anime/369304.jpg",
+    "note": "依旧有钱为所欲为"
+  },
+  {
+    "title": "君は放課後インソムニア",
+    "cnTitle": "放学后失眠的你",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.5,
+    "cover": "/images/anime/365437.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "PLUTO",
+    "cnTitle": "冥王",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.9,
+    "cover": "/images/anime/217021.jpg",
+    "note": "挺好看"
+  },
+  {
+    "title": "Dr.STONE NEW WORLD 第2クール",
+    "cnTitle": "石纪元 新世界 第2部分",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.5,
+    "cover": "/images/anime/424372.jpg",
+    "note": "每次都有很惊艳的点子,虽然演出就比较子供向"
+  },
+  {
+    "title": "SPY×FAMILY Season 2",
+    "cnTitle": "间谍过家家 第二季",
+    "status": "finished",
+    "year": 2023,
+    "score": 7,
+    "cover": "/images/anime/411427.jpg",
+    "note": "em"
+  },
+  {
+    "title": "アンデッドガール・マーダーファルス",
+    "cnTitle": "不死少女 杀人笑剧",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.8,
+    "cover": "/images/anime/425591.jpg",
+    "note": "这说话,总得有个头啊"
+  },
+  {
+    "title": "陰の実力者になりたくて！ 2nd season",
+    "cnTitle": "想要成为影之实力者！ 第二季",
+    "status": "finished",
+    "year": 2023,
+    "score": 8,
+    "cover": "/images/anime/419846.jpg",
+    "note": "I am ATOMIC"
+  },
+  {
+    "title": "【推しの子】",
+    "cnTitle": "【我推的孩子】",
+    "status": "finished",
+    "year": 2023,
+    "score": 7,
+    "cover": "/images/anime/386809.jpg",
+    "note": "哎"
+  },
+  {
+    "title": "薬屋のひとりごと",
+    "cnTitle": "药屋少女的呢喃",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.8,
+    "cover": "/images/anime/420628.jpg",
+    "note": "最日中国风"
+  },
+  {
+    "title": "ウマ娘 プリティーダービー ROAD TO THE TOP",
+    "cnTitle": "赛马娘 Pretty Derby 巅峰之路",
+    "status": "finished",
+    "year": 2023,
+    "score": 7,
+    "cover": "/images/anime/380448.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "BanG Dream! It's MyGO!!!!!",
+    "status": "finished",
+    "year": 2023,
+    "score": 8.4,
+    "cover": "/images/anime/428735.jpg",
+    "note": "木柜子闹麻了"
+  },
+  {
+    "title": "Re:ゼロから始める異世界生活 3rd season 反擊編",
+    "cnTitle": "Re：从零开始的异世界生活 第三季 反击篇",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.5,
+    "cover": "/images/anime/510728.jpg",
+    "note": "居然还能上作画集锦?V圣这么强!?"
+  },
+  {
+    "title": "Dr.STONE SCIENCE FUTURE",
+    "cnTitle": "石纪元 科学与未来",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.5,
+    "cover": "/images/anime/471578.jpg",
+    "note": "有始有终,很好"
+  },
+  {
+    "title": "ウィッチウォッチ",
+    "cnTitle": "魔女与使魔",
+    "status": "finished",
+    "year": 2025,
+    "score": 6.8,
+    "cover": "/images/anime/506672.jpg",
+    "note": "没有很戳到笑点啊"
+  },
+  {
+    "title": "俺だけレベルアップな件 Season 2 -Arise from the Shadow-",
+    "cnTitle": "我独自升级 第二季 -起于暗影-",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.5,
+    "cover": "/images/anime/487630.jpg",
+    "note": "战斗!爽!我管你下巴尖不尖的"
+  },
+  {
+    "title": "ゆるキャン△ SEASON３",
+    "cnTitle": "摇曳露营△ 第三季",
+    "status": "finished",
+    "year": 2024,
+    "score": 5.4,
+    "cover": "/images/anime/405785.jpg",
+    "note": "这下真是旅游宣传片了,能打过佐贺吗"
+  },
+  {
+    "title": "魔法少女にあこがれて",
+    "cnTitle": "梦想成为魔法少女",
+    "status": "finished",
+    "year": 2024,
+    "score": 7,
+    "cover": "/images/anime/424663.jpg",
+    "note": "漫画更涩一点"
+  },
+  {
+    "title": "劇場用再編集版『ウマ娘 プリティーダービー ROAD TO THE TOP』",
+    "cnTitle": "『赛马娘 巅峰之路』电影剪辑版",
+    "status": "finished",
+    "year": 2024,
+    "score": 7,
+    "cover": "/images/anime/486264.jpg",
+    "note": "比3强"
+  },
+  {
+    "title": "エグミレガシー",
+    "cnTitle": "哎咕岛消失的舔甜歌姬",
+    "status": "finished",
+    "year": 2024,
+    "score": 7,
+    "cover": "/images/anime/490824.jpg",
+    "note": "还真让你挖到宝了"
+  },
+  {
+    "title": "【推しの子】 第2期",
+    "cnTitle": "【我推的孩子】 第二季",
+    "status": "finished",
+    "year": 2024,
+    "score": 6.3,
+    "cover": "/images/anime/443428.jpg",
+    "note": "怎么配角演出比主角还好"
+  },
+  {
+    "title": "Re:ゼロから始める異世界生活 3rd season 襲擊編",
+    "cnTitle": "Re：从零开始的异世界生活 第三季 袭击篇",
+    "status": "finished",
+    "year": 2024,
+    "score": 6.5,
+    "cover": "/images/anime/425998.jpg",
+    "note": "486:孩子们,我这波一命通关你们咋又不爱看了"
+  },
+  {
+    "title": "ぷにるはかわいいスライム",
+    "cnTitle": "噗妮露是可爱史莱姆",
+    "status": "finished",
+    "year": 2024,
+    "score": 7.6,
+    "cover": "/images/anime/470045.jpg",
+    "note": "子供向吗?霓虹小孩疑似吃得有点好了"
+  },
+  {
+    "title": "真夜中ぱんチ",
+    "cnTitle": "深夜重拳",
+    "status": "finished",
+    "year": 2024,
+    "score": 7.9,
+    "cover": "/images/anime/477207.jpg",
+    "note": "这样完整而有趣的原创已经不多了"
+  },
+  {
+    "title": "ダンダダン",
+    "cnTitle": "胆大党",
+    "status": "finished",
+    "year": 2024,
+    "score": 6.9,
+    "cover": "/images/anime/467461.jpg",
+    "note": "王道热血挺好的,非要刻意搞怪装作邪道(好吧从商业成绩上看这样确实更好)"
+  },
+  {
+    "title": "ゾンビランドサガ リベンジ",
+    "cnTitle": "佐贺偶像是传奇 复仇",
+    "status": "finished",
+    "year": 2021,
+    "score": 8,
+    "cover": "/images/anime/287488.jpg",
+    "note": "SAGA!!"
+  },
+  {
+    "title": "ゾンビランドサガ",
+    "cnTitle": "佐贺偶像是传奇",
+    "status": "finished",
+    "year": 2018,
+    "score": 8,
+    "cover": "/images/anime/252655.jpg",
+    "note": "SAGA"
+  },
+  {
+    "title": "甘城ブリリアントパーク",
+    "cnTitle": "甘城光辉游乐园",
+    "status": "finished",
+    "year": 2014,
+    "score": 6.5,
+    "cover": "/images/anime/93545.jpg",
+    "note": "千斗好看"
+  },
+  {
+    "title": "キルラキル",
+    "cnTitle": "斩服少女",
+    "status": "finished",
+    "year": 2013,
+    "score": 8,
+    "cover": "/images/anime/72941.jpg",
+    "note": "真的喜欢trigger的画风,这才是动画"
+  },
+  {
+    "title": "オッドタクシー",
+    "cnTitle": "奇巧计程车",
+    "status": "finished",
+    "year": 2021,
+    "score": 9.1,
+    "cover": "/images/anime/325285.jpg",
+    "note": "引人入胜的故事"
+  },
+  {
+    "title": "薬屋のひとりごと 第2期",
+    "cnTitle": "药屋少女的呢喃 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.5,
+    "cover": "/images/anime/486347.jpg",
+    "note": "剧本稳扎稳打"
+  },
+  {
+    "title": "日々は過ぎれど飯うまし",
+    "cnTitle": "时光流逝，饭菜依旧美味",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.7,
+    "cover": "/images/anime/531159.jpg",
+    "note": "没钱就是不能为所欲为"
+  },
+  {
+    "title": "ウマ娘 シンデレラグレイ",
+    "cnTitle": "赛马娘 芦毛灰姑娘",
+    "status": "finished",
+    "year": 2025,
+    "score": 7.4,
+    "cover": "/images/anime/509297.jpg",
+    "note": "还以为你可以超越马2来着"
+  },
+  {
+    "title": "君のことが大大大大大好きな100人の彼女",
+    "cnTitle": "超超超超超喜欢你的100个女朋友",
+    "status": "finished",
+    "year": 2023,
+    "score": 8,
+    "cover": "/images/anime/424379.jpg",
+    "note": "这是真超人"
+  },
+  {
+    "title": "君のことが大大大大大好きな100人の彼女 第2期",
+    "cnTitle": "超超超超超喜欢你的100个女朋友 第二季",
+    "status": "finished",
+    "year": 2025,
+    "score": 8,
+    "cover": "/images/anime/471793.jpg",
+    "note": "厨力拉满,改编优秀"
+  },
+  {
+    "title": "〈物語〉シリーズ オフ&モンスターシーズン",
+    "cnTitle": "物语系列 外传季&怪物季",
+    "status": "finished",
+    "year": 2024,
+    "score": 8.5,
+    "cover": "/images/anime/475354.jpg",
+    "note": "我能流利地说出两位吸血鬼的名字,这真的很帅"
+  },
+  {
+    "title": "斉木楠雄のΨ難",
+    "cnTitle": "齐木楠雄的灾难",
+    "status": "finished",
+    "year": 2016,
+    "score": 8.7,
+    "cover": "/images/anime/181354.jpg",
+    "note": "最下饭"
+  },
+  {
+    "title": "傷物語Ⅲ冷血篇",
+    "cnTitle": "伤物语Ⅲ冷血篇",
+    "status": "finished",
+    "year": 2017,
+    "score": 8,
+    "cover": "/images/anime/148037.jpg",
+    "note": "咔,咔咔,咔咔咔"
+  },
+  {
+    "title": "化物語",
+    "cnTitle": "化物语",
+    "status": "finished",
+    "year": 2009,
+    "score": 9,
+    "cover": "/images/anime/1671.jpg",
+    "note": "从此看到新房风格演出就挪不动步了"
+  },
+  {
+    "title": "劇場版 少女☆歌劇 レヴュースタァライト",
+    "cnTitle": "剧场版 少女☆歌剧 Revue Starlight",
+    "status": "finished",
+    "year": 2021,
+    "score": 8,
+    "cover": "/images/anime/294135.jpg",
+    "note": "哇嘎利马斯"
+  },
+  {
+    "title": "負けヒロインが多すぎる！",
+    "cnTitle": "败犬女主太多了！",
+    "status": "finished",
+    "year": 2024,
+    "score": 9,
+    "cover": "/images/anime/464376.jpg",
+    "note": "牛哥,这把是不是你打的有问题"
+  },
+  {
+    "title": "天元突破グレンラガン",
+    "cnTitle": "天元突破 红莲螺岩",
+    "status": "finished",
+    "year": 2007,
+    "score": 9.7,
+    "cover": "/images/anime/770.jpg",
+    "note": "我的钻头可是能突破天际的啊!"
+  },
+  {
+    "title": "ガールズバンドクライ",
+    "cnTitle": "少女乐队的呐喊",
+    "status": "finished",
+    "year": 2024,
+    "score": 7.8,
+    "cover": "/images/anime/431767.jpg",
+    "note": "起码你真的给我了该季度独一无二的追番体验"
+  },
+  {
+    "title": "映像研には手を出すな！",
+    "cnTitle": "别对映像研出手！",
+    "status": "finished",
+    "year": 2020,
+    "score": 9,
+    "cover": "/images/anime/282433.jpg",
+    "note": "汤浅以后似乎只挂名了"
+  },
+  {
+    "title": "僕だけがいない街",
+    "cnTitle": "只有我不存在的城市",
+    "status": "finished",
+    "year": 2016,
+    "score": 4.5,
+    "cover": "/images/anime/137722.jpg",
+    "note": "不是牛的问题,而是真的有点降智"
+  },
+  {
+    "title": "夜のクラゲは泳げない",
+    "cnTitle": "夜晚的水母不会游泳",
+    "status": "finished",
+    "year": 2024,
+    "score": 4,
+    "cover": "/images/anime/425909.jpg",
+    "note": "从此原创再也没能复刻这季度三叉戟的讨论度荣光(mujica? 谁啊?)"
+  },
+  {
+    "title": "リコリス・リコイル",
+    "cnTitle": "莉可丽丝",
+    "status": "finished",
+    "year": 2022,
+    "score": 5.5,
+    "cover": "/images/anime/364450.jpg",
+    "note": "TTTT依旧在发力"
+  },
+  {
+    "title": "ラブライブ！スーパースター!!",
+    "cnTitle": "Love Live! Superstar!!",
+    "status": "finished",
+    "year": 2021,
+    "score": 4.9,
+    "cover": "/images/anime/306742.jpg",
+    "note": "hyw?"
+  },
+  {
+    "title": "お兄ちゃんはおしまい！",
+    "cnTitle": "别当欧尼酱了！",
+    "status": "finished",
+    "year": 2023,
+    "score": 8.1,
+    "cover": "/images/anime/378862.jpg",
+    "note": "无职转生:so?"
+  },
+  {
+    "title": "とある科学の超電磁砲T",
+    "cnTitle": "某科学的超电磁炮T",
+    "status": "finished",
+    "year": 2020,
+    "score": 7,
+    "cover": "/images/anime/262940.jpg",
+    "note": "永远不会倒闭这块"
+  },
+  {
+    "title": "小林さんちのメイドラゴンS",
+    "cnTitle": "小林家的龙女仆S",
+    "status": "finished",
+    "year": 2021,
+    "score": 7.2,
+    "cover": "/images/anime/274234.jpg",
+    "note": "京阿尼你还是多做点这种吧"
+  },
+  {
+    "title": "ノーゲーム・ノーライフ",
+    "cnTitle": "游戏人生",
+    "status": "finished",
+    "year": 2014,
+    "score": 9.2,
+    "cover": "/images/anime/79227.jpg",
+    "note": "年年问"
+  },
+  {
+    "title": "異世界おじさん",
+    "cnTitle": "异世界舅舅",
+    "status": "finished",
+    "year": 2022,
+    "score": 7.8,
+    "cover": "/images/anime/339326.jpg",
+    "note": "舅妈真漂亮"
+  },
+  {
+    "title": "終末なにしてますか？ 忙しいですか？ 救ってもらっていいですか？",
+    "cnTitle": "末日时在做什么？有没有空？可以来拯救吗？",
+    "status": "finished",
+    "year": 2017,
+    "score": 7.6,
+    "cover": "/images/anime/185943.jpg",
+    "note": "珂朵莉树有点强"
+  },
+  {
+    "title": "ぐらんぶる",
+    "cnTitle": "碧蓝之海",
+    "status": "finished",
+    "year": 2018,
+    "score": 8.5,
+    "cover": "/images/anime/235130.jpg",
+    "note": "把秋裤拿来~马飞~"
+  },
+  {
+    "title": "宝石の国",
+    "cnTitle": "宝石之国",
+    "status": "finished",
+    "year": 2017,
+    "score": 7.2,
+    "cover": "/images/anime/214799.jpg",
+    "note": "碎碎平安"
+  },
+  {
+    "title": "アイドルマスター シンデレラガールズ U149",
+    "cnTitle": "偶像大师 灰姑娘女孩 U149",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.5,
+    "cover": "/images/anime/376703.jpg",
+    "note": "别电我"
+  },
+  {
+    "title": "この素晴らしい世界に祝福を！3",
+    "cnTitle": "为美好的世界献上祝福！第三季",
+    "status": "finished",
+    "year": 2024,
+    "score": 8.5,
+    "cover": "/images/anime/342667.jpg",
+    "note": "好看"
+  },
+  {
+    "title": "スキップとローファー",
+    "cnTitle": "跃动青春",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.8,
+    "cover": "/images/anime/357961.jpg",
+    "note": "青春!?(猛吸)"
+  },
+  {
+    "title": "【推しの子】Mother and Children",
+    "cnTitle": "【我推的孩子】Mother and Children",
+    "status": "finished",
+    "year": 2023,
+    "score": 7,
+    "cover": "/images/anime/424227.jpg",
+    "note": "cbm你有意思吗你"
+  },
+  {
+    "title": "ダンジョン飯",
+    "cnTitle": "迷宫饭",
+    "status": "finished",
+    "year": 2024,
+    "score": 7.9,
+    "cover": "/images/anime/395378.jpg",
+    "note": "吃!爽!"
+  },
+  {
+    "title": "劇場版 Fate/stay night [Heaven's Feel] II.lost butterfly",
+    "cnTitle": "剧场版 Fate/stay night [Heaven's Feel] II.lost butterfly",
+    "status": "finished",
+    "year": 2019,
+    "score": 8,
+    "cover": "/images/anime/175599.jpg",
+    "note": "帅就对了"
+  },
+  {
+    "title": "天国大魔境",
+    "cnTitle": "天国大魔境",
+    "status": "finished",
+    "year": 2023,
+    "score": 8.5,
+    "cover": "/images/anime/404804.jpg",
+    "note": "有牛就看,新番避雷的起点"
+  },
+  {
+    "title": "僕の心のヤバイやつ",
+    "cnTitle": "我心里危险的东西",
+    "status": "finished",
+    "year": 2023,
+    "score": 9,
+    "cover": "/images/anime/394260.jpg",
+    "note": "初中生吗……,我真的成为老灯了吗"
+  },
+  {
+    "title": "無職転生 ～異世界行ったら本気だす～",
+    "cnTitle": "无职转生～到了异世界就拿出真本事～",
+    "status": "finished",
+    "year": 2021,
+    "score": 8.8,
+    "cover": "/images/anime/277554.jpg",
+    "note": "握握手,握握双手"
+  },
+  {
+    "title": "DEVILMAN crybaby",
+    "cnTitle": "恶魔人 crybaby",
+    "status": "finished",
+    "year": 2018,
+    "score": 8,
+    "cover": "/images/anime/211311.jpg",
+    "note": "这是真的致郁,史上最强南通"
+  },
+  {
+    "title": "からかい上手の高木さん③",
+    "cnTitle": "擅长捉弄的高木同学 第三季",
+    "status": "finished",
+    "year": 2022,
+    "score": 7,
+    "cover": "/images/anime/347887.jpg",
+    "note": "在床上扭得跟个区一样"
+  },
+  {
+    "title": "のんのんびより  りぴーと",
+    "cnTitle": "悠哉日常大王 Repeat",
+    "status": "finished",
+    "year": 2015,
+    "score": 8,
+    "cover": "/images/anime/101442.jpg",
+    "note": "音mad常驻嘉宾"
+  },
+  {
+    "title": "涼宮ハルヒの憂鬱",
+    "cnTitle": "凉宫春日的忧郁 2009",
+    "status": "finished",
+    "year": 2009,
+    "score": 8,
+    "cover": "/images/anime/1606.jpg",
+    "note": "你是?"
+  },
+  {
+    "title": "ノーゲーム・ノーライフ ゼロ",
+    "cnTitle": "游戏人生 零",
+    "status": "finished",
+    "year": 2017,
+    "score": 8.7,
+    "cover": "/images/anime/187276.jpg",
+    "note": "问了吗"
+  },
+  {
+    "title": "ワンパンマン",
+    "cnTitle": "一拳超人",
+    "status": "finished",
+    "year": 2015,
+    "score": 9,
+    "cover": "/images/anime/127563.jpg",
+    "note": "现在有多爽,以后就有多难绷"
+  },
+  {
+    "title": "進撃の巨人",
+    "cnTitle": "进击的巨人",
+    "status": "finished",
+    "year": 2013,
+    "score": 8,
+    "cover": "/images/anime/55770.jpg",
+    "note": "幽默了有点"
+  },
+  {
+    "title": "Fate/Zero",
+    "cnTitle": "Fate/Zero",
+    "status": "finished",
+    "year": 2011,
+    "score": 7.4,
+    "cover": "/images/anime/10639.jpg",
+    "note": "入宅番，但我并没有成为月丑"
+  },
+  {
+    "title": "響け！ユーフォニアム3",
+    "cnTitle": "吹响吧！上低音号 第三季",
+    "status": "finished",
+    "year": 2024,
+    "score": 5,
+    "cover": "/images/anime/283643.jpg",
+    "note": "我还没投票呢"
+  },
+  {
+    "title": "涼宮ハルヒの憂鬱",
+    "cnTitle": "凉宫春日的忧郁",
+    "status": "finished",
+    "year": 2006,
+    "score": 7.8,
+    "cover": "/images/anime/485.jpg",
+    "note": "我补番的也要漫无止境的八月吗？"
+  },
+  {
+    "title": "Cyberpunk: Edgerunners",
+    "cnTitle": "赛博浪客",
+    "status": "finished",
+    "year": 2022,
+    "score": 9,
+    "cover": "/images/anime/309311.jpg",
+    "note": "So, get away~, another way to feel……"
+  },
+  {
+    "title": "ゆるキャン△",
+    "cnTitle": "摇曳露营△",
+    "status": "finished",
+    "year": 2018,
+    "score": 8.4,
+    "cover": "/images/anime/207195.jpg",
+    "note": "然后就变成纯文旅宣传片了这对吗"
+  },
+  {
+    "title": "らき☆すた",
+    "cnTitle": "幸运星",
+    "status": "finished",
+    "year": 2007,
+    "score": 9.5,
+    "cover": "/images/anime/276.jpg",
+    "note": "最日常"
+  },
+  {
+    "title": "けいおん！！",
+    "cnTitle": "轻音少女 第二季",
+    "status": "finished",
+    "year": 2010,
+    "score": 8.5,
+    "cover": "/images/anime/3774.jpg",
+    "note": "后面的木柜子何德何能与你并列?"
+  },
+  {
+    "title": "ジョジョの奇妙な冒険 ストーンオーシャン",
+    "cnTitle": "JOJO的奇妙冒险 石之海",
+    "status": "finished",
+    "year": 2022,
+    "score": 6,
+    "cover": "/images/anime/332261.jpg",
+    "note": "过程不论,结局还是很满意的"
+  },
+  {
+    "title": "ジョジョの奇妙な冒険",
+    "cnTitle": "JOJO的奇妙冒险",
+    "status": "finished",
+    "year": 2012,
+    "score": 7,
+    "cover": "/images/anime/43558.jpg",
+    "note": "你dio爷当年这一个面具可不得了"
+  },
+  {
+    "title": "ジョジョの奇妙な冒険 スターダストクルセイダース",
+    "cnTitle": "JOJO的奇妙冒险 星尘斗士",
+    "status": "finished",
+    "year": 2014,
+    "score": 8,
+    "cover": "/images/anime/85631.jpg",
+    "note": "同"
+  },
+  {
+    "title": "ジョジョの奇妙な冒険 黄金の風",
+    "cnTitle": "JOJO的奇妙冒险 黄金之风",
+    "status": "finished",
+    "year": 2018,
+    "score": 8,
+    "cover": "/images/anime/235128.jpg",
+    "note": "经费巅峰"
+  },
+  {
+    "title": "ジョジョの奇妙な冒険 ダイヤモンドは砕けない",
+    "cnTitle": "JOJO的奇妙冒险 不灭钻石",
+    "status": "finished",
+    "year": 2016,
+    "score": 8.5,
+    "cover": "/images/anime/150490.jpg",
+    "note": "JOJO和日常的奇妙相性"
+  },
+  {
+    "title": "ジョジョの奇妙な冒険 スターダストクルセイダース エジプト編",
+    "cnTitle": "JOJO的奇妙冒险 星尘斗士 埃及篇",
+    "status": "finished",
+    "year": 2015,
+    "score": 8,
+    "cover": "/images/anime/113292.jpg",
+    "note": "史上最有意思的公路片"
+  },
+  {
+    "title": "少女終末旅行",
+    "cnTitle": "少女终末旅行",
+    "status": "finished",
+    "year": 2017,
+    "score": 9,
+    "cover": "/images/anime/218707.jpg",
+    "note": "我头像都是这个了,What can I say?"
+  },
+  {
+    "title": "メイドインアビス",
+    "cnTitle": "来自深渊",
+    "status": "finished",
+    "year": 2017,
+    "score": 8,
+    "cover": "/images/anime/203526.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "メイドインアビス 深き魂の黎明",
+    "cnTitle": "来自深渊 深沉灵魂的黎明",
+    "status": "finished",
+    "year": 2020,
+    "score": 8.5,
+    "cover": "/images/anime/230914.jpg",
+    "note": "普鲁修卡……要……洒出来了……"
+  },
+  {
+    "title": "メイドインアビス 烈日の黄金郷",
+    "cnTitle": "来自深渊 烈日的黄金乡",
+    "status": "finished",
+    "year": 2022,
+    "score": 9,
+    "cover": "/images/anime/298477.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "モブサイコ100 Ⅲ",
+    "cnTitle": "灵能百分百 第三季",
+    "status": "finished",
+    "year": 2022,
+    "score": 8,
+    "cover": "/images/anime/353605.jpg",
+    "note": "可惜告白篇差点意思"
+  },
+  {
+    "title": "モブサイコ100",
+    "cnTitle": "灵能百分百",
+    "status": "finished",
+    "year": 2016,
+    "score": 8,
+    "cover": "/images/anime/158316.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "モブサイコ100 Ⅱ",
+    "cnTitle": "灵能百分百 第二季",
+    "status": "finished",
+    "year": 2019,
+    "score": 8.8,
+    "cover": "/images/anime/240760.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "ヴィンランド・サガ SEASON 2",
+    "cnTitle": "冰海战记 第二季",
+    "status": "finished",
+    "year": 2023,
+    "score": 10,
+    "cover": "/images/anime/296739.jpg",
+    "note": "文戏太夯了，明明对白都超长，也没有物语那样奇特的演出，但就是一点也不不无聊"
+  },
+  {
+    "title": "ヴィンランド・サガ",
+    "cnTitle": "冰海战记",
+    "status": "finished",
+    "year": 2019,
+    "score": 10,
+    "cover": "/images/anime/240386.jpg",
+    "note": "老谢是我最喜欢的反派人物"
+  },
+  {
+    "title": "無職転生 ～異世界行ったら本気だす～ 第2クール",
+    "cnTitle": "无职转生～到了异世界就拿出真本事～ 第2部分",
+    "status": "finished",
+    "year": 2021,
+    "score": 9,
+    "cover": "/images/anime/325585.jpg",
+    "note": "吓我一跳我释放忍术！"
+  },
+  {
+    "title": "かぐや様は告らせたい-ウルトラロマンティック-",
+    "cnTitle": "辉夜大小姐想让我告白-超级浪漫-",
+    "status": "finished",
+    "year": 2022,
+    "score": 8.5,
+    "cover": "/images/anime/317613.jpg",
+    "note": "依旧恋爱喜剧巅峰"
+  },
+  {
+    "title": "進撃の巨人 Season 3 Part.2",
+    "cnTitle": "进击的巨人 第三季 Part.2",
+    "status": "finished",
+    "year": 2019,
+    "score": 8.9,
+    "cover": "/images/anime/263750.jpg",
+    "note": "这不也挺好吗"
+  },
+  {
+    "title": "進撃の巨人 The Final Season 完結編 後編",
+    "cnTitle": "进击的巨人 最终季 完结篇 后篇",
+    "status": "finished",
+    "year": 2023,
+    "score": 7.5,
+    "cover": "/images/anime/415779.jpg",
+    "note": "MAPPA依旧尽力局"
+  },
+  {
+    "title": "鋼の錬金術師 FULLMETAL ALCHEMIST",
+    "cnTitle": "钢之炼金术师 FULLMETAL ALCHEMIST",
+    "status": "finished",
+    "year": 2009,
+    "score": 9.2,
+    "cover": "/images/anime/1428.jpg",
+    "note": "惊天一指"
+  },
+  {
+    "title": "CLANNAD 〜AFTER STORY〜",
+    "status": "finished",
+    "year": 2008,
+    "score": 10,
+    "cover": "/images/anime/876.jpg",
+    "note": "无需多言"
+  },
+  {
+    "title": "千と千尋の神隠し",
+    "cnTitle": "千与千寻",
+    "status": "finished",
+    "year": 2001,
+    "score": 8.5,
+    "cover": "/images/anime/311.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "ぼっち・ざ・ろっく！",
+    "cnTitle": "孤独摇滚！",
+    "status": "finished",
+    "year": 2022,
+    "score": 8.5,
+    "cover": "/images/anime/328609.jpg",
+    "note": "从此社恐变成了时尚单品"
+  },
+  {
+    "title": "響け！ユーフォニアム2",
+    "cnTitle": "吹响吧！上低音号 第二季",
+    "status": "finished",
+    "year": 2016,
+    "score": 8,
+    "cover": "/images/anime/152091.jpg",
+    "note": "暂无"
+  },
+  {
+    "title": "ウマ娘 プリティーダービー Season 2",
+    "cnTitle": "赛马娘 Pretty Derby 第二季",
+    "status": "finished",
+    "year": 2021,
+    "score": 7.9,
+    "cover": "/images/anime/315574.jpg",
+    "note": "哈基米和忍者的源头居然在同一年同一个季度"
+  },
+  {
+    "title": "DEATH NOTE",
+    "cnTitle": "死亡笔记",
+    "status": "finished",
+    "year": 2006,
+    "score": 8.8,
+    "cover": "/images/anime/1773.jpg",
+    "note": "夜神月唱歌真好听喵"
+  },
+  {
+    "title": "日常",
+    "cnTitle": "日常",
+    "status": "finished",
+    "year": 2011,
+    "score": 9,
+    "cover": "/images/anime/9912.jpg",
+    "note": "日常！？"
+  },
+  {
+    "title": "天空の城ラピュタ",
+    "cnTitle": "天空之城",
+    "status": "finished",
+    "year": 1986,
+    "score": 9.3,
+    "cover": "/images/anime/298.jpg",
+    "note": "100分！于是隔壁恋太郎的传说开始了……"
+  },
+  {
+    "title": "劇場版 魔法少女まどか☆マギカ [新編] 叛逆の物語",
+    "cnTitle": "剧场版 魔法少女小圆 [新篇] 叛逆的物语",
+    "status": "finished",
+    "year": 2013,
+    "score": 8,
+    "cover": "/images/anime/44693.jpg",
+    "note": "圆神牛逼"
+  },
+  {
+    "title": "葬送のフリーレン",
+    "cnTitle": "葬送的芙莉莲",
+    "status": "finished",
+    "year": 2023,
+    "score": 8.0,
+    "cover": "/images/anime/400602.jpg",
+    "note": "有钱就是可以为所欲为"
+  },
+  {
+    "title": "魔法少女まどか☆マギカ",
+    "cnTitle": "魔法少女小圆",
+    "status": "finished",
+    "year": 2011,
+    "score": 8.5,
+    "cover": "/images/anime/9717.jpg",
+    "note": "现在的原创番还做得到吗"
+  },
+  {
+    "title": "ピンポン THE ANIMATION",
+    "cnTitle": "乒乓",
+    "status": "finished",
+    "year": 2014,
+    "score": 10,
+    "cover": "/images/anime/93739.jpg",
+    "note": "从主角到配角，每个人的形象都太鲜活了，仿佛这十几集囊括了所有人的人生"
+  },
+  {
+    "title": "涼宮ハルヒの消失",
+    "cnTitle": "凉宫春日的消失",
+    "status": "finished",
+    "year": 2010,
+    "score": 9,
+    "cover": "/images/anime/3375.jpg",
+    "note": "本篇垫给这个剧场版，全是伏笔不要太爽"
+  },
+  {
+    "title": "STEINS;GATE",
     "cnTitle": "命运石之门",
     "status": "finished",
     "year": 2011,
-    "score": 10,
-    "cover": "/images/anime/steins-gate.svg",
-    "note": "时间线、选择和代价，技术脑与情绪线都很强。"
+    "score": 8.5,
+    "cover": "/images/anime/10380.jpg",
+    "note": "慢热的典型，0才是精髓"
   }
 ]

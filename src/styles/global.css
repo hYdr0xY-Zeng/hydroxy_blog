@@ -317,19 +317,36 @@ button {
   gap: 18px;
 }
 
+.status-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.status-social__link {
+  min-width: 96px;
+  border-color: var(--line);
+  background: #090302;
+}
+
 .rpg-avatar {
-  width: 88px;
-  height: 88px;
+  width: 104px;
+  height: 104px;
+  padding: 4px;
   border: 4px solid var(--line-strong);
-  background:
-    linear-gradient(var(--yellow), var(--yellow)) 30px 18px / 8px 8px no-repeat,
-    linear-gradient(var(--yellow), var(--yellow)) 50px 18px / 8px 8px no-repeat,
-    linear-gradient(var(--pink), var(--pink)) 22px 34px / 44px 10px no-repeat,
-    linear-gradient(var(--text), var(--text)) 30px 56px / 28px 8px no-repeat,
-    #050505;
+  background: #050505;
   image-rendering: pixelated;
   flex: 0 0 auto;
   box-shadow: 5px 5px 0 #251524;
+}
+
+.rpg-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
 }
 
 .stat-grid {

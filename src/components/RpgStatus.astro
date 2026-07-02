@@ -1,4 +1,6 @@
 ---
+import { SITE } from '@/utils/site';
+
 const { learnCount = 0, essayCount = 0, tagCount = 0 } = Astro.props;
 ---
 
@@ -8,10 +10,25 @@ const { learnCount = 0, essayCount = 0, tagCount = 0 } = Astro.props;
       <p class="section-kicker">Hydroxy Wiki</p>
       <h1 id="status-title" class="section-title">Personal Knowledge Console</h1>
       <p class="section-copy">
-        深色像素风个人 Wiki，用来沉淀课程笔记、技术文章、实验记录和生活切片。
+        ？！羟羟！？的个人 Wiki，用来存储学习笔记、技术文章和生活切片。
       </p>
+      <nav class="status-social" aria-label="Social profiles">
+        {SITE.social.map((item) => (
+          <a
+            class="text-button status-social__link"
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open Hydroxy ${item.label} profile`}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
     </div>
-    <div class="rpg-avatar" aria-hidden="true"></div>
+    <div class="rpg-avatar">
+      <img src="/images/profile/avatar.jpg" alt="Hydroxy avatar" width="96" height="96" />
+    </div>
   </div>
 
   <div class="stat-grid">
