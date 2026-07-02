@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://hydroxy.wiki/sitemap-index.xml
+Sitemap: https://hydroxy-wiki.com/sitemap-index.xml
