@@ -1,18 +1,9 @@
 ---
-title: "Computer Science"
-description: "计算机科学学习目录，示例展示目录首页和子文章如何共用文件树。"
+title: "CSAPP"
+description: "CSAPP学习笔记以及lab相关"
 date: 2026-07-01
-tags: ["cs", "index"]
+tags: ["cs", "index", "csapp"]
 draft: false
 ---
 
-这里是一个目录首页。你可以把课程、章节和专题都放进这个文件夹。
-
-如果某个目录没有 `index.md`，站点会自动生成目录列表；如果有 `index.md`，它会像普通文章一样渲染，同时仍然可以在左侧树中展开子节点。
-
-## 文件规则
-
-- 使用英文 `kebab-case`
-- 使用 `01-`、`02-` 控制排序
-- 页面显示时会隐藏数字前缀
-- 图片可以和 `index.md` 放在同一个目录
+待填充
