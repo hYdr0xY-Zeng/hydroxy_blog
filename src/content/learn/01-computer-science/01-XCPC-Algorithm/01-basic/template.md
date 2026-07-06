@@ -1,5 +1,5 @@
 ---
-title: "basic"
+title: "竞赛基础"
 description: "竞赛常用基础内容"
 date: 2026-07-02
 tags: ["cs", "algorithm", "xcpc", "cpp"]

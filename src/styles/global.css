@@ -456,6 +456,42 @@ button {
   text-transform: uppercase;
 }
 
+.home-profile-card {
+  min-height: 220px;
+}
+
+.home-profile-body {
+  color: var(--muted);
+  line-height: 1.72;
+}
+
+.home-profile-body :where(p, ul, ol) {
+  margin: 0 0 12px;
+}
+
+.home-profile-body :where(ul, ol) {
+  padding-left: 20px;
+}
+
+.home-profile-body :where(strong, em) {
+  color: var(--yellow);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.home-profile-body a {
+  color: var(--yellow);
+  border-bottom: 2px solid var(--pink);
+}
+
+.home-profile-body > :last-child {
+  margin-bottom: 0;
+}
+
+.home-tags {
+  margin-top: 18px;
+}
+
 .article-list {
   display: grid;
   gap: 12px;

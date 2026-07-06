@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" shape-rendering="crispEdges">
-  <rect width="320" height="200" fill="#090912"/>
-  <rect x="24" y="24" width="272" height="152" fill="#11111c" stroke="#51f2e6" stroke-width="4"/>
-  <rect x="70" y="58" width="40" height="40" fill="#a879ff"/>
-  <rect x="210" y="58" width="40" height="40" fill="#a879ff"/>
-  <rect x="112" y="104" width="96" height="12" fill="#f7f7ff"/>
-  <rect x="76" y="136" width="168" height="12" fill="#8cffb2"/>
-  <text x="160" y="166" fill="#51f2e6" font-family="monospace" font-size="18" text-anchor="middle">ANIME LOG</text>
-</svg>

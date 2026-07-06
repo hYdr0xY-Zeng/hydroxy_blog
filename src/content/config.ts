@@ -14,6 +14,11 @@ const lifeNoteSchema = articleSchema.extend({
   mood: z.string().optional()
 });
 
+const profileSchema = z.object({
+  title: z.string(),
+  draft: z.boolean().default(false)
+});
+
 export const collections = {
   learn: defineCollection({
     loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/learn' }),
@@ -22,5 +27,9 @@ export const collections = {
   essays: defineCollection({
     loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/life/essays' }),
     schema: lifeNoteSchema
+  }),
+  profile: defineCollection({
+    loader: glob({ pattern: 'home.md', base: './src/content/profile' }),
+    schema: profileSchema
   })
 };

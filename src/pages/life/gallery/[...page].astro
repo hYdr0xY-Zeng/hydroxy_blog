@@ -25,7 +25,7 @@ const current = paginateItems(gallery, Astro.props.page, PAGE_SIZE, BASE_PATH);
   <header class="page-hero pixel-panel">
     <p class="section-kicker">/life/gallery</p>
     <h1 class="section-title">Gallery</h1>
-    <p class="section-copy">按原比例展示图片，只保留图片名。当前第 {current.currentPage} / {current.totalPages} 页，共 {current.totalItems} 张。</p>
+    <p class="section-copy"> 当前第 {current.currentPage} / {current.totalPages} 页，共 {current.totalItems} 张。</p>
   </header>
 
   <section class="gallery-masonry" aria-label="Gallery images">

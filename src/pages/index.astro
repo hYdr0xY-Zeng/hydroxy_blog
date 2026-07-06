@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import RpgStatus from '@/components/RpgStatus.astro';
 import MiniShell from '@/components/MiniShell.astro';
@@ -9,6 +9,14 @@ import { formatDate } from '@/utils/site';
 
 const learn = (await getCollection('learn')).filter(isPublished);
 const essays = (await getCollection('essays')).filter(isPublished);
+const profileEntries = (await getCollection('profile')).filter(isPublished);
+const homeProfile = profileEntries.find((entry) => entry.id === 'home');
+
+if (!homeProfile) {
+  throw new Error('Missing required profile entry: src/content/profile/home.md');
+}
+
+const { Content: HomeProfileContent } = await render(homeProfile);
 const recent = sortEntriesByDate([...learn, ...essays]).slice(0, 6);
 const tags = allTags([...learn, ...essays]);
 ---
@@ -20,6 +28,13 @@ const tags = allTags([...learn, ...essays]);
   </div>
 
   <section class="dashboard" aria-label="Hydroxy Wiki dashboard">
+    <div class="dashboard-section pixel-panel home-profile-card">
+      <h2>{homeProfile.data.title}</h2>
+      <div class="home-profile-body">
+        <HomeProfileContent />
+      </div>
+    </div>
+
     <div class="dashboard-section pixel-panel">
       <h2>Recent Updates</h2>
       <ul class="article-list">
@@ -37,19 +52,21 @@ const tags = allTags([...learn, ...essays]);
     <div class="dashboard-section pixel-panel">
       <h2>Primary Gates</h2>
       <ul class="article-list">
-        <li><a class="article-link" href="/learn/"><strong>Learn</strong><span>技术文章、学习笔记、实验记录。</span></a></li>
+        <li><a class="article-link" href="/learn/"><strong>Learn</strong><span>技术文章、学习笔记。</span></a></li>
         <li><a class="article-link" href="/life/"><strong>Life</strong><span>简介，以及追番、随笔、好图。</span></a></li>
         <li><a class="article-link" href="/life/anime/"><strong>Anime Log</strong><span>追番列表。</span></a></li>
         <li><a class="article-link" href="/life/gallery/"><strong>Gallery</strong><span>好康的。</span></a></li>
         <li><a class="article-link" href="/archive/"><strong>Archive</strong><span>按时间回看全部公开内容。</span></a></li>
       </ul>
     </div>
+  </section>
 
-    <div class="dashboard-section pixel-panel">
+  {tags.length > 0 && (
+    <section class="home-tags dashboard-section pixel-panel" aria-label="Content tags">
       <h2>Tags</h2>
       <ul class="tag-list">
         {tags.slice(0, 18).map((tag) => <li class="tag">{tag}</li>)}
       </ul>
-    </div>
-  </section>
+    </section>
+  )}
 </BaseLayout>
