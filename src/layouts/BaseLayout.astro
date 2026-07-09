@@ -41,7 +41,64 @@ const description = Astro.props.description ?? SITE.description;
     </div>
     <SearchModal />
     <script>
+      async function renderMermaidBlocks() {
+        const blocks = Array.from(document.querySelectorAll('.prose pre[data-language="mermaid"]'));
+        if (!blocks.length) return;
+
+        const { default: mermaid } = await import('mermaid');
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: 'strict',
+          theme: 'base',
+          themeVariables: {
+            background: '#050505',
+            primaryColor: '#15131a',
+            primaryTextColor: '#fff7f7',
+            primaryBorderColor: '#d48bab',
+            lineColor: '#f19abd',
+            secondaryColor: '#130d13',
+            tertiaryColor: '#0c0b10',
+            textColor: '#fff7f7',
+            mainBkg: '#15131a',
+            nodeBorder: '#d48bab',
+            clusterBkg: '#0c0b10',
+            clusterBorder: '#6b334d',
+            edgeLabelBackground: '#050505',
+            fontFamily: 'var(--font-pixel)'
+          }
+        });
+
+        await Promise.all(blocks.map(async (pre) => {
+          const code = pre.querySelector('code');
+          const lines = code ? Array.from(code.querySelectorAll('.line')) : [];
+          const source = (lines.length ? lines.map((line) => line.textContent).join('\n') : code?.textContent)?.trim();
+          if (!source) return;
+
+          const figure = document.createElement('figure');
+          const diagram = document.createElement('div');
+          figure.className = 'mermaid-figure';
+          diagram.className = 'mermaid-diagram';
+          diagram.textContent = source;
+          figure.append(diagram);
+          pre.replaceWith(figure);
+
+          try {
+            await mermaid.run({ nodes: [diagram] });
+          } catch (error) {
+            figure.classList.add('mermaid-figure--error');
+            diagram.textContent = source;
+            const message = document.createElement('figcaption');
+            message.textContent = `Mermaid render failed: ${error instanceof Error ? error.message : 'unknown error'}`;
+            figure.append(message);
+          }
+        }));
+      }
+
+      renderMermaidBlocks();
+
       document.querySelectorAll('.prose pre').forEach((pre) => {
+        if (pre.dataset.language === 'mermaid') return;
+
         const button = document.createElement('button');
         button.className = 'copy-code';
         button.type = 'button';

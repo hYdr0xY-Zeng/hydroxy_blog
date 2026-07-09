@@ -704,6 +704,41 @@ button {
   box-shadow: 5px 5px 0 #251524;
 }
 
+.mermaid-figure {
+  margin: 1.4em 0;
+  overflow: auto;
+  border: 4px solid var(--line-strong);
+  padding: 18px;
+  background: #050505;
+  box-shadow: 5px 5px 0 #251524;
+}
+
+.mermaid-diagram {
+  color: var(--text);
+  text-align: center;
+}
+
+.mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  image-rendering: auto;
+}
+
+.mermaid-figure--error .mermaid-diagram {
+  min-width: 0;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.mermaid-figure figcaption {
+  margin-top: 12px;
+  color: var(--red);
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+}
+
 .copy-code {
   position: absolute;
   top: 8px;
