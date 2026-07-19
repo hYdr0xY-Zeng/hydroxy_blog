@@ -68,35 +68,47 @@ const description = Astro.props.description ?? SITE.description;
           }
         });
 
-        await Promise.all(blocks.map(async (pre) => {
+        const renderIdPrefix = `mermaid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+        for (const [index, pre] of blocks.entries()) {
           const code = pre.querySelector('code');
           const lines = code ? Array.from(code.querySelectorAll('.line')) : [];
           const source = (lines.length ? lines.map((line) => line.textContent).join('\n') : code?.textContent)?.trim();
-          if (!source) return;
+          if (!source) continue;
 
           const figure = document.createElement('figure');
           const diagram = document.createElement('div');
           figure.className = 'mermaid-figure';
           diagram.className = 'mermaid-diagram';
-          diagram.textContent = source;
-          figure.append(diagram);
-          pre.replaceWith(figure);
 
           try {
-            await mermaid.run({ nodes: [diagram] });
+            const { svg, bindFunctions } = await mermaid.render(`${renderIdPrefix}-${index}`, source);
+            diagram.innerHTML = svg;
+            figure.append(diagram);
+            pre.replaceWith(figure);
+
+            try {
+              bindFunctions?.(diagram);
+            } catch (error) {
+              console.warn('Mermaid diagram interactions failed to bind', error);
+            }
           } catch (error) {
             figure.classList.add('mermaid-figure--error');
             diagram.textContent = source;
+            figure.append(diagram);
             const message = document.createElement('figcaption');
             message.textContent = `Mermaid render failed: ${error instanceof Error ? error.message : 'unknown error'}`;
             figure.append(message);
+            pre.replaceWith(figure);
           }
-        }));
+        }
       }
 
-      renderMermaidBlocks();
+      renderMermaidBlocks().catch((error) => {
+        console.error('Mermaid failed to initialize', error);
+      });
 
-      document.querySelectorAll('.prose pre').forEach((pre) => {
+      document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
         if (pre.dataset.language === 'mermaid') return;
 
         const button = document.createElement('button');
