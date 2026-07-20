@@ -755,6 +755,10 @@ button {
 .toc {
   position: sticky;
   top: 92px;
+  max-height: calc(100dvh - 116px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   padding: 16px;
   box-shadow: 4px 4px 0 #201722;
 }
@@ -776,12 +780,30 @@ button {
   list-style: none;
 }
 
+.toc__scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .toc a {
   display: block;
   position: relative;
   padding-left: 24px;
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.toc a[aria-current="location"] {
+  color: var(--yellow);
+  background-color: var(--pink-soft);
+}
+
+.toc a[aria-current="location"]::before {
+  opacity: 1;
 }
 
 .life-grid {
@@ -1190,6 +1212,7 @@ button {
   .toc {
     position: static;
     order: -1;
+    max-height: min(48vh, 420px);
   }
 }
 

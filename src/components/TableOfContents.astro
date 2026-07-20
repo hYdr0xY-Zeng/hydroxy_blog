@@ -8,19 +8,85 @@ type Heading = {
 const headings = (Astro.props.headings ?? []).filter((heading: Heading) => heading.depth > 1 && heading.depth < 4);
 ---
 
-<aside class="toc pixel-panel">
-  <h2>Contents</h2>
+<aside class="toc pixel-panel" aria-labelledby="contents-heading" data-toc>
+  <h2 id="contents-heading">Contents</h2>
   {
     headings.length ? (
-      <ol>
-        {headings.map((heading: Heading) => (
-          <li style={`padding-left: ${(heading.depth - 2) * 12}px`}>
-            <a href={`#${heading.slug}`}>{heading.text}</a>
-          </li>
-        ))}
-      </ol>
+      <div class="toc__scroll" data-toc-scroll tabindex="0">
+        <ol>
+          {headings.map((heading: Heading) => (
+            <li style={`padding-left: ${(heading.depth - 2) * 12}px`}>
+              <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ol>
+      </div>
     ) : (
       <p class="section-copy">No headings</p>
     )
   }
 </aside>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-toc]').forEach((toc) => {
+    const scrollArea = toc.querySelector<HTMLElement>('[data-toc-scroll]');
+    const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+    const entries = links.flatMap((link) => {
+      const id = decodeURIComponent(link.hash.slice(1));
+      const heading = document.getElementById(id);
+      return heading ? [{ link, heading }] : [];
+    });
+
+    if (!scrollArea || !entries.length) return;
+
+    let activeIndex = -1;
+    let frame = 0;
+
+    const scrollActiveLinkIntoView = (link: HTMLAnchorElement) => {
+      const scrollAreaRect = scrollArea.getBoundingClientRect();
+      const linkRect = link.getBoundingClientRect();
+      const padding = 8;
+      let offset = 0;
+
+      if (linkRect.top < scrollAreaRect.top + padding) {
+        offset = linkRect.top - scrollAreaRect.top - padding;
+      } else if (linkRect.bottom > scrollAreaRect.bottom - padding) {
+        offset = linkRect.bottom - scrollAreaRect.bottom + padding;
+      }
+
+      if (offset) scrollArea.scrollBy({ top: offset, behavior: 'smooth' });
+    };
+
+    const updateActiveHeading = () => {
+      frame = 0;
+      const headerBottom = document.querySelector<HTMLElement>('.site-header')?.getBoundingClientRect().bottom ?? 0;
+      const readingLine = Math.max(headerBottom, 0) + 24;
+      let nextIndex = 0;
+
+      entries.forEach(({ heading }, index) => {
+        if (heading.getBoundingClientRect().top <= readingLine) nextIndex = index;
+      });
+
+      if (nextIndex === activeIndex) return;
+
+      entries.forEach(({ link }, index) => {
+        if (index === nextIndex) {
+          link.setAttribute('aria-current', 'location');
+        } else {
+          link.removeAttribute('aria-current');
+        }
+      });
+
+      activeIndex = nextIndex;
+      scrollActiveLinkIntoView(entries[activeIndex].link);
+    };
+
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(updateActiveHeading);
+    };
+
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    scheduleUpdate();
+  });
+</script>
