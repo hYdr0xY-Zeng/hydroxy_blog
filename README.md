@@ -75,6 +75,20 @@ cover: "./cover.png"
 - `draft: true` is visible in local dev but hidden in production builds.
 - If a directory has no article body, the site automatically renders it as a directory page.
 
+### Mathematical notation
+
+Math is rendered at build time with KaTeX. Use single dollar signs for inline notation and double dollar signs on their own lines for display equations:
+
+```md
+The dependency bound is $CPE_{dep} \approx \frac{L}{k}$.
+
+$$
+S = \frac{1}{(1-p) + p/s}
+$$
+```
+
+Keep TeX source inside a `code` fence when it should be shown as code rather than rendered as math.
+
 ### Life Essays
 
 Add personal essays under `src/content/life/essays/`.

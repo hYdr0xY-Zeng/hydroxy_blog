@@ -1,3 +1,5 @@
+@import "katex/dist/katex.min.css";
+
 @font-face {
   font-family: "Fusion Pixel";
   src: url("/fonts/fusion-pixel-12px-proportional-zh-hans.woff2") format("woff2");
@@ -675,6 +677,46 @@ button {
   color: #f4ece4;
 }
 
+.prose table {
+  width: 100%;
+  margin: 1.5em 0;
+  border: 2px solid var(--line-strong);
+  border-collapse: collapse;
+  background: #0b090e;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid rgba(212, 139, 171, 0.58);
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+.prose th {
+  border-bottom: 2px solid var(--line-strong);
+  color: var(--yellow);
+  background: #1b101b;
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  text-align: left;
+}
+
+.prose tbody tr:nth-child(even) {
+  background: #120d14;
+}
+
+.prose tbody tr:hover {
+  background: var(--pink-soft);
+}
+
+.prose :is(th, td)[align="center"] {
+  text-align: center;
+}
+
+.prose :is(th, td)[align="right"] {
+  text-align: right;
+}
+
 .prose blockquote {
   margin: 1.4em 0;
   border-left: 6px solid var(--pink);
@@ -693,6 +735,17 @@ button {
   border: 2px solid var(--line);
   color: var(--yellow);
   background: #120605;
+}
+
+.prose .katex {
+  color: var(--text);
+  font-size: 1.04em;
+}
+
+.prose .katex-display {
+  margin: 1.5em 0;
+  padding: 0 2px;
+  text-align: center;
 }
 
 .prose pre {
@@ -1221,6 +1274,16 @@ button {
     min-height: auto;
     padding: 14px 0;
     align-items: start;
+  }
+
+  .prose table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose th,
+  .prose td {
+    min-width: 120px;
   }
 
   .site-nav {

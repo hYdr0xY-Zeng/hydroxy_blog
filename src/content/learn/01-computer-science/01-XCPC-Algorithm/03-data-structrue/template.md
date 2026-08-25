@@ -5,10 +5,11 @@ date: 2026-07-17
 tags: ["cs", "algorithm", "xcpc", "cpp"]
 draft: false
 ---
+# 数据结构
 
-# 并查集
+## 并查集
 
-## 路径压缩 + 启发式合并
+### 路径压缩 + 启发式合并
 
 - 维护元素之间的连通关系，每个集合由一个根节点代表。
 - 路径压缩配合按大小合并，单次操作的均摊复杂度为 $O(\alpha(n))$。
@@ -49,7 +50,7 @@ struct DSU
 };
 ```
 
-## 种类并查集
+### 种类并查集
 
 - 开 $m$（种类数）倍空间，相当于增加一维来表示种类信息。
 - 类似 SAT 问题：根据种类关系合并节点；同一个体的不同类型落入同一集合时即产生冲突。
@@ -94,7 +95,7 @@ struct DSU
 };
 ```
 
-## 带权并查集
+### 带权并查集
 
 - 维护数值的**加减关系**，例如偏移量和距离。
 - 扩展权值运算后，也可维护倍数的**比例关系**。
@@ -146,7 +147,16 @@ struct DSU
 };
 ```
 
-# ST 表
+### 可删除的并查集
+
+- 每个节点都连一个代表节点，用代表节点连并查集结构。
+- 删除时，原节点更换新的代表节点，这样即可维持原集合关系。
+
+```cpp
+
+```
+
+## ST 表
 
 - 适用于满足可重复贡献性质的静态区间运算，例如 `min`、`max` 和 `gcd`。
 - $O(n \log n)$ 预处理，$O(1)$ 查询；不支持在线修改。
@@ -177,7 +187,7 @@ int query(int L, int R)
 }
 ```
 
-# 树状数组
+## 树状数组
 
 - 当前模板维护加法前缀和，支持 $O(\log n)$ 单点加与区间求和。
 - 对差分数组使用同一模板，可实现区间加与单点查询。
@@ -225,9 +235,9 @@ struct BidxTree
 BidxTree<ll> bit;
 ```
 
-# 线段树
+## 线段树
 
-## 普通版
+### 普通版
 
 - 通过分治维护区间信息；本模板支持区间加和区间求和。
 - 懒标记仅在访问子区间前下传，修改与查询的复杂度均为 $O(\log n)$。
@@ -314,7 +324,7 @@ struct SGT
 };
 ```
 
-## 动态开点 + 标记永久化
+### 动态开点 + 标记永久化
 
 - 仅为被访问的区间创建节点，适用于值域很大但操作较少的场景。
 - 懒标记永久保留在当前节点，查询时累加祖先标记，无须向下创建空节点。
@@ -428,7 +438,7 @@ struct dynamic_SGT
 };
 ```
 
-## 可持久化线段树（主席树）
+### 可持久化线段树（主席树）
 
 - 每次修改仅复制根到目标叶子的路径，保留历史版本，单次修改新增 $O(\log n)$ 个节点。
 - 当前模板实现单点赋值与单点查询：以 `root[0] = build(1, n)` 建立初始版本，再保存每次 `modify` 返回的新根。
@@ -503,38 +513,16 @@ struct pst_SGT
 
 
 ```cpp
-template<typename T>
 struct pst_SGT
 {
     struct sgt_node
     {
-        int lch, rch;
-        T data;
-
-        sgt_node()
-        {
-            lch = rch = 0;
-            data = 0;
-        }
+        int lch = 0, rch = 0;
+        int data = 0;
     } tr[MAXN * 22];
 
     int root[MAXN];
     int tot = 0;
-
-    int build(int l, int r)
-    {
-        int u = ++tot;
-        //tr[u].data = 0;
-        if (l == r)
-        {
-            return u;
-        }
-
-        int mid = l + (r - l) / 2;
-        tr[u].lch = build(l, mid);
-        tr[u].rch = build(mid + 1, r);
-        return u;
-    }
 
     int insert(int p, int u, int l ,int r)
     {
@@ -553,7 +541,7 @@ struct pst_SGT
     }
 
     //ql ~ qr 第k小
-    T query(int k, int lrt, int rrt, int l, int r)
+    int query(int k, int lrt, int rrt, int l, int r)
     {
         if (l == r)
         {

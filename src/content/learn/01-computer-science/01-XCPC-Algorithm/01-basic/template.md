@@ -78,6 +78,14 @@ namespace fio
             return *this;
         }
 
+        Input& operator>>(char &c)
+        {
+            int ch = getc();
+            while (ch != EOF && (ch <= ' ')) ch = getc();
+            if (ch != EOF) c = static_cast<char>(ch);
+            return *this;
+        }
+
         bool getline(std::string &s)
         {
             s.clear();
@@ -183,3 +191,101 @@ namespace fio
 }
 #endif
 ```
+---
+
+# 取模基础
+
+## 1. 基础四则运算
+
+```cpp
+inline ll add(ll a, ll b)
+{
+    a += b;
+    if (a >= MOD) a -= MOD;
+    return a;
+}
+
+inline ll sub(ll a, ll b)
+{
+    a -= b;
+    if (a < 0) a += MOD;
+    return a;
+}
+
+inline ll mul(ll a, ll b)
+{
+    return a * b % MOD;
+}
+```
+
+## 2. 快速幂 & 逆元（处理除法）
+**费马小定理**：当 MOD 为质数时，`a` 的逆元为 `pow(a, MOD-2)`。
+
+```cpp
+ll qmi(ll a, ll b = MOD - 2)
+{
+    ll res = 1;
+    while (b)
+    {
+        if (b & 1) res = mul(res, a);
+        a = mul(a, a);
+        b >>= 1;
+    }
+    return res;
+}
+
+inline ll div_mod(ll a, ll b)
+{
+    return mul(a, qmi(b));
+}
+```
+
+## 3. 组合数预处理
+若题目涉及大量组合数 `C(n, k)`，务必预处理阶乘和逆元（线性递推，避免每次快速幂的 log）。
+
+```cpp
+const int N = 1e6 + 5;
+ll fact[N], invfact[N];
+
+void init_comb(int n)
+{
+    fact[0] = 1;
+    for (int i = 1; i <= n; i++) fact[i] = mul(fact[i-1], i);
+    
+    invfact[n] = qmi(fact[n]); // 求最大阶乘的逆元
+    for (int i = n; i >= 1; i--) invfact[i-1] = mul(invfact[i], i);
+}
+
+inline ll C(ll n, ll k)
+{
+    if (k < 0 || k > n) return 0;
+    return mul(fact[n], mul(invfact[k], invfact[n-k]));
+}
+```
+
+## 4. 线性递推逆元（单点求逆常用）
+求 `1` 到 `n` 每个数的逆元，复杂度 O(n)：
+
+```cpp
+int inv[N];
+inv[1] = 1;
+for (int i = 2; i <= n; i++)
+{
+    inv[i] = MOD - 1LL * (MOD / i) * inv[MOD % i] % MOD;
+}
+```
+
+## 5. 大数读入取模（字符串输入）
+当输入数字远超 `long long` 范围时，边读边取模：
+
+```cpp
+ll read_mod(string &s)
+{
+    ll res = 0;
+    for (char c : s) res = (1LL * res * 10 + (c - '0')) % MOD;
+    return res;
+}
+```
+
+---
+
