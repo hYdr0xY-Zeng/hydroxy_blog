@@ -1,24 +1,21 @@
 ---
-import { getCollection, render } from 'astro:content';
+export const prerender = false;
+
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import RpgStatus from '@/components/RpgStatus.astro';
 import MiniShell from '@/components/MiniShell.astro';
-import { entryHref, allTags } from '@/utils/content';
-import { isPublished, sortEntriesByDate } from '@/utils/wiki';
+import { documentHref, getProfile, listDocuments, listTags } from '@/lib/cms';
+import { renderMarkdown } from '@/lib/markdown';
 import { formatDate } from '@/utils/site';
 
-const learn = (await getCollection('learn')).filter(isPublished);
-const essays = (await getCollection('essays')).filter(isPublished);
-const profileEntries = (await getCollection('profile')).filter(isPublished);
-const homeProfile = profileEntries.find((entry) => entry.id === 'home');
-
-if (!homeProfile) {
-  throw new Error('Missing required profile entry: src/content/profile/home.md');
-}
-
-const { Content: HomeProfileContent } = await render(homeProfile);
-const recent = sortEntriesByDate([...learn, ...essays]).slice(0, 6);
-const tags = allTags([...learn, ...essays]);
+const [learn, essays, profile, tags] = await Promise.all([
+  listDocuments(Astro.locals, { kind: 'learn' }),
+  listDocuments(Astro.locals, { kind: 'essay' }),
+  getProfile(Astro.locals),
+  listTags(Astro.locals)
+]);
+const recent = [...learn, ...essays].sort((a, b) => Date.parse(b.published_at ?? b.updated_at) - Date.parse(a.published_at ?? a.updated_at)).slice(0, 6);
+const profileRendered = profile ? await renderMarkdown(profile.body_markdown) : null;
 ---
 
 <BaseLayout>
@@ -26,47 +23,10 @@ const tags = allTags([...learn, ...essays]);
     <RpgStatus learnCount={learn.length} essayCount={essays.length} tagCount={tags.length} />
     <MiniShell />
   </div>
-
   <section class="dashboard" aria-label="Hydroxy Wiki dashboard">
-    <div class="dashboard-section pixel-panel home-profile-card">
-      <h2>{homeProfile.data.title}</h2>
-      <div class="home-profile-body">
-        <HomeProfileContent />
-      </div>
-    </div>
-
-    <div class="dashboard-section pixel-panel">
-      <h2>Recent Updates</h2>
-      <ul class="article-list">
-        {recent.map((entry) => (
-          <li>
-            <a class="article-link" href={entryHref(entry)}>
-              <strong>{entry.data.title}</strong>
-              <span>{formatDate(entry.data.date)} / {entry.collection}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-
-    <div class="dashboard-section pixel-panel">
-      <h2>Primary Gates</h2>
-      <ul class="article-list">
-        <li><a class="article-link" href="/learn/"><strong>Learn</strong><span>技术文章、学习笔记。</span></a></li>
-        <li><a class="article-link" href="/life/"><strong>Life</strong><span>简介，以及追番、随笔、好图。</span></a></li>
-        <li><a class="article-link" href="/life/anime/"><strong>Anime Log</strong><span>追番列表。</span></a></li>
-        <li><a class="article-link" href="/life/gallery/"><strong>Gallery</strong><span>好康的。</span></a></li>
-        <li><a class="article-link" href="/archive/"><strong>Archive</strong><span>按时间回看全部公开内容。</span></a></li>
-      </ul>
-    </div>
+    <div class="dashboard-section pixel-panel home-profile-card"><h2>{profile?.title ?? 'Profile'}</h2><div class="home-profile-body" set:html={profileRendered?.html ?? '<p>Profile is not published yet.</p>'} /></div>
+    <div class="dashboard-section pixel-panel"><h2>Recent Updates</h2><ul class="article-list">{recent.map((entry) => <li><a class="article-link" href={documentHref(entry)}><strong>{entry.title}</strong><span>{formatDate(entry.published_at ?? entry.updated_at)} / {entry.kind}</span></a></li>)}</ul></div>
+    <div class="dashboard-section pixel-panel"><h2>Primary Gates</h2><ul class="article-list"><li><a class="article-link" href="/learn/"><strong>Learn</strong><span>技术文章、学习笔记、实验记录。</span></a></li><li><a class="article-link" href="/life/"><strong>Life</strong><span>简介、随笔、追番、好图。</span></a></li><li><a class="article-link" href="/life/anime/"><strong>Anime Log</strong><span>追番列表。</span></a></li><li><a class="article-link" href="/life/gallery/"><strong>Gallery</strong><span>好康的。</span></a></li><li><a class="article-link" href="/archive/"><strong>Archive</strong><span>按时间回看全部公开内容。</span></a></li></ul></div>
   </section>
-
-  {tags.length > 0 && (
-    <section class="home-tags dashboard-section pixel-panel" aria-label="Content tags">
-      <h2>Tags</h2>
-      <ul class="tag-list">
-        {tags.slice(0, 18).map((tag) => <li class="tag">{tag}</li>)}
-      </ul>
-    </section>
-  )}
+  {tags.length > 0 && <section class="home-tags dashboard-section pixel-panel" aria-label="Content tags"><h2>Tags</h2><ul class="tag-list">{tags.slice(0, 18).map((tag) => <li class="tag">{tag}</li>)}</ul></section>}
 </BaseLayout>

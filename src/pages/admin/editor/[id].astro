@@ -1,0 +1,93 @@
+---
+export const prerender = false;
+
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { requireAdmin } from '@/lib/auth';
+import { getDocumentById } from '@/lib/cms';
+
+const identity = await requireAdmin(Astro.request, Astro.locals);
+if (identity instanceof Response) return identity;
+const requestedId = Astro.params.id ?? 'new';
+const existing = requestedId === 'new' ? null : await getDocumentById(Astro.locals, requestedId);
+if (requestedId !== 'new' && !existing) return Astro.redirect('/admin/');
+const kind = existing?.kind ?? (Astro.url.searchParams.get('kind') === 'essay' ? 'essay' : 'learn');
+const path = existing?.path ?? '';
+---
+
+<BaseLayout title={existing ? `Edit ${existing.title}` : 'New document'}>
+  <header class="page-hero pixel-panel"><p class="section-kicker">/admin/editor</p><h1 class="section-title">{existing ? 'Edit Document' : 'New Document'}</h1><p class="section-copy">{identity.email}</p></header>
+  <form class="editor-shell" data-editor-form>
+    <section class="pixel-panel editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind"><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'computer-science/example'} required /></label><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label><div class="editor-actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div></section>
+    <section class="pixel-panel editor-markdown"><label>Markdown<textarea name="body_markdown" data-markdown-input spellcheck="false">{existing?.body_markdown ?? ''}</textarea></label></section>
+    <section class="pixel-panel editor-preview"><h2>Preview</h2><article class="prose" data-preview></article></section>
+  </form>
+</BaseLayout>
+
+<script>
+  type PreviewPayload = { html?: string; error?: string };
+  type SavePayload = { document?: { id?: string }; error?: string };
+
+  const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Request failed';
+  const form = document.querySelector<HTMLFormElement>('[data-editor-form]');
+
+  if (form) {
+    const textarea = form.querySelector<HTMLTextAreaElement>('[data-markdown-input]');
+    const preview = form.querySelector<HTMLElement>('[data-preview]');
+    let timer: number | undefined;
+
+    const updatePreview = async () => {
+      if (!textarea || !preview) return;
+      const response = await fetch('/api/admin/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markdown: textarea.value })
+      });
+      const payload = await response.json() as PreviewPayload;
+      preview.innerHTML = payload.html || '';
+    };
+
+    textarea?.addEventListener('input', () => {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = window.setTimeout(updatePreview, 250);
+    });
+    void updatePreview();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const values = new FormData(form);
+      const field = (name: string) => {
+        const value = values.get(name);
+        return typeof value === 'string' ? value : '';
+      };
+      const publishedAt = field('published_at');
+      const parsedPublishedAt = publishedAt ? new Date(publishedAt) : null;
+      const submitter = event.submitter;
+      const documentPayload = {
+        id: field('id'),
+        kind: field('kind'),
+        path: field('path'),
+        title: field('title'),
+        description: field('description'),
+        body_markdown: field('body_markdown'),
+        mood: field('mood'),
+        cover_key: field('cover_key'),
+        status: submitter instanceof HTMLElement ? submitter.dataset.status || 'draft' : 'draft',
+        tags: field('tags').split(',').map((tag) => tag.trim()).filter(Boolean),
+        published_at: parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime()) ? parsedPublishedAt.toISOString() : null
+      };
+
+      try {
+        const response = await fetch('/api/admin/content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'saveDocument', document: documentPayload })
+        });
+        const payload = await response.json() as SavePayload;
+        if (!response.ok || !payload.document?.id) throw new Error(payload.error || 'Save failed');
+        window.location.href = '/admin/editor/' + payload.document.id;
+      } catch (error) {
+        alert(errorMessage(error));
+      }
+    });
+  }
+</script>

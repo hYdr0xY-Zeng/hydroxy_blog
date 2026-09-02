@@ -1,0 +1,20 @@
+name = "hydroxy-wiki"
+compatibility_date = "2026-08-27"
+pages_build_output_dir = "./dist"
+
+# Create these resources in Cloudflare before deployment, then replace the ids.
+[[d1_databases]]
+binding = "HYDROXY_DB"
+database_name = "hydroxy-wiki-production"
+database_id = "REPLACE_WITH_PRODUCTION_D1_ID"
+preview_database_id = "REPLACE_WITH_PREVIEW_D1_ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "HYDROXY_MEDIA"
+bucket_name = "hydroxy-wiki-media-production"
+preview_bucket_name = "hydroxy-wiki-media-preview"
+
+[vars]
+CF_ACCESS_TEAM_DOMAIN = "REPLACE_WITH_ACCESS_TEAM_DOMAIN"
+CF_ACCESS_AUD = "REPLACE_WITH_ACCESS_AUD"

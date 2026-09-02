@@ -4,7 +4,7 @@ const token = import.meta.env.PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN;
 
 {
   token && (
-    <script
+    <script is:inline
       defer
       src="https://static.cloudflareinsights.com/beacon.min.js"
       data-cf-beacon={`{"token":"${token}"}`}

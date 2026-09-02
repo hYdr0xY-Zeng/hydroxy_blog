@@ -1,24 +1,15 @@
 import rss from '@astrojs/rss';
-import { getCollection } from 'astro:content';
+import { listDocuments, documentHref } from '@/lib/cms';
 import { SITE } from '@/utils/site';
-import { entryHref } from '@/utils/content';
-import { isPublished, sortEntriesByDate } from '@/utils/wiki';
 
-export async function GET(context) {
-  const entries = sortEntriesByDate([
-    ...(await getCollection('learn')).filter(isPublished),
-    ...(await getCollection('essays')).filter(isPublished)
-  ]);
+export const prerender = false;
 
+export async function GET({ locals, site, request }) {
+  const entries = await listDocuments(locals);
   return rss({
     title: SITE.title,
     description: SITE.description,
-    site: context.site,
-    items: entries.map((entry) => ({
-      title: entry.data.title,
-      description: entry.data.description,
-      pubDate: entry.data.date,
-      link: entryHref(entry)
-    }))
+    site: site ?? new URL(request.url).origin,
+    items: entries.map((entry) => ({ title: entry.title, description: entry.description, pubDate: new Date(entry.published_at ?? entry.updated_at), link: documentHref(entry) }))
   });
 }

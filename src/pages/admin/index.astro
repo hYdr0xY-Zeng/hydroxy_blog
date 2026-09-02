@@ -1,0 +1,88 @@
+---
+export const prerender = false;
+
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { requireAdmin } from '@/lib/auth';
+import { getDocument, listAnime, listDocuments, listGallery } from '@/lib/cms';
+
+const identity = await requireAdmin(Astro.request, Astro.locals);
+if (identity instanceof Response) return identity;
+const [learn, essays, profile, anime, gallery] = await Promise.all([
+  listDocuments(Astro.locals, { kind: 'learn', includeUnpublished: true }),
+  listDocuments(Astro.locals, { kind: 'essay', includeUnpublished: true }),
+  getDocument(Astro.locals, 'profile', 'home', true),
+  listAnime(Astro.locals, 1, 100, true),
+  listGallery(Astro.locals, 1, 100, true)
+]);
+const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
+---
+
+<BaseLayout title="Admin" description="Hydroxy Wiki private editor.">
+  <header class="page-hero pixel-panel"><p class="section-kicker">/admin</p><h1 class="section-title">Content Console</h1><p class="section-copy">{identity.email}</p><a class="text-button" href="/api/admin/export">EXPORT</a></header>
+  <section class="admin-grid">
+    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Documents</h2><div><a class="text-button" href="/admin/editor/new?kind=learn">NEW LEARN</a><a class="text-button" href="/admin/editor/new?kind=essay">NEW ESSAY</a></div></div><ul class="article-list">{documents.map((document) => <li><a class="article-link" href={`/admin/editor/${document.id}`}><strong>{document.title}</strong><span>{document.kind} / {document.status} / {document.path}</span></a></li>)}</ul></div>
+    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Media</h2></div><form data-media-form class="admin-form"><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required /><button class="text-button">UPLOAD</button><output data-media-output></output></form></div>
+    <div class="pixel-panel admin-panel"><h2>Anime Log</h2><form class="admin-form" data-life-form="anime"><input name="id" type="hidden" /><input name="title" placeholder="Original title" required /><input name="cn_title" placeholder="中文标题" /><input name="year" type="number" placeholder="Year" /><input name="score" type="number" min="0" max="10" step="0.1" placeholder="Score" /><input name="status" placeholder="Status" /><input name="cover_key" placeholder="R2 cover key" /><input name="sort_order" type="number" value="0" placeholder="Order" /><textarea name="note" placeholder="Note"></textarea><select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><button class="text-button">SAVE ANIME</button></form><div class="admin-entry-list">{anime.items.map((item) => <button class="admin-entry" type="button" data-life-entry={JSON.stringify(item)} data-life-target="anime">{item.cn_title || item.title} / {item.visibility}</button>)}</div></div>
+    <div class="pixel-panel admin-panel"><h2>Gallery</h2><form class="admin-form" data-life-form="gallery"><input name="id" type="hidden" /><input name="title" placeholder="Image title" required /><input name="alt" placeholder="Alt text" /><input name="media_key" placeholder="R2 media key" required /><input name="sort_order" type="number" value="0" placeholder="Order" /><select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><button class="text-button">SAVE GALLERY</button></form><div class="admin-entry-list">{gallery.items.map((item) => <button class="admin-entry" type="button" data-life-entry={JSON.stringify(item)} data-life-target="gallery">{item.title} / {item.visibility}</button>)}</div></div>
+  </section>
+</BaseLayout>
+
+<script>
+  type ApiPayload = { error?: string; key?: string };
+
+  const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Request failed';
+  const post = async (body: unknown) => {
+    const response = await fetch('/api/admin/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const payload = await response.json() as ApiPayload;
+    if (!response.ok) throw new Error(payload.error || 'Save failed');
+    return payload;
+  };
+
+  document.querySelectorAll<HTMLFormElement>('[data-life-form]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const entry = Object.fromEntries(new FormData(form));
+      try {
+        await post({ action: form.dataset.lifeForm === 'anime' ? 'saveAnime' : 'saveGallery', entry });
+        window.location.reload();
+      } catch (error) {
+        alert(errorMessage(error));
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-life-entry]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.lifeTarget;
+      const form = target ? document.querySelector<HTMLFormElement>('[data-life-form="' + target + '"]') : null;
+      if (!form) return;
+      const entry = JSON.parse(button.dataset.lifeEntry ?? '{}') as Record<string, unknown>;
+      Object.entries(entry).forEach(([key, value]) => {
+        const control = form.elements.namedItem(key);
+        if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement || control instanceof HTMLSelectElement) {
+          control.value = value == null ? '' : String(value);
+        }
+      });
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+  const mediaForm = document.querySelector<HTMLFormElement>('[data-media-form]');
+  if (mediaForm) {
+    mediaForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const output = mediaForm.querySelector<HTMLOutputElement>('[data-media-output]');
+      try {
+        const response = await fetch('/api/admin/media', { method: 'POST', body: new FormData(mediaForm) });
+        const payload = await response.json() as ApiPayload;
+        if (output) output.textContent = payload.key || payload.error || 'Upload failed';
+      } catch (error) {
+        if (output) output.textContent = errorMessage(error);
+      }
+    });
+  }
+</script>
