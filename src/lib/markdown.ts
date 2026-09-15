@@ -3,44 +3,60 @@ import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
-import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 import type { Element, ElementContent, Parent, Root } from 'hast';
-import { createHighlighterCore } from 'shiki/core';
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-import bash from '@shikijs/langs/bash';
-import c from '@shikijs/langs/c';
-import cpp from '@shikijs/langs/cpp';
-import css from '@shikijs/langs/css';
-import go from '@shikijs/langs/go';
-import html from '@shikijs/langs/html';
-import java from '@shikijs/langs/java';
-import javascript from '@shikijs/langs/javascript';
-import json from '@shikijs/langs/json';
-import markdown from '@shikijs/langs/markdown';
-import python from '@shikijs/langs/python';
-import rust from '@shikijs/langs/rust';
-import sql from '@shikijs/langs/sql';
-import typescript from '@shikijs/langs/typescript';
-import xml from '@shikijs/langs/xml';
-import yaml from '@shikijs/langs/yaml';
-import githubDark from '@shikijs/themes/github-dark';
 
 export type MarkdownHeading = { depth: number; slug: string; text: string };
 
-const SHIKI_LANGUAGES = new Set(['bash', 'c', 'cpp', 'css', 'go', 'html', 'java', 'javascript', 'json', 'markdown', 'python', 'rust', 'sql', 'typescript', 'xml', 'yaml']);
+const SHIKI_LANGUAGE_LOADERS = {
+  bash: () => import('@shikijs/langs/bash'),
+  c: () => import('@shikijs/langs/c'),
+  cpp: () => import('@shikijs/langs/cpp'),
+  css: () => import('@shikijs/langs/css'),
+  go: () => import('@shikijs/langs/go'),
+  html: () => import('@shikijs/langs/html'),
+  java: () => import('@shikijs/langs/java'),
+  javascript: () => import('@shikijs/langs/javascript'),
+  json: () => import('@shikijs/langs/json'),
+  markdown: () => import('@shikijs/langs/markdown'),
+  python: () => import('@shikijs/langs/python'),
+  rust: () => import('@shikijs/langs/rust'),
+  sql: () => import('@shikijs/langs/sql'),
+  typescript: () => import('@shikijs/langs/typescript'),
+  xml: () => import('@shikijs/langs/xml'),
+  yaml: () => import('@shikijs/langs/yaml')
+};
+const SHIKI_LANGUAGES = new Set(Object.keys(SHIKI_LANGUAGE_LOADERS));
 const SHIKI_ALIASES: Record<string, string> = { js: 'javascript', sh: 'bash', shell: 'bash', ts: 'typescript', yml: 'yaml', md: 'markdown' };
-let shikiHighlighter: ReturnType<typeof createHighlighterCore> | undefined;
+type ShikiHighlighter = {
+  codeToHtml(code: string, options: { lang: string; theme: string }): string;
+};
 
-function getHighlighter() {
-  return shikiHighlighter ??= createHighlighterCore({
-    themes: [githubDark],
-    langs: [bash, c, cpp, css, go, html, java, javascript, json, markdown, python, rust, sql, typescript, xml, yaml],
-    engine: createJavaScriptRegexEngine({ forgiving: true })
-  });
+const shikiHighlighters = new Map<string, Promise<ShikiHighlighter>>();
+
+function getHighlighter(languages: string[]) {
+  const key = [...new Set(languages)].sort().join(',');
+  const cached = shikiHighlighters.get(key);
+  if (cached) return cached;
+
+  const highlighter = (async () => {
+    const [core, engine, theme, languageModules] = await Promise.all([
+      import('shiki/core'),
+      import('shiki/engine/javascript'),
+      import('@shikijs/themes/github-dark'),
+      Promise.all(languages.map((language) => SHIKI_LANGUAGE_LOADERS[language as keyof typeof SHIKI_LANGUAGE_LOADERS]()))
+    ]);
+    return core.createHighlighterCore({
+      themes: [theme.default],
+      langs: languageModules.map((language) => language.default),
+      engine: engine.createJavaScriptRegexEngine({ forgiving: true })
+    });
+  })();
+  shikiHighlighters.set(key, highlighter);
+  return highlighter;
 }
 
 function codeElement(pre: Element) {
@@ -77,7 +93,7 @@ function highlightCodeBlocks() {
       if (SHIKI_LANGUAGES.has(language)) blocks.push({ code, index, parent, rawLanguage, language });
     });
     if (!blocks.length) return;
-    const highlighter = await getHighlighter();
+    const highlighter = await getHighlighter(blocks.map((block) => block.language));
     blocks.forEach(({ code, index, parent, rawLanguage, language }) => {
       const rendered = highlighter.codeToHtml(toString(code), { lang: language, theme: 'github-dark' });
       const html = rendered.replace('<pre', '<pre data-language="' + rawLanguage + '"');
@@ -99,16 +115,22 @@ function collectHeadings(headings: MarkdownHeading[]) {
 
 export async function renderMarkdown(markdown: string) {
   const headings: MarkdownHeading[] = [];
-  const rendered = await unified()
+  const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
     .use(remarkRehype)
-    .use(rehypeKatex)
     .use(rehypeSlug)
     .use(attachCodeLanguages)
     .use(highlightCodeBlocks)
-    .use(() => collectHeadings(headings))
+    .use(() => collectHeadings(headings));
+
+  if (/\$|\\(?:\(|\[)/.test(markdown)) {
+    const { default: rehypeKatex } = await import('rehype-katex');
+    processor.use(rehypeKatex);
+  }
+
+  const rendered = await processor
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);
   return { html: String(rendered), headings };
