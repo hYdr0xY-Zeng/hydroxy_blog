@@ -14,7 +14,7 @@ npm run db:migrate:local
 npm run content:migrate
 ```
 
-For local D1/R2 binding emulation, build first and run `npm run dev:pages`.
+For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then run `npm run dev:pages`.
 
 ## Runtime
 
