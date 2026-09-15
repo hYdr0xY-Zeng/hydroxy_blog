@@ -1,6 +1,9 @@
 name = "hydroxy-wiki"
 compatibility_date = "2026-08-27"
-pages_build_output_dir = "./dist"
+main = "./dist/_worker.js/index.js"
+
+[assets]
+directory = "./dist"
 
 # Default bindings are deliberately the preview resources so local Wrangler use
 # cannot accidentally read or write production content.
