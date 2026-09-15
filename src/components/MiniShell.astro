@@ -13,13 +13,13 @@
 </section>
 
 <script>
-  const shell = document.querySelector('[data-shell]');
-  const output = shell?.querySelector('[data-shell-output]');
-  const form = shell?.querySelector('[data-shell-form]');
-  const input = shell?.querySelector('[data-shell-input]');
-  const prompt = shell?.querySelector('[data-shell-prompt]');
+  const shell = document.querySelector<HTMLElement>('[data-shell]');
+  const output = shell?.querySelector<HTMLElement>('[data-shell-output]');
+  const form = shell?.querySelector<HTMLFormElement>('[data-shell-form]');
+  const input = shell?.querySelector<HTMLInputElement>('[data-shell-input]');
+  const prompt = shell?.querySelector<HTMLElement>('[data-shell-prompt]');
 
-  const routes = {
+  const routes: Record<string, string> = {
     home: '/',
     learn: '/learn/',
     life: '/life/',
@@ -30,29 +30,29 @@
 
   let cwd = '/';
 
-  function write(text, type = '') {
+  function write(text: string, type = '') {
     if (!output) return;
     const line = document.createElement('p');
-    line.className = `terminal-line ${type}`;
+    line.className = 'terminal-line' + (type ? ' ' + type : '');
     line.textContent = text;
     output.append(line);
     output.scrollTop = output.scrollHeight;
   }
 
   function updatePrompt() {
-    if (prompt) prompt.textContent = `hydroxy:${cwd} $`;
+    if (prompt) prompt.textContent = 'hydroxy:' + cwd + ' $';
   }
 
-  function go(path) {
+  function go(path: string) {
     window.location.href = path;
   }
 
-  function handle(commandLine) {
+  function handle(commandLine: string) {
     const [command = '', ...args] = commandLine.trim().split(/\s+/);
     const target = args.join(' ');
 
     if (!command) return;
-    write(`${prompt?.textContent || 'hydroxy:/ $'} ${commandLine}`, 'terminal-line--command');
+    write((prompt?.textContent || 'hydroxy:/ $') + ' ' + commandLine, 'terminal-line--command');
 
     switch (command) {
       case 'help':
@@ -64,18 +64,18 @@
       case 'cd': {
         const next = target.replace(/^\//, '') || 'home';
         if (routes[next]) {
-          cwd = next === 'home' ? '/' : `/${next}`;
+          cwd = next === 'home' ? '/' : '/' + next;
           updatePrompt();
-          write(`PATH: ${cwd}`);
+          write('PATH: ' + cwd);
         } else {
-          write(`NO SUCH PATH: ${target}`, 'terminal-line--error');
+          write('NO SUCH PATH: ' + target, 'terminal-line--error');
         }
         break;
       }
       case 'open': {
         const next = target.replace(/^\//, '') || 'home';
         if (routes[next]) go(routes[next]);
-        else write(`NO SUCH ROUTE: ${target}`, 'terminal-line--error');
+        else write('NO SUCH ROUTE: ' + target, 'terminal-line--error');
         break;
       }
       case 'search':
@@ -86,13 +86,13 @@
         break;
       default:
         if (routes[command]) go(routes[command]);
-        else write(`UNKNOWN COMMAND: ${command}`, 'terminal-line--error');
+        else write('UNKNOWN COMMAND: ' + command, 'terminal-line--error');
     }
   }
 
   form?.addEventListener('submit', (event) => {
     event.preventDefault();
-    if (!(input instanceof HTMLInputElement)) return;
+    if (!input) return;
     handle(input.value);
     input.value = '';
   });

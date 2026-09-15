@@ -2,128 +2,93 @@
 const isPage = Astro.props.isPage ?? false;
 ---
 
-{
-  isPage ? (
-    <section class="search-surface pixel-panel" data-search-surface>
-      <form class="search-form" data-search-form>
-        <input class="search-input" data-search-input type="search" name="q" autocomplete="off" placeholder="search Hydroxy Wiki" />
-        <button class="text-button" type="submit">GO</button>
-      </form>
-      <div class="search-results" data-search-results></div>
-    </section>
-  ) : (
-    <dialog class="search-modal" data-search-modal aria-label="Search Hydroxy Wiki">
-      <section class="search-surface pixel-panel" data-search-surface>
-        <form class="search-form" data-search-form>
-          <input class="search-input" data-search-input type="search" name="q" autocomplete="off" placeholder="search Hydroxy Wiki" />
-          <button class="text-button" type="submit">GO</button>
-        </form>
-        <div class="search-results" data-search-results></div>
-      </section>
-    </dialog>
-  )
-}
+{isPage ? <section class="search-surface pixel-panel" data-search-surface><form class="search-form" data-search-form><input class="search-input" data-search-input type="search" name="q" autocomplete="off" placeholder="search Hydroxy Wiki" /><button class="text-button" type="submit">GO</button></form><div class="search-results" data-search-results></div></section> : <dialog class="search-modal" data-search-modal aria-label="Search Hydroxy Wiki"><section class="search-surface pixel-panel" data-search-surface><form class="search-form" data-search-form><input class="search-input" data-search-input type="search" name="q" autocomplete="off" placeholder="search Hydroxy Wiki" /><button class="text-button" type="submit">GO</button></form><div class="search-results" data-search-results></div></section></dialog>}
 
 <script>
-  const surfaces = Array.from(document.querySelectorAll('[data-search-surface]'));
-  let pagefindPromise;
+  type SearchResult = {
+    entity_kind: 'learn' | 'essay' | 'anime' | 'gallery';
+    path: string;
+    title: string;
+    excerpt?: string;
+  };
 
-  async function loadPagefind() {
-    if (!pagefindPromise) {
-      const runtimeImport = new Function('specifier', 'return import(specifier)');
-      pagefindPromise = runtimeImport('/pagefind/pagefind.js').catch(() => null);
+  const surfaces = Array.from(document.querySelectorAll<HTMLElement>('[data-search-surface]'));
+  const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+  const escapeHtml = (value: unknown) => String(value).replace(/[&<>'"]/g, (character) => entities[character] ?? character);
+  const hrefFor = (result: SearchResult) => result.entity_kind === 'learn' ? '/learn/' + result.path + '/' : result.entity_kind === 'essay' ? '/life/essays/' + result.path + '/' : result.entity_kind === 'anime' ? '/life/anime/' : '/life/gallery/';
+  const message = (surface: HTMLElement, value: string) => {
+    const area = surface.querySelector<HTMLElement>('[data-search-results]');
+    if (area) area.innerHTML = '<p class="search-result">' + value + '</p>';
+  };
+
+  async function runSearch(surface: HTMLElement, query: string) {
+    if (!query.trim()) return message(surface, 'READY');
+    message(surface, 'SEARCHING...');
+    try {
+      const response = await fetch('/api/search?q=' + encodeURIComponent(query.trim()), { headers: { Accept: 'application/json' } });
+      const payload = await response.json() as { results?: SearchResult[] };
+      const area = surface.querySelector<HTMLElement>('[data-search-results]');
+      if (!area) return;
+      const results = Array.isArray(payload.results) ? payload.results : [];
+      area.innerHTML = results.length
+        ? results.map((result) => '<a class="search-result" href="' + hrefFor(result) + '"><strong>' + escapeHtml(result.title) + '</strong><span>' + escapeHtml(result.excerpt ?? '').replace(/&lt;mark&gt;/g, '<mark>').replace(/&lt;\/mark&gt;/g, '</mark>') + '</span></a>').join('')
+        : '<p class="search-result">NO MATCH</p>';
+    } catch {
+      message(surface, 'SEARCH UNAVAILABLE');
     }
-    return pagefindPromise;
-  }
-
-  function renderMessage(surface, message) {
-    const results = surface.querySelector('[data-search-results]');
-    if (results) results.innerHTML = `<p class="search-result">${message}</p>`;
-  }
-
-  function resultTemplate(data) {
-    const excerpt = data.excerpt ? data.excerpt.replace(/<[^>]*>/g, '') : data.url;
-    return `
-      <a class="search-result" href="${data.url}">
-        <strong>${data.meta?.title || data.url}</strong>
-        <span>${excerpt}</span>
-      </a>
-    `;
-  }
-
-  async function runSearch(surface, query) {
-    if (!query.trim()) {
-      renderMessage(surface, 'READY');
-      return;
-    }
-
-    const pagefind = await loadPagefind();
-    if (!pagefind) {
-      renderMessage(surface, 'SEARCH INDEX MISSING. RUN pnpm build FIRST.');
-      return;
-    }
-
-    const search = await pagefind.search(query);
-    const items = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
-    const results = surface.querySelector('[data-search-results]');
-    if (!results) return;
-    results.innerHTML = items.length ? items.map(resultTemplate).join('') : '<p class="search-result">NO MATCH</p>';
   }
 
   surfaces.forEach((surface) => {
-    const form = surface.querySelector('[data-search-form]');
-    const input = surface.querySelector('[data-search-input]');
-    const params = new URLSearchParams(window.location.search);
-    const initialQuery = params.get('q');
-
-    if (initialQuery && input instanceof HTMLInputElement) {
-      input.value = initialQuery;
-      runSearch(surface, initialQuery);
+    const form = surface.querySelector<HTMLFormElement>('[data-search-form]');
+    const input = surface.querySelector<HTMLInputElement>('[data-search-input]');
+    const initial = new URLSearchParams(window.location.search).get('q');
+    if (initial && input) {
+      input.value = initial;
+      void runSearch(surface, initial);
     } else {
-      renderMessage(surface, 'READY');
+      message(surface, 'READY');
     }
-
     form?.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (input instanceof HTMLInputElement) runSearch(surface, input.value);
+      if (input) void runSearch(surface, input.value);
     });
   });
 
-  const modal = document.querySelector('[data-search-modal]');
-  document.querySelectorAll('[data-search-open]').forEach((button) => {
+  const modal = document.querySelector<HTMLDialogElement>('[data-search-modal]');
+  document.querySelectorAll<HTMLButtonElement>('[data-search-open]').forEach((button) => {
     button.addEventListener('click', () => {
-      if (!(modal instanceof HTMLDialogElement)) return;
-      modal.showModal();
-      const input = modal.querySelector('[data-search-input]');
-      if (input instanceof HTMLInputElement) input.focus();
+      if (modal) {
+        modal.showModal();
+        modal.querySelector<HTMLInputElement>('input')?.focus();
+      }
     });
   });
 
   window.addEventListener('hydroxy:search', (event) => {
-    const query = event.detail?.query || '';
-    if (!(modal instanceof HTMLDialogElement)) {
-      window.location.href = `/search/?q=${encodeURIComponent(query)}`;
+    const detail = event instanceof CustomEvent ? event.detail as { query?: unknown } : undefined;
+    const query = typeof detail?.query === 'string' ? detail.query : '';
+    if (!modal) {
+      window.location.href = '/search/?q=' + encodeURIComponent(query);
       return;
     }
     modal.showModal();
-    const surface = modal.querySelector('[data-search-surface]');
-    const input = modal.querySelector('[data-search-input]');
-    if (input instanceof HTMLInputElement) {
+    const input = modal.querySelector<HTMLInputElement>('[data-search-input]');
+    if (input) {
       input.value = query;
       input.focus();
     }
-    if (surface) runSearch(surface, query);
+    const surface = modal.querySelector<HTMLElement>('[data-search-surface]');
+    if (surface) void runSearch(surface, query);
   });
 
   modal?.addEventListener('click', (event) => {
-    if (event.target === modal && modal instanceof HTMLDialogElement) modal.close();
+    if (event.target === modal) modal.close();
   });
-
   window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && modal instanceof HTMLDialogElement && modal.open) modal.close();
+    if (event.key === 'Escape' && modal?.open) modal.close();
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      if (modal instanceof HTMLDialogElement) modal.showModal();
+      modal?.showModal();
     }
   });
 </script>

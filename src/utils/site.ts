@@ -16,10 +16,15 @@ export const SITE = {
   ]
 };
 
-export function formatDate(date: Date) {
+export function formatDate(date: Date | string | null | undefined) {
+  if (!date) return '';
+  const value = date instanceof Date
+    ? date
+    : new Date(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(date) ? `${date.replace(' ', 'T')}Z` : date);
+  if (Number.isNaN(value.getTime())) return typeof date === 'string' ? date.slice(0, 10) : '';
   return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
-  }).format(date);
+  }).format(value);
 }

@@ -1,0 +1,44 @@
+name = "hydroxy-wiki"
+compatibility_date = "2026-08-27"
+pages_build_output_dir = "./dist"
+
+# Default bindings are deliberately the preview resources so local Wrangler use
+# cannot accidentally read or write production content.
+[[d1_databases]]
+binding = "HYDROXY_DB"
+database_name = "hydroxy-wiki-preview"
+database_id = "0a5ad965-8168-44c8-b77b-fdc65ace7226"
+preview_database_id = "0a5ad965-8168-44c8-b77b-fdc65ace7226"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "HYDROXY_MEDIA"
+bucket_name = "hydroxy-wiki-media-preview"
+preview_bucket_name = "hydroxy-wiki-media-preview"
+
+# Cloudflare Access values are environment-specific secrets. Configure
+# CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD, and ADMIN_EMAILS in the Pages dashboard.
+
+[[env.preview.d1_databases]]
+binding = "HYDROXY_DB"
+database_name = "hydroxy-wiki-preview"
+database_id = "0a5ad965-8168-44c8-b77b-fdc65ace7226"
+preview_database_id = "0a5ad965-8168-44c8-b77b-fdc65ace7226"
+migrations_dir = "migrations"
+
+[[env.preview.r2_buckets]]
+binding = "HYDROXY_MEDIA"
+bucket_name = "hydroxy-wiki-media-preview"
+preview_bucket_name = "hydroxy-wiki-media-preview"
+
+[[env.production.d1_databases]]
+binding = "HYDROXY_DB"
+database_name = "hydroxy-wiki-production"
+database_id = "e1b11947-2abc-47b0-84ca-e9c157ddfcf7"
+preview_database_id = "0a5ad965-8168-44c8-b77b-fdc65ace7226"
+migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "HYDROXY_MEDIA"
+bucket_name = "hydroxy-wiki-media-production"
+preview_bucket_name = "hydroxy-wiki-media-preview"

@@ -1,38 +1,23 @@
 ---
-import { getCollection, render } from 'astro:content';
+export const prerender = false;
+
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import TableOfContents from '@/components/TableOfContents.astro';
-import { isPublished } from '@/utils/wiki';
+import { getDocument, getRedirect } from '@/lib/cms';
+import { renderMarkdown } from '@/lib/markdown';
 import { formatDate } from '@/utils/site';
 
-export async function getStaticPaths() {
-  const entries = (await getCollection('essays')).filter(isPublished);
-  return entries.map((entry) => ({
-    params: { slug: entry.id.replace(/\.(md|mdx)$/, '') },
-    props: { entry }
-  }));
+const slug = Astro.params.slug ?? '';
+const entry = await getDocument(Astro.locals, 'essay', slug);
+if (!entry) {
+  const redirect = await getRedirect(Astro.locals, Astro.url.pathname);
+  if (redirect) return Astro.redirect(redirect.to_path, 301);
+  return Astro.redirect('/life/essays/');
 }
-
-const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
+const rendered = await renderMarkdown(entry.body_markdown);
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.description}>
-  <header class="article-hero pixel-panel">
-    <p class="section-kicker">/life/essays</p>
-    <h1 class="section-title">{entry.data.title}</h1>
-    <p class="section-copy">{entry.data.description}</p>
-    <div class="article-meta">
-      <span>{formatDate(entry.data.date)}</span>
-      <span>{entry.data.mood || 'quiet'}</span>
-      {entry.data.tags.map((tag) => <span>{tag}</span>)}
-    </div>
-  </header>
-
-  <div class="article-shell">
-    <article class="article-body pixel-panel prose">
-      <Content />
-    </article>
-    <TableOfContents headings={headings} />
-  </div>
+<BaseLayout title={entry.title} description={entry.description}>
+  <header class="article-hero pixel-panel"><p class="section-kicker">/life/essays</p><h1 class="section-title">{entry.title}</h1><p class="section-copy">{entry.description}</p><div class="article-meta"><span>{formatDate(entry.published_at ?? entry.updated_at)}</span><span>{entry.mood || 'quiet'}</span>{entry.tags.map((tag) => <span>{tag}</span>)}</div></header>
+  <div class="article-shell"><article class="article-body pixel-panel prose" set:html={rendered.html} /><TableOfContents headings={rendered.headings} /></div>
 </BaseLayout>

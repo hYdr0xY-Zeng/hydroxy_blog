@@ -5,8 +5,9 @@ date: 2026-07-17
 tags: ["cs", "algorithm", "xcpc", "cpp"]
 draft: false
 ---
+# 基础
 
-# FASTIO(模拟输入输出流)
+## FASTIO(模拟输入输出流)
 
 > 注意调试的时候不要开快读
 
@@ -193,9 +194,9 @@ namespace fio
 ```
 ---
 
-# 取模基础
+## 取模基础
 
-## 1. 基础四则运算
+### 1. 基础四则运算
 
 ```cpp
 inline ll add(ll a, ll b)
@@ -218,7 +219,7 @@ inline ll mul(ll a, ll b)
 }
 ```
 
-## 2. 快速幂 & 逆元（处理除法）
+### 2. 快速幂 & 逆元（处理除法）
 **费马小定理**：当 MOD 为质数时，`a` 的逆元为 `pow(a, MOD-2)`。
 
 ```cpp
@@ -240,7 +241,7 @@ inline ll div_mod(ll a, ll b)
 }
 ```
 
-## 3. 组合数预处理
+### 3. 组合数预处理
 若题目涉及大量组合数 `C(n, k)`，务必预处理阶乘和逆元（线性递推，避免每次快速幂的 log）。
 
 ```cpp
@@ -263,7 +264,7 @@ inline ll C(ll n, ll k)
 }
 ```
 
-## 4. 线性递推逆元（单点求逆常用）
+### 4. 线性递推逆元（单点求逆常用）
 求 `1` 到 `n` 每个数的逆元，复杂度 O(n)：
 
 ```cpp
@@ -275,7 +276,7 @@ for (int i = 2; i <= n; i++)
 }
 ```
 
-## 5. 大数读入取模（字符串输入）
+### 5. 大数读入取模（字符串输入）
 当输入数字远超 `long long` 范围时，边读边取模：
 
 ```cpp
@@ -288,4 +289,43 @@ ll read_mod(string &s)
 ```
 
 ---
+
+## 线性筛
+
+> 这里还给了一个 **线性筛dp** 求质因子次幂和函数。
+>
+> 线性筛形式的 dp 是一个很重要的技巧
+
+
+```cpp
+
+ll g[MAX];
+bool isPrime[MAX];
+int Prime[MAXP], p;
+ 
+void Euler(int N)
+{
+    memset(isPrime, 1, sizeof(isPrime));
+     
+    Prime[0] = 1;
+    isPrime[0] = isPrime[1] = false;
+    g[1] = 1;
+ 
+    for (int i = 2; i <= N; i++)
+    {
+        if (isPrime[i])
+        {
+            g[i] = 1;
+            Prime[++p] = i;
+        }
+ 
+        for (int j = 1; (j <= p) && (i * Prime[j] <= N); j++)
+        {
+            isPrime[i * Prime[j]] = 0;
+            g[i * Prime[j]] = g[i] + 1;
+            if (i % Prime[j] == 0) break;
+        }
+    }
+}
+```
 

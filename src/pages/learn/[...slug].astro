@@ -1,92 +1,26 @@
 ---
-import { getCollection, render } from 'astro:content';
+export const prerender = false;
+
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import WikiTree from '@/components/WikiTree.astro';
 import TableOfContents from '@/components/TableOfContents.astro';
-import { buildCrumbs, buildLearnTree, findChildrenForSlug, findNodeBySlug, flattenTree, isPublished, learnSlugFromId } from '@/utils/wiki';
+import { getDocument, getLearnTree, getRedirect } from '@/lib/cms';
+import { renderMarkdown } from '@/lib/markdown';
+import { buildCrumbs } from '@/utils/wiki';
 import { formatDate } from '@/utils/site';
 
-export async function getStaticPaths() {
-  const entries = (await getCollection('learn')).filter(isPublished);
-  const tree = buildLearnTree(entries);
-  const nodes = flattenTree(tree);
-
-  return nodes.map((node) => ({
-    params: { slug: node.key },
-    props: { slug: node.key }
-  }));
+const slug = Astro.params.slug ?? '';
+const [tree, entry] = await Promise.all([getLearnTree(Astro.locals), getDocument(Astro.locals, 'learn', slug)]);
+const node = tree.byPath.get(slug);
+if (!node) {
+  const redirect = await getRedirect(Astro.locals, Astro.url.pathname);
+  if (redirect) return Astro.redirect(redirect.to_path, 301);
+  return Astro.redirect('/learn/');
 }
-
-const entries = (await getCollection('learn')).filter(isPublished);
-const tree = buildLearnTree(entries);
-const slug = Astro.props.slug as string;
-const node = findNodeBySlug(tree, slug);
-
-if (!node) return Astro.redirect('/learn/');
-
-const children = findChildrenForSlug(tree, slug);
-const entry = node.entry;
+const rendered = entry ? await renderMarkdown(entry.body_markdown) : null;
 const crumbs = buildCrumbs(slug);
-let Content;
-let headings = [];
-
-if (entry) {
-  const rendered = await render(entry);
-  Content = rendered.Content;
-  headings = rendered.headings;
-}
 ---
 
-<BaseLayout title={entry?.data.title || node.label} description={entry?.data.description || `Hydroxy Wiki directory ${node.label}`}>
-  <div class="learn-layout">
-    <WikiTree tree={tree} activeSlug={slug} />
-    <section class="learn-content">
-      <nav aria-label="Breadcrumb">
-        <ol class="crumbs">
-          {crumbs.map((crumb, index) => (
-            <li><a href={crumb.href}>{crumb.label}</a>{index < crumbs.length - 1 ? ' /' : ''}</li>
-          ))}
-        </ol>
-      </nav>
-
-      {entry ? (
-        <>
-          <header class="article-hero pixel-panel">
-            <p class="section-kicker">/learn/{learnSlugFromId(entry.id)}</p>
-            <h1 class="section-title">{entry.data.title}</h1>
-            <p class="section-copy">{entry.data.description}</p>
-            <div class="article-meta">
-              <span>{formatDate(entry.data.date)}</span>
-              <span>{entry.data.draft ? 'Draft' : 'Published'}</span>
-              {entry.data.tags.map((tag) => <span>{tag}</span>)}
-            </div>
-          </header>
-
-          <div class="article-shell">
-            <article class="article-body pixel-panel prose">
-              <Content />
-            </article>
-
-            <TableOfContents headings={headings} />
-          </div>
-        </>
-      ) : (
-        <>
-          <header class="directory-hero pixel-panel">
-            <p class="section-kicker">/learn/{slug}</p>
-            <h1 class="section-title">{node.label}</h1>
-            <p class="section-copy">自动目录页。继续沿着文件树进入子目录或文章。</p>
-          </header>
-          <div class="directory-grid">
-            {children.map((child) => (
-              <a class="article-card" href={child.href}>
-                <h2>{child.children.length ? '[DIR]' : '[MD]'} {child.label}</h2>
-                <p>{child.entry?.data.description || `${child.children.length} child nodes`}</p>
-              </a>
-            ))}
-          </div>
-        </>
-      )}
-    </section>
-  </div>
+<BaseLayout title={entry?.title ?? node.label} description={entry?.description ?? `Hydroxy Wiki directory ${node.label}`}>
+  <div class="learn-layout"><WikiTree tree={tree.roots as any} activeSlug={slug} /><section class="learn-content"><nav aria-label="Breadcrumb"><ol class="crumbs">{crumbs.map((crumb, index) => <li><a href={crumb.href}>{crumb.label}</a>{index < crumbs.length - 1 ? ' /' : ''}</li>)}</ol></nav>{entry ? <><header class="article-hero pixel-panel"><p class="section-kicker">/learn/{entry.path}</p><h1 class="section-title">{entry.title}</h1><p class="section-copy">{entry.description}</p><div class="article-meta"><span>{formatDate(entry.published_at ?? entry.updated_at)}</span>{entry.tags.map((tag) => <span>{tag}</span>)}</div></header><div class="article-shell"><article class="article-body pixel-panel prose" set:html={rendered?.html} /><TableOfContents headings={rendered?.headings ?? []} /></div></> : <><header class="directory-hero pixel-panel"><p class="section-kicker">/learn/{slug}</p><h1 class="section-title">{node.label}</h1><p class="section-copy">继续沿着文件树进入子目录或文章。</p></header><div class="directory-grid">{node.children.map((child) => <a class="article-card" href={child.href}><h2>{child.children.length ? '[DIR]' : '[MD]'} {child.label}</h2><p>{child.entry?.description || `${child.children.length} child nodes`}</p></a>)}</div></>}</section></div>
 </BaseLayout>

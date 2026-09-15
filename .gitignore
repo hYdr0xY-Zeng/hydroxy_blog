@@ -24,3 +24,5 @@ Thumbs.db
 
 # AI
 AGENTS.md
+# Cloudflare local state
+.wrangler/

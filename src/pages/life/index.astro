@@ -1,57 +1,18 @@
 ---
-import { getCollection } from 'astro:content';
+export const prerender = false;
+
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import anime from '@/data/anime.json';
-import gallery from '@/data/gallery.json';
-import { isPublished } from '@/utils/wiki';
+import { listAnime, listDocuments, listGallery } from '@/lib/cms';
 
-const essays = (await getCollection('essays')).filter(isPublished);
-
+const [essays, anime, gallery] = await Promise.all([listDocuments(Astro.locals, { kind: 'essay' }), listAnime(Astro.locals, 1), listGallery(Astro.locals, 1)]);
 const gates = [
-  {
-    title: 'Anime Log',
-    href: '/life/anime/',
-    count: anime.length,
-    copy: '追番列表，以及我的评分和短评，我称之为【Qiangumi】'
-  },
-  {
-    title: 'Essays',
-    href: '/life/essays/',
-    count: essays.length,
-    copy: '技术之外的随笔和生活片段。'
-  },
-  {
-    title: 'Gallery',
-    href: '/life/gallery/',
-    count: gallery.length,
-    copy: '总之也许是一些【图片】'
-  }
+  { title: 'Anime Log', href: '/life/anime/', count: anime.totalItems, copy: '追番列表，以及我的评分和短评，我称之为【Qiangumi】' },
+  { title: 'Essays', href: '/life/essays/', count: essays.length, copy: '技术之外的随笔和生活片段。' },
+  { title: 'Gallery', href: '/life/gallery/', count: gallery.totalItems, copy: '总之也许是一些【图片】' }
 ];
 ---
 
 <BaseLayout title="Life" description="Hydroxy Wiki 的生活页入口：个人简介、追番、随笔和图片。">
-  <header class="page-hero pixel-panel">
-    <p class="section-kicker">/life</p>
-    <h1 class="section-title">Life Pages</h1>
-    <p class="section-copy">总之就是塞亿点私货在这里</p>
-  </header>
-
-  <div class="life-hub">
-    <section class="content-card profile-card">
-      <h2>Profile</h2>
-      <p class="section-copy">
-        Hydroxy是我，我是羟，我知道这听起来很【炫酷】
-      </p>
-    </section>
-
-    <section class="life-gates" aria-label="Life sections">
-      {gates.map((gate) => (
-        <a class="life-gate article-card" href={gate.href}>
-          <span class="life-gate__count">{gate.count}</span>
-          <h2>{gate.title}</h2>
-          <p>{gate.copy}</p>
-        </a>
-      ))}
-    </section>
-  </div>
+  <header class="page-hero pixel-panel"><p class="section-kicker">/life</p><h1 class="section-title">Life Pages</h1><p class="section-copy">总之就是塞亿点私货在这里</p></header>
+  <div class="life-hub"><section class="content-card profile-card"><h2>Profile</h2><p class="section-copy">Hydroxy是我，我是羟，我知道这听起来很【炫酷】</p></section><section class="life-gates" aria-label="Life sections">{gates.map((gate) => <a class="life-gate article-card" href={gate.href}><span class="life-gate__count">{gate.count}</span><h2>{gate.title}</h2><p>{gate.copy}</p></a>)}</section></div>
 </BaseLayout>

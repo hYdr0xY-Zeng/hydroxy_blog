@@ -2,7 +2,7 @@
 title: "ch5 - 优化程序性能"
 description: "05-optimizing-program-performance"
 date: 2026-08-12
-tags: ["cs", "csapp", "performance"]
+tags: ["cs", "csapp"]
 draft: false
 ---
 
