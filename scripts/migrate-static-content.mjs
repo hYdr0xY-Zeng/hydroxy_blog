@@ -75,13 +75,37 @@ for (const file of await walk(join(root, 'src/content/life/essays'))) if (/\.(md
 documents.push(await documentFrom(join(root, 'src/content/profile/home.md'), 'profile'));
 
 const learnNodes = new Map();
-for (const document of documents.filter((item) => item.kind === 'learn')) {
-  document.rawParts.forEach((part, index) => {
-    const path = document.rawParts.slice(0, index + 1).map(clean).join('/');
-    const parent = index ? document.rawParts.slice(0, index).map(clean).join('/') : null;
-    const order = Number(part.match(/^(\d+)[-_ ]+/)?.[1] ?? 9999);
-    learnNodes.set(path, { path, parent, label: index === document.rawParts.length - 1 ? document.title : titleFor(part), order, documentId: index === document.rawParts.length - 1 ? document.id : null });
-  });
+const learnTreeFiles = [join(root, 'src/data/learn-tree.json'), join(root, 'data/learn-tree.json')];
+const learnTreeFile = learnTreeFiles.find(existsSync);
+if (learnTreeFile) {
+  const manifest = JSON.parse(await readFile(learnTreeFile, 'utf8'));
+  if (!Array.isArray(manifest)) throw new Error(`Learn tree manifest must be an array: ${learnTreeFile}`);
+  for (const entry of manifest) {
+    const path = String(entry.path ?? '').trim().replace(/^\/+|\/+$/g, '');
+    const parent = entry.parentPath == null && entry.parent_path == null ? null : String(entry.parentPath ?? entry.parent_path).trim().replace(/^\/+|\/+$/g, '');
+    const label = String(entry.label ?? '').trim();
+    const order = Number.isInteger(entry.sortOrder) ? entry.sortOrder : Number.isInteger(entry.sort_order) ? entry.sort_order : 9999;
+    const expectedParent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
+    if (!path || !label || parent !== expectedParent) throw new Error(`Invalid Learn tree entry: ${JSON.stringify(entry)}`);
+    if (learnNodes.has(path)) throw new Error(`Duplicate Learn tree path: ${path}`);
+    learnNodes.set(path, { path, parent, label, order, documentId: null });
+  }
+  for (const document of documents.filter((item) => item.kind === 'learn')) {
+    const node = learnNodes.get(document.path);
+    if (!node) throw new Error(`Learn tree manifest is missing article path: ${document.path}`);
+    if (node.documentId) throw new Error(`Learn tree path has multiple articles: ${document.path}`);
+    node.documentId = document.id;
+  }
+  console.log(`Using Learn tree manifest: ${learnTreeFile}`);
+} else {
+  for (const document of documents.filter((item) => item.kind === 'learn')) {
+    document.rawParts.forEach((part, index) => {
+      const path = document.rawParts.slice(0, index + 1).map(clean).join('/');
+      const parent = index ? document.rawParts.slice(0, index).map(clean).join('/') : null;
+      const order = Number(part.match(/^(\d+)[-_ ]+/)?.[1] ?? 9999);
+      learnNodes.set(path, { path, parent, label: index === document.rawParts.length - 1 ? document.title : titleFor(part), order, documentId: index === document.rawParts.length - 1 ? document.id : null });
+    });
+  }
 }
 
 const animeSource = JSON.parse(await readFile(join(root, 'src/data/anime.json'), 'utf8'));

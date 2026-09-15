@@ -3,7 +3,7 @@ export const prerender = false;
 
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { requireAdmin } from '@/lib/auth';
-import { getDocumentById } from '@/lib/cms';
+import { getDocumentById, getLearnTree, listLearnDirectories } from '@/lib/cms';
 
 const identity = await requireAdmin(Astro.request, Astro.locals);
 if (identity instanceof Response) return identity;
@@ -12,12 +12,21 @@ const existing = requestedId === 'new' ? null : await getDocumentById(Astro.loca
 if (requestedId !== 'new' && !existing) return Astro.redirect('/admin/');
 const kind = existing?.kind ?? (Astro.url.searchParams.get('kind') === 'essay' ? 'essay' : 'learn');
 const path = existing?.path ?? '';
+const [directories, adminTree] = await Promise.all([
+  listLearnDirectories(Astro.locals),
+  getLearnTree(Astro.locals, { includeUnpublished: true, includeEmpty: true })
+]);
+const pathParts = path.split('/').filter(Boolean);
+const learnParentPath = kind === 'learn' ? pathParts.slice(0, -1).join('/') : '';
+const learnSlug = kind === 'learn' ? pathParts.at(-1) ?? '' : '';
+const existingLearnNode = kind === 'learn' ? adminTree.byPath.get(path) : undefined;
+const isLearnDirectoryArticle = Boolean(existingLearnNode && existingLearnNode.children.length > 0);
 ---
 
 <BaseLayout title={existing ? `Edit ${existing.title}` : 'New document'}>
   <header class="page-hero pixel-panel"><p class="section-kicker">/admin/editor</p><h1 class="section-title">{existing ? 'Edit Document' : 'New Document'}</h1><p class="section-copy">{identity.email}</p></header>
-  <form class="editor-shell" data-editor-form>
-    <section class="pixel-panel editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind"><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'computer-science/example'} required /></label><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label><div class="editor-actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div></section>
+  <form class="editor-shell" data-editor-form data-learn-parent-path={learnParentPath} data-learn-slug={learnSlug}>
+    <section class="pixel-panel editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind" data-kind-select><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label data-path-field hidden={kind === 'learn'}>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label><div data-learn-path-fields hidden={kind !== 'learn'}>{isLearnDirectoryArticle && <input type="hidden" name="parent_path" value={learnParentPath} />}<label>Directory<select name="parent_path" data-learn-parent disabled={isLearnDirectoryArticle}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isLearnDirectoryArticle} required /></label><label>Order<input name="sort_order" type="number" value={String(existingLearnNode?.sort_order ?? 9999)} /></label><output data-learn-path-preview></output>{isLearnDirectoryArticle && <p class="form-hint">This article has child nodes, so its directory and slug cannot be moved.</p>}</div><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label><div class="editor-actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div></section>
     <section class="pixel-panel editor-markdown"><label>Markdown<textarea name="body_markdown" data-markdown-input spellcheck="false">{existing?.body_markdown ?? ''}</textarea></label></section>
     <section class="pixel-panel editor-preview"><h2>Preview</h2><article class="prose" data-preview></article></section>
   </form>
@@ -33,7 +42,29 @@ const path = existing?.path ?? '';
   if (form) {
     const textarea = form.querySelector<HTMLTextAreaElement>('[data-markdown-input]');
     const preview = form.querySelector<HTMLElement>('[data-preview]');
+    const kindSelect = form.querySelector<HTMLSelectElement>('[data-kind-select]');
+    const pathField = form.querySelector<HTMLElement>('[data-path-field]');
+    const pathInput = form.querySelector<HTMLInputElement>('input[name="path"]');
+    const learnPathFields = form.querySelector<HTMLElement>('[data-learn-path-fields]');
+    const parentInput = form.querySelector<HTMLSelectElement>('[data-learn-parent]');
+    const slugInput = form.querySelector<HTMLInputElement>('[data-learn-slug]');
+    const pathPreview = form.querySelector<HTMLOutputElement>('[data-learn-path-preview]');
     let timer: number | undefined;
+
+    const syncPathFields = () => {
+      const isLearn = kindSelect?.value === 'learn';
+      if (pathField) pathField.hidden = isLearn;
+      if (pathInput) pathInput.required = !isLearn;
+      if (learnPathFields) learnPathFields.hidden = !isLearn;
+      if (pathPreview) {
+        const parts = [parentInput?.value, slugInput?.value.trim()].filter(Boolean);
+        pathPreview.textContent = isLearn ? `/learn/${parts.join('/') || '...'}/` : '';
+      }
+    };
+    kindSelect?.addEventListener('change', syncPathFields);
+    parentInput?.addEventListener('change', syncPathFields);
+    slugInput?.addEventListener('input', syncPathFields);
+    syncPathFields();
 
     const updatePreview = async () => {
       if (!textarea || !preview) return;
@@ -52,7 +83,7 @@ const path = existing?.path ?? '';
     });
     void updatePreview();
 
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('submit', async (event: SubmitEvent) => {
       event.preventDefault();
       const values = new FormData(form);
       const field = (name: string) => {
@@ -66,6 +97,9 @@ const path = existing?.path ?? '';
         id: field('id'),
         kind: field('kind'),
         path: field('path'),
+        parent_path: field('parent_path') || form.dataset.learnParentPath || '',
+        slug: field('slug') || form.dataset.learnSlug || '',
+        sort_order: Number(field('sort_order')),
         title: field('title'),
         description: field('description'),
         body_markdown: field('body_markdown'),

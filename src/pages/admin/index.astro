@@ -3,16 +3,17 @@ export const prerender = false;
 
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { requireAdmin } from '@/lib/auth';
-import { getDocument, listAnime, listDocuments, listGallery } from '@/lib/cms';
+import { getDocument, listAnime, listDocuments, listGallery, listLearnDirectories } from '@/lib/cms';
 
 const identity = await requireAdmin(Astro.request, Astro.locals);
 if (identity instanceof Response) return identity;
-const [learn, essays, profile, anime, gallery] = await Promise.all([
+const [learn, essays, profile, anime, gallery, directories] = await Promise.all([
   listDocuments(Astro.locals, { kind: 'learn', includeUnpublished: true }),
   listDocuments(Astro.locals, { kind: 'essay', includeUnpublished: true }),
   getDocument(Astro.locals, 'profile', 'home', true),
   listAnime(Astro.locals, 1, 100, true),
-  listGallery(Astro.locals, 1, 100, true)
+  listGallery(Astro.locals, 1, 100, true),
+  listLearnDirectories(Astro.locals)
 ]);
 const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
 ---
@@ -21,6 +22,7 @@ const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
   <header class="page-hero pixel-panel"><p class="section-kicker">/admin</p><h1 class="section-title">Content Console</h1><p class="section-copy">{identity.email}</p><a class="text-button" href="/api/admin/export">EXPORT</a></header>
   <section class="admin-grid">
     <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Documents</h2><div><a class="text-button" href="/admin/editor/new?kind=learn">NEW LEARN</a><a class="text-button" href="/admin/editor/new?kind=essay">NEW ESSAY</a></div></div><ul class="article-list">{documents.map((document) => <li><a class="article-link" href={`/admin/editor/${document.id}`}><strong>{document.title}</strong><span>{document.kind} / {document.status} / {document.path}</span></a></li>)}</ul></div>
+    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Learn Directories</h2></div><form class="admin-form" data-directory-form><label>Parent<select name="parent_path"><option value="">/learn</option>{directories.map((directory) => <option value={directory.path}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Label<input name="label" placeholder="Computer Science" required /></label><label>Slug<input name="slug" placeholder="computer-science" pattern="[a-z0-9]+(-[a-z0-9]+)*" required /></label><label>Order<input name="sort_order" type="number" value="9999" /></label><button class="text-button">CREATE DIRECTORY</button></form><ul class="article-list">{directories.map((directory) => <li><span class="article-link"><strong>{directory.label}</strong><span>/learn/{directory.path} / order {directory.sort_order}</span></span></li>)}</ul></div>
     <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Media</h2></div><form data-media-form class="admin-form"><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required /><button class="text-button">UPLOAD</button><output data-media-output></output></form></div>
     <div class="pixel-panel admin-panel"><h2>Anime Log</h2><form class="admin-form" data-life-form="anime"><input name="id" type="hidden" /><input name="title" placeholder="Original title" required /><input name="cn_title" placeholder="中文标题" /><input name="year" type="number" placeholder="Year" /><input name="score" type="number" min="0" max="10" step="0.1" placeholder="Score" /><input name="status" placeholder="Status" /><input name="cover_key" placeholder="R2 cover key" /><input name="sort_order" type="number" value="0" placeholder="Order" /><textarea name="note" placeholder="Note"></textarea><select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><button class="text-button">SAVE ANIME</button></form><div class="admin-entry-list">{anime.items.map((item) => <button class="admin-entry" type="button" data-life-entry={JSON.stringify(item)} data-life-target="anime">{item.cn_title || item.title} / {item.visibility}</button>)}</div></div>
     <div class="pixel-panel admin-panel"><h2>Gallery</h2><form class="admin-form" data-life-form="gallery"><input name="id" type="hidden" /><input name="title" placeholder="Image title" required /><input name="alt" placeholder="Alt text" /><input name="media_key" placeholder="R2 media key" required /><input name="sort_order" type="number" value="0" placeholder="Order" /><select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><button class="text-button">SAVE GALLERY</button></form><div class="admin-entry-list">{gallery.items.map((item) => <button class="admin-entry" type="button" data-life-entry={JSON.stringify(item)} data-life-target="gallery">{item.title} / {item.visibility}</button>)}</div></div>
@@ -53,6 +55,22 @@ const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
         alert(errorMessage(error));
       }
     });
+  });
+
+  const directoryForm = document.querySelector<HTMLFormElement>('[data-directory-form]');
+  directoryForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const values = new FormData(directoryForm);
+    const field = (name: string) => {
+      const value = values.get(name);
+      return typeof value === 'string' ? value : '';
+    };
+    try {
+      await post({ action: 'saveLearnDirectory', directory: { parent_path: field('parent_path'), label: field('label'), slug: field('slug'), sort_order: Number(field('sort_order')) } });
+      window.location.reload();
+    } catch (error) {
+      alert(errorMessage(error));
+    }
   });
 
   document.querySelectorAll<HTMLButtonElement>('[data-life-entry]').forEach((button) => {

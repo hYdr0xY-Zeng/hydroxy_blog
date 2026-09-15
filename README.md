@@ -26,9 +26,11 @@ For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then r
 
 ## Content Publishing
 
-Use `/admin/` for normal publication. The editor supports Markdown, KaTeX, Mermaid, code blocks, split preview, drafts, publication, archive, tags, metadata, and stable paths. Moving a published article creates a D1-backed 301 redirect.
+Use `/admin/` for normal publication. Create Learn directories first in the **Learn Directories** panel, choosing a parent (or `/learn`), a display label, lowercase `kebab-case` slug, and sort order. A Learn article then uses **Directory + Slug** to produce its stable path; published moves create a D1-backed 301 redirect. A Learn article that contains child nodes cannot be moved from the normal editor.
 
-The repository Markdown and JSON files remain a migration/import source and a Git-friendly backup format, not the primary production data source. Download a backup from `/api/admin/export` and commit it when a snapshot is needed.
+Empty directories, drafts, and archived Learn items stay available in the admin tree but are hidden from the public Wiki tree until a published article exists beneath them. Equal sort orders are ordered by display label.
+
+The repository Markdown and JSON files remain a migration/import source and a Git-friendly backup format, not the primary production data source. Download a backup from `/api/admin/export` and commit it when a snapshot is needed. The ZIP includes `data/learn-tree.json`, which preserves Learn directory paths, labels, parents, and ordering for a later import.
 
 ## One-time migration
 

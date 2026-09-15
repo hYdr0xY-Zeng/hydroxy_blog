@@ -8,12 +8,13 @@ export async function GET({ request, locals }: { request: Request; locals: App.L
   const admin = await requireAdmin(request, locals);
   if (admin instanceof Response) return admin;
   const database = getEnv(locals).HYDROXY_DB;
-  const [documents, tags, anime, gallery, media] = await Promise.all([
+  const [documents, tags, anime, gallery, media, learnTree] = await Promise.all([
     database.prepare('SELECT * FROM documents ORDER BY kind, path').all<Record<string, unknown>>(),
     database.prepare('SELECT document_id, label FROM document_tags JOIN tags ON slug = tag_slug ORDER BY label').all<{ document_id: string; label: string }>(),
     database.prepare('SELECT * FROM anime_entries ORDER BY sort_order DESC').all(),
     database.prepare('SELECT * FROM gallery_entries ORDER BY sort_order DESC').all(),
-    database.prepare('SELECT * FROM media_assets ORDER BY key').all()
+    database.prepare('SELECT * FROM media_assets ORDER BY key').all(),
+    database.prepare('SELECT path, parent_path, label, sort_order FROM learn_nodes ORDER BY parent_path, sort_order, label').all<{ path: string; parent_path: string | null; label: string; sort_order: number }>()
   ]);
   const tagMap = new Map<string, string[]>();
   tags.results.forEach((tag) => tagMap.set(tag.document_id, [...(tagMap.get(tag.document_id) ?? []), tag.label]));
@@ -26,6 +27,7 @@ export async function GET({ request, locals }: { request: Request; locals: App.L
   });
   files['data/anime.json'] = strToU8(JSON.stringify(anime.results, null, 2));
   files['data/gallery.json'] = strToU8(JSON.stringify(gallery.results, null, 2));
+  files['data/learn-tree.json'] = strToU8(JSON.stringify(learnTree.results.map((node) => ({ path: node.path, parentPath: node.parent_path, label: node.label, sortOrder: node.sort_order })), null, 2));
   files['media-manifest.json'] = strToU8(JSON.stringify(media.results, null, 2));
   const archive = zipSync(files, { level: 6 });
   return new Response(archive as unknown as BodyInit, { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="hydroxy-wiki-export-${new Date().toISOString().slice(0, 10)}.zip"` } });

@@ -11,7 +11,7 @@ const nodes = [...tree.byPath.values()].filter((node) => node.path.split('/').le
 
 <BaseLayout title="Learn" description="学习 Wiki：技术文章、课程笔记和实验记录。">
   <div class="learn-layout">
-    <WikiTree tree={tree.roots as any} />
+    <WikiTree tree={tree.roots} />
     <section class="learn-content"><div class="directory-hero pixel-panel"><p class="section-kicker">/learn</p><h1 class="section-title">Learning File System</h1><p class="section-copy">这里的目录和文章由后台内容库维护。</p></div><div class="directory-grid">{nodes.map((node) => <a class="article-card" href={node.href}><h2>{node.children.length ? '[DIR]' : '[MD]'} {node.label}</h2><p>{node.entry?.description || `${node.children.length} child nodes`}</p></a>)}</div></section>
   </div>
 </BaseLayout>

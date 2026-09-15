@@ -1,22 +1,22 @@
 ---
-import type { TreeNode } from '@/utils/wiki';
+import type { LearnNode } from '@/lib/cms';
 
 type Props = {
-  nodes: TreeNode[];
+  nodes: LearnNode[];
   activeSlug?: string;
 };
 
 const { nodes, activeSlug = '' } = Astro.props;
 
-function isOpen(node: TreeNode) {
-  return activeSlug === node.key || activeSlug.startsWith(`${node.key}/`);
+function isOpen(node: LearnNode) {
+  return activeSlug === node.path || activeSlug.startsWith(`${node.path}/`);
 }
 ---
 
 <ul class="tree-list">
   {nodes.map((node) => (
     <li>
-      <a class="tree-link" href={node.href} aria-current={activeSlug === node.key ? 'page' : undefined}>
+      <a class="tree-link" href={node.href} aria-current={activeSlug === node.path ? 'page' : undefined}>
         <span class="tree-link__icon" aria-hidden="true">{node.children.length ? (isOpen(node) ? '[-]' : '[+]') : '[*]'}</span>
         <span>{node.label}</span>
       </a>

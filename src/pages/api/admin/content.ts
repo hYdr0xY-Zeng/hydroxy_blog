@@ -1,4 +1,4 @@
-import { archiveDocument, saveDocument, upsertAnime, upsertGallery } from '@/lib/cms';
+import { archiveDocument, saveDocument, saveLearnDirectory, upsertAnime, upsertGallery } from '@/lib/cms';
 import { requireAdmin, requireSameOrigin } from '@/lib/auth';
 
 export const prerender = false;
@@ -12,8 +12,13 @@ export async function POST({ request, locals }: { request: Request; locals: App.
     const payload = await request.json() as Record<string, unknown>;
     if (payload.action === 'saveDocument') {
       const document = payload.document as Record<string, unknown>;
-      const result = await saveDocument(locals, { id: typeof document.id === 'string' ? document.id : undefined, kind: document.kind === 'essay' || document.kind === 'profile' ? document.kind : 'learn', path: String(document.path ?? ''), title: String(document.title ?? ''), description: String(document.description ?? ''), body_markdown: String(document.body_markdown ?? ''), mood: typeof document.mood === 'string' ? document.mood : null, cover_key: typeof document.cover_key === 'string' ? document.cover_key : null, status: document.status === 'published' || document.status === 'archived' ? document.status : 'draft', published_at: typeof document.published_at === 'string' ? document.published_at : null, tags: Array.isArray(document.tags) ? document.tags.map(String) : [] });
+      const result = await saveDocument(locals, { id: typeof document.id === 'string' && document.id.trim() ? document.id : undefined, kind: document.kind === 'essay' || document.kind === 'profile' ? document.kind : 'learn', path: typeof document.path === 'string' ? document.path : undefined, parent_path: typeof document.parent_path === 'string' ? document.parent_path : undefined, slug: typeof document.slug === 'string' ? document.slug : undefined, sort_order: Number.isInteger(document.sort_order) ? Number(document.sort_order) : undefined, title: String(document.title ?? ''), description: String(document.description ?? ''), body_markdown: String(document.body_markdown ?? ''), mood: typeof document.mood === 'string' ? document.mood : null, cover_key: typeof document.cover_key === 'string' ? document.cover_key : null, status: document.status === 'published' || document.status === 'archived' ? document.status : 'draft', published_at: typeof document.published_at === 'string' ? document.published_at : null, tags: Array.isArray(document.tags) ? document.tags.map(String) : [] });
       return Response.json({ document: result });
+    }
+    if (payload.action === 'saveLearnDirectory') {
+      const directory = payload.directory as Record<string, unknown>;
+      const result = await saveLearnDirectory(locals, { parent_path: typeof directory.parent_path === 'string' ? directory.parent_path : undefined, slug: String(directory.slug ?? ''), label: String(directory.label ?? ''), sort_order: Number.isInteger(directory.sort_order) ? Number(directory.sort_order) : undefined });
+      return Response.json({ directory: result });
     }
     if (payload.action === 'archiveDocument') { await archiveDocument(locals, String(payload.id)); return Response.json({ ok: true }); }
     if (payload.action === 'saveAnime') {

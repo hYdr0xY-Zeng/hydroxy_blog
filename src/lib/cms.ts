@@ -5,6 +5,8 @@ export type DocumentKind = 'learn' | 'essay' | 'profile';
 export type Visibility = 'draft' | 'published' | 'archived';
 export type ContentDocument = { id: string; kind: DocumentKind; path: string; source_path: string | null; title: string; description: string; body_markdown: string; published_at: string | null; mood: string | null; cover_key: string | null; status: Visibility; created_at: string; updated_at: string; tags: string[] };
 export type LearnNode = { path: string; parent_path: string | null; label: string; sort_order: number; document_id: string | null; href: string; children: LearnNode[]; entry?: ContentDocument };
+export type LearnTreeOptions = { includeUnpublished?: boolean; includeEmpty?: boolean };
+export type LearnDirectory = Pick<LearnNode, 'path' | 'label' | 'sort_order'> & { depth: number };
 export type AnimeEntry = { id: string; title: string; cn_title: string; status: string; year: number | null; score: number | null; note: string; cover_key: string | null; sort_order: number; visibility: Visibility; created_at: string; updated_at: string };
 export type GalleryEntry = { id: string; title: string; alt: string; media_key: string; sort_order: number; visibility: Visibility; created_at: string; updated_at: string };
 export type PageResult<T> = { items: T[]; currentPage: number; totalPages: number; totalItems: number };
@@ -44,22 +46,39 @@ export async function getDocumentById(locals: App.Locals, id: string) {
 }
 export async function listTags(locals: App.Locals) { const result = await db(locals).prepare('SELECT label FROM tags ORDER BY label').all<{ label: string }>(); return result.results.map((row) => row.label); }
 
-export async function getLearnTree(locals: App.Locals) {
-  const result = await db(locals).prepare(`SELECT n.path AS node_path, n.parent_path, n.label, n.sort_order, n.document_id, d.* FROM learn_nodes n LEFT JOIN documents d ON d.id = n.document_id AND d.status = 'published' ORDER BY n.sort_order, n.label`).all<Record<string, unknown>>();
+export async function getLearnTree(locals: App.Locals, options: LearnTreeOptions = {}) {
+  const documentFilter = options.includeUnpublished ? '' : "AND d.status = 'published'";
+  const result = await db(locals).prepare(`SELECT n.path AS node_path, n.parent_path, n.label, n.sort_order, n.document_id, d.* FROM learn_nodes n LEFT JOIN documents d ON d.id = n.document_id ${documentFilter} ORDER BY n.sort_order, n.label`).all<Record<string, unknown>>();
   const documentRows = result.results.filter((row) => typeof row.id === 'string').map((row) => ({ id: String(row.id), kind: 'learn' as const, path: String(row.path), source_path: row.source_path ? String(row.source_path) : null, title: String(row.title), description: String(row.description ?? ''), body_markdown: String(row.body_markdown ?? ''), published_at: row.published_at ? String(row.published_at) : null, mood: row.mood ? String(row.mood) : null, cover_key: row.cover_key ? String(row.cover_key) : null, status: String(row.status) as Visibility, created_at: String(row.created_at), updated_at: String(row.updated_at) }));
   const documents = new Map((await attachTags(locals, documentRows)).map((entry) => [entry.id, entry]));
   const byPath = new Map<string, LearnNode>();
   result.results.forEach((row) => byPath.set(String(row.node_path), { path: String(row.node_path), parent_path: row.parent_path ? String(row.parent_path) : null, label: String(row.label), sort_order: Number(row.sort_order), document_id: row.document_id ? String(row.document_id) : null, href: `/learn/${String(row.node_path)}/`, entry: row.document_id ? documents.get(String(row.document_id)) : undefined, children: [] }));
   const roots: LearnNode[] = [];
   byPath.forEach((node) => { const parent = node.parent_path ? byPath.get(node.parent_path) : undefined; parent ? parent.children.push(node) : roots.push(node); });
+  const sortNodes = (nodes: LearnNode[]) => {
+    nodes.sort((left, right) => left.sort_order - right.sort_order || left.label.localeCompare(right.label));
+    nodes.forEach((node) => sortNodes(node.children));
+  };
+  sortNodes(roots);
   const visibleByPath = new Map<string, LearnNode>();
   const prune = (node: LearnNode): LearnNode | null => {
     node.children = node.children.map(prune).filter((child): child is LearnNode => child !== null);
-    if (!node.entry && node.children.length === 0) return null;
+    if (!options.includeEmpty && !node.entry && node.children.length === 0) return null;
     visibleByPath.set(node.path, node);
     return node;
   };
   return { roots: roots.map(prune).filter((node): node is LearnNode => node !== null), byPath: visibleByPath };
+}
+
+export async function listLearnDirectories(locals: App.Locals) {
+  const tree = await getLearnTree(locals, { includeUnpublished: true, includeEmpty: true });
+  const directories: LearnDirectory[] = [];
+  const visit = (nodes: LearnNode[], depth: number) => nodes.forEach((node) => {
+    if (!node.document_id || node.children.length > 0) directories.push({ path: node.path, label: node.label, sort_order: node.sort_order, depth });
+    visit(node.children, depth + 1);
+  });
+  visit(tree.roots, 0);
+  return directories;
 }
 
 async function page<T>(locals: App.Locals, table: 'anime_entries' | 'gallery_entries', pageNumber: number, size: number, includeUnpublished: boolean) {
@@ -83,27 +102,63 @@ async function syncSearch(locals: App.Locals, entity: { id: string; kind: string
   if (visible) await db(locals).prepare('INSERT INTO search_index (entity_id, entity_kind, path, title, description, body, tags) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(entity.id, entity.kind, entity.path, entity.title, entity.description, entity.body, entity.tags ?? '').run();
 }
 
-export type SaveDocumentInput = Pick<ContentDocument, 'kind' | 'title' | 'description' | 'body_markdown' | 'mood' | 'cover_key' | 'status'> & { id?: string; path: string; published_at?: string | null; tags: string[] };
-const labelForPathSegment = (segment: string) => segment.replace(/^\d+-/, '').replace(/-/g, ' ') || segment;
-async function ensureLearnAncestors(database: D1Database, path: string) {
-  const parts = path.split('/');
-  for (let index = 0; index < parts.length - 1; index += 1) {
-    const ancestor = parts.slice(0, index + 1).join('/');
-    const parent = index === 0 ? null : parts.slice(0, index).join('/');
-    await database.prepare('INSERT OR IGNORE INTO learn_nodes (path, parent_path, label) VALUES (?, ?, ?)').bind(ancestor, parent, labelForPathSegment(parts[index])).run();
-  }
+export type SaveDocumentInput = Pick<ContentDocument, 'kind' | 'title' | 'description' | 'body_markdown' | 'mood' | 'cover_key' | 'status'> & { id?: string; path?: string; parent_path?: string; slug?: string; sort_order?: number; published_at?: string | null; tags: string[] };
+export type SaveLearnDirectoryInput = { parent_path?: string; slug: string; label: string; sort_order?: number };
+
+const learnSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const normalizeLearnSlug = (value: string) => {
+  const slug = value.trim();
+  if (!learnSlugPattern.test(slug)) throw new Error('Learn slug must use lowercase letters, numbers, and hyphens only.');
+  return slug;
+};
+const normalizeLearnParentPath = (value: string | undefined) => {
+  const parent = pathFor(value ?? '');
+  if (parent && !parent.split('/').every((segment) => learnSlugPattern.test(segment))) throw new Error('Learn parent path is invalid.');
+  return parent;
+};
+const learnPathFor = (parentPath: string, slug: string) => parentPath ? `${parentPath}/${slug}` : slug;
+const normalizedSortOrder = (value: number | undefined) => Number.isInteger(value) ? Number(value) : 9999;
+
+async function assertLearnParent(database: D1Database, parentPath: string) {
+  if (!parentPath) return;
+  const parent = await database.prepare(`SELECT n.document_id, EXISTS(SELECT 1 FROM learn_nodes child WHERE child.parent_path = n.path) AS has_children FROM learn_nodes n WHERE n.path = ?`).bind(parentPath).first<{ document_id: string | null; has_children: number }>();
+  if (!parent || (parent.document_id && !parent.has_children)) throw new Error('Choose an existing Learn directory as the parent.');
 }
+
+export async function saveLearnDirectory(locals: App.Locals, input: SaveLearnDirectoryInput) {
+  const database = db(locals);
+  const parentPath = normalizeLearnParentPath(input.parent_path);
+  const slug = normalizeLearnSlug(input.slug);
+  const path = learnPathFor(parentPath, slug);
+  const label = input.label.trim();
+  if (!label) throw new Error('A directory label is required.');
+  await assertLearnParent(database, parentPath);
+  const existing = await database.prepare('SELECT path FROM learn_nodes WHERE path = ?').bind(path).first<{ path: string }>();
+  if (existing) throw new Error('That Learn path is already in use.');
+  await database.prepare('INSERT INTO learn_nodes (path, parent_path, label, sort_order) VALUES (?, ?, ?, ?)').bind(path, parentPath || null, label, normalizedSortOrder(input.sort_order)).run();
+  return { path, parent_path: parentPath || null, label, sort_order: normalizedSortOrder(input.sort_order) };
+}
+
 export async function saveDocument(locals: App.Locals, input: SaveDocumentInput) {
-  const id = input.id ?? crypto.randomUUID(), path = pathFor(input.path), database = db(locals);
+  const database = db(locals);
+  const learnParentPath = input.kind === 'learn' ? normalizeLearnParentPath(input.parent_path) : '';
+  const learnSlug = input.kind === 'learn' ? normalizeLearnSlug(input.slug ?? '') : '';
+  const id = input.id ?? crypto.randomUUID(), path = input.kind === 'learn' ? learnPathFor(learnParentPath, learnSlug) : pathFor(input.path ?? '');
   if (!path) throw new Error('A content path is required.');
   const existing = await database.prepare('SELECT * FROM documents WHERE id = ?').bind(id).first<ContentDocument>();
+  const existingLearnNode = existing?.kind === 'learn' ? await database.prepare(`SELECT path, EXISTS(SELECT 1 FROM learn_nodes child WHERE child.parent_path = learn_nodes.path) AS has_children FROM learn_nodes WHERE path = ?`).bind(existing.path).first<{ path: string; has_children: number }>() : null;
+  if (existingLearnNode?.has_children && (input.kind !== 'learn' || existing!.path !== path)) throw new Error('A Learn article with child nodes cannot be moved.');
+  if (input.kind === 'learn') {
+    await assertLearnParent(database, learnParentPath);
+    const targetNode = await database.prepare('SELECT document_id FROM learn_nodes WHERE path = ?').bind(path).first<{ document_id: string | null }>();
+    if (targetNode && targetNode.document_id !== id) throw new Error('That Learn path is already in use.');
+  }
   const publishedAt = input.status === 'published' ? input.published_at ?? existing?.published_at ?? new Date().toISOString() : input.published_at ?? existing?.published_at ?? null;
   await database.prepare(`INSERT INTO documents (id, kind, path, title, description, body_markdown, published_at, mood, cover_key, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind, path=excluded.path, title=excluded.title, description=excluded.description, body_markdown=excluded.body_markdown, published_at=excluded.published_at, mood=excluded.mood, cover_key=excluded.cover_key, status=excluded.status, updated_at=CURRENT_TIMESTAMP`).bind(id, input.kind, path, input.title.trim(), input.description.trim(), input.body_markdown, publishedAt, input.mood || null, input.cover_key || null, input.status).run();
   if (existing?.status === 'published' && existing.path !== path) await database.prepare('INSERT OR REPLACE INTO redirects (from_path, to_path) VALUES (?, ?)').bind(documentHref(existing), documentHref({ kind: input.kind, path })).run();
   if (existing?.kind === 'learn' && (input.kind !== 'learn' || existing.path !== path)) await database.prepare('DELETE FROM learn_nodes WHERE path = ?').bind(existing.path).run();
   if (input.kind === 'learn') {
-    await ensureLearnAncestors(database, path);
-    await database.prepare('INSERT INTO learn_nodes (path, parent_path, label, document_id) VALUES (?, ?, ?, ?) ON CONFLICT(path) DO UPDATE SET parent_path=excluded.parent_path, label=excluded.label, document_id=excluded.document_id').bind(path, path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null, input.title.trim(), id).run();
+    await database.prepare('INSERT INTO learn_nodes (path, parent_path, label, sort_order, document_id) VALUES (?, ?, ?, ?, ?) ON CONFLICT(path) DO UPDATE SET parent_path=excluded.parent_path, label=excluded.label, sort_order=excluded.sort_order, document_id=excluded.document_id').bind(path, learnParentPath || null, input.title.trim(), normalizedSortOrder(input.sort_order), id).run();
   }
   await database.prepare('DELETE FROM document_tags WHERE document_id = ?').bind(id).run();
   const tags = [...new Set(input.tags.map((tag) => tag.trim()).filter(Boolean))];
