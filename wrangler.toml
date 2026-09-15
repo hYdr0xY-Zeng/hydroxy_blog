@@ -2,6 +2,9 @@ name = "hydroxy-wiki"
 compatibility_date = "2026-08-27"
 main = "./dist/_worker.js/index.js"
 
+[limits]
+cpu_ms = 1_000
+
 [assets]
 directory = "./dist"
 
