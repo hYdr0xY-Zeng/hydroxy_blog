@@ -390,7 +390,7 @@ struct Decompose
 > 
 > 小集合并大集合的思想更重要——每个点最多遍历 $ O(\log n) $ 次，所以可以放心大胆遍历轻链，dsu on tree具备很灵活的数据维护能力。
 > 
-> 可以与树dp混用，但要注意数据更新顺序，尤其注意需要跨子树合并答案时。
+> 可以与树dp混用，但要注意数据更新顺序，尤其注意需要跨子树合并答案时，一般会分开写两个递归函数，先维护答案，再维护动态数据。
 
 ```cpp
 struct DSU_on_tree
@@ -481,6 +481,145 @@ struct DSU_on_tree
 
 ### 虚树
 
+> 每次询问仅涉及一棵树上的 k 个**关键点**，在整棵树上求解复杂度与总节点数 n 相关。**$ \sum k$** 在复杂度允许范围内。
+>
+>  **$ O(k \log k) $** 建树。（**双排序**和**单调栈法**复杂度相同）
+> 
+>  经常可以看到一些典型的虚树题可以用 dsu on tree 解。
+
+```cpp
+
+struct ImTree
+{
+    int head[MAXN];
+    int nxt[MAXM], to[MAXM], tot = 0;
+
+    void add_e(int u, int v)
+    {
+        to[++tot] = v;
+        nxt[tot] = head[u];
+        head[u] = tot;
+    }
+    
+    int vhead[MAXN];
+    int vnxt[MAXM], vto[MAXM], vtot = 0;
+    ll vwei[MAXM];
+    int vroot = 0;
+
+    void add_ve(int u, int v, ll w)
+    {
+        vto[++vtot] = v;
+        vwei[vtot] = w;
+        vnxt[vtot] = vhead[u];
+        vhead[u] = vtot;
+    }
+
+    int dep[MAXN], dfn[MAXN], stp = 0;
+    int stjmp[MAXN][MAXJ];
+
+    /*
+    * some data on virtual tree
+    */
+
+    int key[MAXN], kcnt = 0;
+    bool iskey[MAXN];
+
+    void add_key(int u)
+    {
+        key[++kcnt] = u;
+        iskey[u] = true;
+    }
+
+    void clear_key()
+    {
+        for (int i = 1; i <= kcnt; i++) iskey[key[i]] = false;
+        kcnt = 0;
+    }
+
+    void DFS1(int f, int u)
+    {
+        dfn[u] = ++stp;
+        dep[u] = dep[f] + 1;
+        stjmp[u][0] = f;
+        for (int i = 1; i < MAXJ; i++) stjmp[u][i] = stjmp[stjmp[u][i - 1]][i - 1];
+
+        for (int e = head[u]; e ; e = nxt[e])
+        {
+            int v = to[e];
+            if (v == f) continue;
+            DFS1(u, v);
+        }
+    }
+
+    int LCA(int u, int v)
+    {
+        if (dep[u] < dep[v]) swap(u, v);
+
+        for (int i = MAXJ - 1; i >= 0; i--)
+        {
+            if (dep[stjmp[u][i]] >= dep[v]) u = stjmp[u][i];
+            if (dep[u] == dep[v]) break;
+        }
+        
+        if (u == v) return v;
+
+        for (int i = MAXJ - 1; i >= 0; i--)
+        {
+            if (stjmp[u][i] != stjmp[v][i])
+            {
+                u = stjmp[u][i];
+                v = stjmp[v][i];
+            }
+        }
+        return stjmp[v][0];
+    }
+
+    void build()
+    {
+        auto cmp = [&] (const int &x, const int &y) { return dfn[x] < dfn[y];};
+        sort(key + 1, key + 1 + kcnt, cmp);
+
+        vector<int> nodes;
+        for (int i = 1; i < kcnt; i++)
+        {
+            nodes.emplace_back(key[i]);
+            nodes.emplace_back(LCA(key[i], key[i + 1]));
+        }
+        nodes.emplace_back(key[kcnt]);
+        sort(nodes.begin(), nodes.end(), cmp);
+        nodes.erase(unique(nodes.begin(), nodes.end()), nodes.end());
+
+        vtot = 0;
+        for (int u : nodes) vhead[u] = 0;
+
+        int sz = nodes.size();
+        for (int i = 1; i < sz; i++)
+        {
+            int f = LCA(nodes[i - 1], nodes[i]);
+            add_ve(f, nodes[i], dep[nodes[i]] - dep[f]);
+        }
+        vroot = nodes[0];
+    }
+
+    void DFS2(int u)
+    {
+        /*
+        * initialize or reset data 
+        */
+        for (int e = vhead[u]; e ; e = vnxt[e])
+        {
+            int v = vto[e];
+            DFS2(v);
+            /*
+            * dp or something else
+            */
+        }
+    }
+
+} g;
+
+```
+
 ### 树分治
 
 ## 最短路
@@ -495,14 +634,154 @@ struct DSU_on_tree
 
 ### Prim
 
+```cpp
+
+struct EDGE
+{
+    int to, val, nxt;
+} e[MAXNODE << 1];
+
+bool operator<(const EDGE &x, const EDGE &y) { return x.val < y.val; }
+
+int head[MAXNODE], dis[MAXNODE];
+bool vis[MAXNODE];
+
+void add_edge(int u, int v, int w, int id)
+{
+    e[id] = { v, w, head[u] };
+    head[u] = id;
+}
+
+int N, K, enemy[MAXNODE];
+ll ans;
+priority_queue<EDGE> q;
+
+void Prim()
+{
+    int tot = K;
+
+    for (int i = 1; i <= K; i++)
+    {
+        int rt = enemy[i];
+        for (int i = head[rt]; i ; i = e[i].nxt)
+        {
+            int ch = e[i].to, w = e[i].val;
+            if (!vis[ch] && w > dis[ch])
+            {
+                q.emplace(e[i]);
+                dis[ch] = w;
+            }
+        }
+    }
+
+    while (!q.empty())
+    {
+        if (tot >= N) break;
+        int u = q.top().to, w = q.top().val;
+        q.pop();
+        if (vis[u]) continue;
+        vis[u] = true;
+        tot++;
+        ans -= (ll)w;
+        for (int i = head[u]; i ; i = e[i].nxt)
+        {
+            int ch = e[i].to, w = e[i].val;
+            if (vis[ch]) continue;
+            if (w > dis[ch])
+            {
+                dis[ch] = w;
+                q.emplace(e[i]);
+            }
+        }
+    }
+}
+```
+
 ### Kruskal
+
+```cpp
+
+```
 
 ## 连通性
 
 ### Tarjan缩点
 
+```cpp
+void tarjan(int u)
+{
+    low[u] = dfn[u] = ++stp;
+    stk[++stktop] = u, instk[u] = true;
+    for (int i = head[u]; i; i = nxt[i])
+    {
+        int v = to[i];
+        if (!dfn[v])
+        {
+            tarjan(v);
+            low[u] = min(low[u], low[v]);
+        }
+        else if (instk[v])
+        {
+            low[u] = min(low[u], dfn[v]);
+        }
+    }
+
+    if (dfn[u] == low[u])
+    {
+        tot++;
+        int k;
+        do
+        {
+            k = stk[stktop--];
+            instk[k] = false;
+            scc[k] = tot;
+        }while (k != u);
+    }
+}
+```
+
 ## 2-SAT
 
 ## 欧拉回路
+
+> 这里是有向图的起点终点判定。
+> 
+> 如果题目要求**字典序最大/小**，在建图前先对边进行排序。
+
+```cpp
+int get_begin()
+{
+    int beg = 0, end = 0;
+    for (int i = 1; i <= n; i++)
+    {
+        int dd = outdeg[i] - indeg[i];
+        if (dd < -1 || dd > 1 || (dd == 1 && beg) || (dd == -1 && end)) return 0;
+
+        if (dd == 1) beg = i;
+        else if (dd == -1) end = i;
+    }
+
+    if ((!beg) ^ (!end)) return 0;
+    if (beg) return beg;
+
+    for (int i = 1; i <= n; i++)
+    {
+        if (indeg[i]) return i;
+    }
+    return 0;
+}
+
+int ans[MAXN], cnt = 0;
+void Hierholzer(int u)
+{
+    for (int i = head[u]; i ; i = head[u])
+    {
+        head[u] = nxt[i]; // 链表头删节点(如果不想破坏图的结构可再copy一个head数组, 这样好维护)
+        Hierholzer(to[i]);
+    }
+    ans[++cnt] = u;
+}
+
+```
 
 ## 网络流

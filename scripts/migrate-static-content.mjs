@@ -12,6 +12,7 @@ const apply = args.includes('--apply');
 const arg = (name) => args[args.indexOf(name) + 1];
 const database = arg('--database');
 const bucket = arg('--bucket');
+const environment = arg('--env');
 const output = join(tmpdir(), 'hydroxy-wiki-migration');
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const sql = (value) => value == null ? 'NULL' : `'${String(value).replaceAll("'", "''")}'`;
@@ -97,7 +98,7 @@ for (const [index, item] of gallerySource.entries()) {
   gallery.push({ id: hash(`gallery:${item.src}:${index}`).slice(0, 32), ...item, mediaKey, order: gallerySource.length - index });
 }
 
-const statements = ['BEGIN TRANSACTION;', 'DELETE FROM search_index;', 'DELETE FROM document_tags;', 'DELETE FROM tags;', 'DELETE FROM learn_nodes;', 'DELETE FROM documents;', 'DELETE FROM anime_entries;', 'DELETE FROM gallery_entries;'];
+const statements = ['DELETE FROM search_index;', 'DELETE FROM document_tags;', 'DELETE FROM tags;', 'DELETE FROM learn_nodes;', 'DELETE FROM documents;', 'DELETE FROM anime_entries;', 'DELETE FROM gallery_entries;'];
 for (const asset of assets.values()) statements.push(`INSERT INTO media_assets (key, original_name, content_type, byte_size, sha256) VALUES (${sql(asset.key)}, ${sql(asset.originalName)}, ${sql(asset.type)}, ${asset.bytes}, ${sql(asset.digest)}) ON CONFLICT(key) DO UPDATE SET original_name=excluded.original_name, content_type=excluded.content_type, byte_size=excluded.byte_size;`);
 for (const document of documents) {
   statements.push(`INSERT INTO documents (id,kind,path,source_path,title,description,body_markdown,published_at,mood,cover_key,status) VALUES (${sql(document.id)},${sql(document.kind)},${sql(document.path)},${sql(document.sourcePath)},${sql(document.title)},${sql(document.description)},${sql(document.body)},${sql(document.publishedAt)},${sql(document.mood)},${sql(document.coverKey)},${sql(document.status)});`);
@@ -107,16 +108,18 @@ for (const document of documents) {
 for (const node of learnNodes.values()) statements.push(`INSERT INTO learn_nodes (path,parent_path,label,sort_order,document_id) VALUES (${sql(node.path)},${sql(node.parent)},${sql(node.label)},${node.order},${sql(node.documentId)});`);
 for (const item of anime) { statements.push(`INSERT INTO anime_entries (id,title,cn_title,status,year,score,note,cover_key,sort_order,visibility) VALUES (${sql(item.id)},${sql(item.title)},${sql(item.cnTitle || '')},${sql(item.status || '')},${Number(item.year) || 'NULL'},${typeof item.score === 'number' ? item.score : 'NULL'},${sql(item.note || '')},${sql(item.coverKey)},${item.order},'published');`, `INSERT INTO search_index (entity_id,entity_kind,path,title,description,body,tags) VALUES (${sql(item.id)},'anime','',${sql(item.cnTitle || item.title)},${sql(item.title)},${sql(item.note || '')},'');`); }
 for (const item of gallery) { statements.push(`INSERT INTO gallery_entries (id,title,alt,media_key,sort_order,visibility) VALUES (${sql(item.id)},${sql(item.title)},${sql(item.alt || '')},${sql(item.mediaKey)},${item.order},'published');`, `INSERT INTO search_index (entity_id,entity_kind,path,title,description,body,tags) VALUES (${sql(item.id)},'gallery','',${sql(item.title)},${sql(item.alt || '')},'','');`); }
-statements.push('COMMIT;');
-
 await mkdir(output, { recursive: true });
 const sqlFile = join(output, 'seed.sql');
+const mediaFile = join(output, 'media.json');
 await writeFile(sqlFile, statements.join('\n'));
-await writeFile(join(output, 'report.json'), JSON.stringify({ documents: documents.length, learnNodes: learnNodes.size, anime: anime.length, gallery: gallery.length, media: assets.size, sqlFile }, null, 2));
+await writeFile(mediaFile, JSON.stringify([...assets.entries()].map(([file, asset]) => ({ file, ...asset })), null, 2));
+await writeFile(join(output, 'report.json'), JSON.stringify({ documents: documents.length, learnNodes: learnNodes.size, anime: anime.length, gallery: gallery.length, media: assets.size, sqlFile, mediaFile }, null, 2));
 console.log(`Prepared migration report in ${output}`);
 if (apply) {
   if (!database || !bucket) throw new Error('Use --apply --database <D1 name> --bucket <R2 bucket>.');
   for (const [file, asset] of assets) execFileSync('npx', ['wrangler', 'r2', 'object', 'put', `${bucket}/${asset.key}`, '--file', file, '--remote'], { stdio: 'inherit' });
-  execFileSync('npx', ['wrangler', 'd1', 'execute', database, '--remote', '--file', sqlFile], { stdio: 'inherit' });
+  const executeArgs = ['wrangler', 'd1', 'execute', database, '--remote', '--file', sqlFile];
+  if (environment) executeArgs.push('--env', environment);
+  execFileSync('npx', executeArgs, { stdio: 'inherit' });
   console.log('Migration applied. Review the report and visit the Pages preview before production cutover.');
 }

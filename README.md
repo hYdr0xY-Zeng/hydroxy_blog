@@ -38,7 +38,7 @@ The repository Markdown and JSON files remain a migration/import source and a Gi
 4. Upload/import only after review:
 
 ```bash
-npm run content:migrate -- --apply --database <d1-database-name> --bucket <r2-bucket-name>
+npm run content:migrate -- --apply --database <d1-database-name> --bucket <r2-bucket-name> --env production
 ```
 
 5. Configure the Cloudflare Access application for `/admin/*` and `/api/admin/*`, set `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and `ADMIN_EMAILS`, then deploy a Pages preview branch.
