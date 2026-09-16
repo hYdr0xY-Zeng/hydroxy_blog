@@ -1,0 +1,83 @@
+---
+import type { EngagementSummary } from '@/lib/cms';
+
+type Props = {
+  documentId: string;
+  engagement: EngagementSummary;
+  placement: 'meta' | 'action';
+};
+
+const { documentId, engagement, placement } = Astro.props;
+---
+
+{placement === 'meta' ? (
+  <span class="article-engagement-meta" data-engagement data-document-id={documentId}>
+    <span data-engagement-views>VIEW {engagement.views}</span>
+    <span data-engagement-likes>LIKE {engagement.likes}</span>
+  </span>
+) : (
+  <section class="article-engagement-action pixel-panel" data-engagement data-document-id={documentId} aria-label="Article engagement">
+    <p><span data-engagement-views>VIEW {engagement.views}</span><span data-engagement-likes>LIKE {engagement.likes}</span></p>
+    <button class="text-button article-like-button" type="button" data-engagement-like disabled aria-pressed="false">LIKE</button>
+    <output data-engagement-status aria-live="polite"></output>
+  </section>
+)}
+
+<script>
+  type EngagementPayload = { views?: number; likes?: number; liked?: boolean; error?: string };
+
+  const groups = new Map<string, HTMLElement[]>();
+  document.querySelectorAll<HTMLElement>('[data-engagement]').forEach((element) => {
+    const documentId = element.dataset.documentId;
+    if (documentId) groups.set(documentId, [...(groups.get(documentId) ?? []), element]);
+  });
+
+  const sync = (documentId: string, payload: EngagementPayload) => {
+    groups.get(documentId)?.forEach((element) => {
+      element.querySelectorAll<HTMLElement>('[data-engagement-views]').forEach((target) => { target.textContent = `VIEW ${payload.views ?? 0}`; });
+      element.querySelectorAll<HTMLElement>('[data-engagement-likes]').forEach((target) => { target.textContent = `LIKE ${payload.likes ?? 0}`; });
+      element.querySelectorAll<HTMLButtonElement>('[data-engagement-like]').forEach((button) => {
+        button.disabled = false;
+        button.setAttribute('aria-pressed', String(Boolean(payload.liked)));
+        button.textContent = payload.liked ? 'LIKED' : 'LIKE';
+      });
+    });
+  };
+
+  const request = async (documentId: string, action: 'view' | 'toggle-like') => {
+    const response = await fetch('/api/engagement', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentId, action })
+    });
+    const payload = await response.json() as EngagementPayload;
+    if (!response.ok) throw new Error(payload.error || 'Request failed.');
+    return payload;
+  };
+
+  groups.forEach((elements, documentId) => {
+    void request(documentId, 'view').then((payload) => sync(documentId, payload)).catch(() => {
+      elements.forEach((element) => {
+        const status = element.querySelector<HTMLOutputElement>('[data-engagement-status]');
+        if (status) status.textContent = 'UNAVAILABLE';
+      });
+    });
+    elements.forEach((element) => {
+      element.querySelector<HTMLButtonElement>('[data-engagement-like]')?.addEventListener('click', async () => {
+        const button = element.querySelector<HTMLButtonElement>('[data-engagement-like]');
+        if (!button || button.disabled) return;
+        const status = element.querySelector<HTMLOutputElement>('[data-engagement-status]');
+        button.disabled = true;
+        if (status) status.textContent = 'SAVING...';
+        try {
+          const payload = await request(documentId, 'toggle-like');
+          sync(documentId, payload);
+          if (status) status.textContent = payload.liked ? 'THANKS' : 'REMOVED';
+        } catch (error) {
+          button.disabled = false;
+          if (status) status.textContent = error instanceof Error ? error.message : 'FAILED';
+        }
+      });
+    });
+  });
+</script>

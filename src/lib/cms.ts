@@ -9,7 +9,15 @@ export type LearnTreeOptions = { includeUnpublished?: boolean; includeEmpty?: bo
 export type LearnDirectory = Pick<LearnNode, 'path' | 'label' | 'sort_order'> & { depth: number };
 export type AnimeEntry = { id: string; title: string; cn_title: string; status: string; year: number | null; score: number | null; note: string; cover_key: string | null; sort_order: number; visibility: Visibility; created_at: string; updated_at: string };
 export type GalleryEntry = { id: string; title: string; alt: string; media_key: string; sort_order: number; visibility: Visibility; created_at: string; updated_at: string };
+export type EngagementSummary = { views: number; likes: number; liked: boolean };
+export type EngagementTotals = { views: number; likes: number };
+export type MediaReference = { type: 'document-cover' | 'document-body' | 'anime-cover' | 'gallery-image'; label: string; href?: string };
+export type MediaAsset = { key: string; original_name: string; content_type: string; byte_size: number; sha256: string; created_at: string; references: number };
 export type PageResult<T> = { items: T[]; currentPage: number; totalPages: number; totalItems: number };
+
+export class CmsOperationError extends Error {
+  constructor(message: string, public readonly status: number) { super(message); }
+}
 
 const db = (locals: App.Locals) => getEnv(locals).HYDROXY_DB;
 const pathFor = (value: string) => value.trim().replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
@@ -44,7 +52,7 @@ export async function getDocumentById(locals: App.Locals, id: string) {
   const row = await db(locals).prepare('SELECT * FROM documents WHERE id = ?').bind(id).first<Omit<ContentDocument, 'tags'>>();
   return row ? (await attachTags(locals, [row]))[0] : null;
 }
-export async function listTags(locals: App.Locals) { const result = await db(locals).prepare('SELECT label FROM tags ORDER BY label').all<{ label: string }>(); return result.results.map((row) => row.label); }
+export async function listTags(locals: App.Locals) { const result = await db(locals).prepare(`SELECT DISTINCT tags.label FROM tags JOIN document_tags ON document_tags.tag_slug = tags.slug JOIN documents ON documents.id = document_tags.document_id WHERE documents.status = 'published' ORDER BY tags.label`).all<{ label: string }>(); return result.results.map((row) => row.label); }
 
 export async function getLearnTree(locals: App.Locals, options: LearnTreeOptions = {}) {
   const documentFilter = options.includeUnpublished ? '' : "AND d.status = 'published'";
@@ -91,6 +99,38 @@ async function page<T>(locals: App.Locals, table: 'anime_entries' | 'gallery_ent
 export const listAnime = (locals: App.Locals, pageNumber: number, size = 20, includeUnpublished = false) => page<AnimeEntry>(locals, 'anime_entries', pageNumber, size, includeUnpublished);
 export const listGallery = (locals: App.Locals, pageNumber: number, size = 30, includeUnpublished = false) => page<GalleryEntry>(locals, 'gallery_entries', pageNumber, size, includeUnpublished);
 export const getRedirect = (locals: App.Locals, path: string) => db(locals).prepare('SELECT to_path FROM redirects WHERE from_path = ?').bind(path).first<{ to_path: string }>();
+
+export async function getEngagementSummary(locals: App.Locals, documentId: string, visitorHash?: string) {
+  const database = db(locals);
+  const [viewRow, likeRow, likedRow] = await Promise.all([
+    database.prepare('SELECT COUNT(*) AS total FROM document_daily_views WHERE document_id = ?').bind(documentId).first<{ total: number }>(),
+    database.prepare('SELECT COUNT(*) AS total FROM document_likes WHERE document_id = ?').bind(documentId).first<{ total: number }>(),
+    visitorHash ? database.prepare('SELECT 1 AS liked FROM document_likes WHERE document_id = ? AND visitor_hash = ?').bind(documentId, visitorHash).first<{ liked: number }>() : Promise.resolve(null)
+  ]);
+  return { views: Number(viewRow?.total ?? 0), likes: Number(likeRow?.total ?? 0), liked: Boolean(likedRow?.liked) } satisfies EngagementSummary;
+}
+
+export async function recordDailyView(locals: App.Locals, documentId: string, visitorHash: string) {
+  await db(locals).prepare('INSERT OR IGNORE INTO document_daily_views (document_id, visitor_hash, viewed_on) VALUES (?, ?, ?)').bind(documentId, visitorHash, new Date().toISOString().slice(0, 10)).run();
+  return getEngagementSummary(locals, documentId, visitorHash);
+}
+
+export async function toggleDocumentLike(locals: App.Locals, documentId: string, visitorHash: string) {
+  const database = db(locals);
+  const existing = await database.prepare('SELECT 1 AS liked FROM document_likes WHERE document_id = ? AND visitor_hash = ?').bind(documentId, visitorHash).first<{ liked: number }>();
+  if (existing) await database.prepare('DELETE FROM document_likes WHERE document_id = ? AND visitor_hash = ?').bind(documentId, visitorHash).run();
+  else await database.prepare('INSERT INTO document_likes (document_id, visitor_hash) VALUES (?, ?)').bind(documentId, visitorHash).run();
+  return getEngagementSummary(locals, documentId, visitorHash);
+}
+
+export async function getEngagementTotals(locals: App.Locals) {
+  const database = db(locals);
+  const [viewRow, likeRow] = await Promise.all([
+    database.prepare(`SELECT COUNT(*) AS total FROM document_daily_views JOIN documents ON documents.id = document_daily_views.document_id WHERE documents.status = 'published'`).first<{ total: number }>(),
+    database.prepare(`SELECT COUNT(*) AS total FROM document_likes JOIN documents ON documents.id = document_likes.document_id WHERE documents.status = 'published'`).first<{ total: number }>()
+  ]);
+  return { views: Number(viewRow?.total ?? 0), likes: Number(likeRow?.total ?? 0) } satisfies EngagementTotals;
+}
 
 export async function searchContent(locals: App.Locals, query: string) {
   const result = await db(locals).prepare(`SELECT entity_id, entity_kind, path, title, snippet(search_index, 5, '<mark>', '</mark>', '...', 16) AS excerpt FROM search_index WHERE search_index MATCH ? ORDER BY bm25(search_index) LIMIT 12`).bind(`${query.trim()}*`).all<{ entity_id: string; entity_kind: string; path: string; title: string; excerpt: string }>();
@@ -167,6 +207,67 @@ export async function saveDocument(locals: App.Locals, input: SaveDocumentInput)
   return getDocument(locals, input.kind, path, true);
 }
 export async function archiveDocument(locals: App.Locals, id: string) { await db(locals).prepare("UPDATE documents SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(id).run(); await db(locals).prepare('DELETE FROM search_index WHERE entity_id = ?').bind(id).run(); }
+
+export async function deleteDocument(locals: App.Locals, id: string, confirmation: string) {
+  const document = await getDocumentById(locals, id);
+  if (!document) throw new CmsOperationError('Document not found.', 404);
+  if (document.kind === 'profile') throw new CmsOperationError('The homepage profile cannot be deleted.', 409);
+  if (confirmation !== document.title) throw new CmsOperationError('Type the exact document title to confirm deletion.', 400);
+
+  const database = db(locals);
+  const node = document.kind === 'learn' ? await database.prepare(`SELECT path, parent_path, EXISTS(SELECT 1 FROM learn_nodes child WHERE child.parent_path = learn_nodes.path) AS has_children FROM learn_nodes WHERE document_id = ?`).bind(id).first<{ path: string; parent_path: string | null; has_children: number }>() : null;
+  if (node?.has_children) throw new CmsOperationError('A Learn article with child nodes cannot be deleted.', 409);
+
+  const oldHref = documentHref(document);
+  const parentHref = document.kind === 'learn' ? node?.parent_path ? `/learn/${node.parent_path}/` : '/learn/' : '/life/essays/';
+  const statements = [
+    ...(document.published_at ? [
+      database.prepare('INSERT OR REPLACE INTO redirects (from_path, to_path) VALUES (?, ?)').bind(oldHref, parentHref),
+      database.prepare('UPDATE redirects SET to_path = ? WHERE to_path = ?').bind(parentHref, oldHref)
+    ] : []),
+    database.prepare('DELETE FROM search_index WHERE entity_id = ?').bind(id),
+    database.prepare('DELETE FROM document_tags WHERE document_id = ?').bind(id),
+    database.prepare('DELETE FROM document_daily_views WHERE document_id = ?').bind(id),
+    database.prepare('DELETE FROM document_likes WHERE document_id = ?').bind(id),
+    ...(document.kind === 'learn' ? [database.prepare('DELETE FROM learn_nodes WHERE document_id = ?').bind(id)] : []),
+    database.prepare('DELETE FROM documents WHERE id = ?').bind(id),
+    database.prepare('DELETE FROM tags WHERE NOT EXISTS (SELECT 1 FROM document_tags WHERE document_tags.tag_slug = tags.slug)')
+  ];
+  await database.batch(statements);
+  return { redirect: '/admin/' };
+}
+
+export async function getMediaReferences(locals: App.Locals, key: string) {
+  const database = db(locals);
+  const [documentCovers, documentBodies, animeCovers, galleryImages] = await Promise.all([
+    database.prepare('SELECT id, kind, path, title FROM documents WHERE cover_key = ?').bind(key).all<Pick<ContentDocument, 'id' | 'kind' | 'path' | 'title'>>(),
+    database.prepare(`SELECT id, kind, path, title FROM documents WHERE instr(body_markdown, ?) > 0`).bind(`/media/${key}`).all<Pick<ContentDocument, 'id' | 'kind' | 'path' | 'title'>>(),
+    database.prepare('SELECT id, title, cn_title FROM anime_entries WHERE cover_key = ?').bind(key).all<{ id: string; title: string; cn_title: string }>(),
+    database.prepare('SELECT id, title FROM gallery_entries WHERE media_key = ?').bind(key).all<{ id: string; title: string }>()
+  ]);
+  return [
+    ...documentCovers.results.map((entry) => ({ type: 'document-cover' as const, label: `${entry.title} cover`, href: documentHref(entry) })),
+    ...documentBodies.results.map((entry) => ({ type: 'document-body' as const, label: `${entry.title} body`, href: documentHref(entry) })),
+    ...animeCovers.results.map((entry) => ({ type: 'anime-cover' as const, label: entry.cn_title || entry.title })),
+    ...galleryImages.results.map((entry) => ({ type: 'gallery-image' as const, label: entry.title }))
+  ] satisfies MediaReference[];
+}
+
+export async function listMediaAssets(locals: App.Locals) {
+  const result = await db(locals).prepare('SELECT * FROM media_assets ORDER BY created_at DESC, key').all<Omit<MediaAsset, 'references'>>();
+  return Promise.all(result.results.map(async (asset) => ({ ...asset, references: (await getMediaReferences(locals, asset.key)).length } satisfies MediaAsset)));
+}
+
+export async function deleteMediaAsset(locals: App.Locals, key: string, confirmation: string) {
+  const database = db(locals);
+  const asset = await database.prepare('SELECT * FROM media_assets WHERE key = ?').bind(key).first<Omit<MediaAsset, 'references'>>();
+  if (!asset) throw new CmsOperationError('Media asset not found.', 404);
+  if (confirmation !== asset.original_name) throw new CmsOperationError('Type the exact original file name to confirm deletion.', 400);
+  const references = await getMediaReferences(locals, key);
+  if (references.length) throw new CmsOperationError(`This media is still referenced by ${references.length} item(s).`, 409);
+  await getEnv(locals).HYDROXY_MEDIA.delete(key);
+  await database.prepare('DELETE FROM media_assets WHERE key = ?').bind(key).run();
+}
 
 export async function upsertAnime(locals: App.Locals, entry: Omit<AnimeEntry, 'created_at' | 'updated_at'>) {
   await db(locals).prepare(`INSERT INTO anime_entries (id,title,cn_title,status,year,score,note,cover_key,sort_order,visibility) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,cn_title=excluded.cn_title,status=excluded.status,year=excluded.year,score=excluded.score,note=excluded.note,cover_key=excluded.cover_key,sort_order=excluded.sort_order,visibility=excluded.visibility,updated_at=CURRENT_TIMESTAMP`).bind(entry.id, entry.title, entry.cn_title, entry.status, entry.year, entry.score, entry.note, entry.cover_key, entry.sort_order, entry.visibility).run();

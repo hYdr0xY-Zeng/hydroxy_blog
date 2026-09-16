@@ -21,20 +21,37 @@ const learnParentPath = kind === 'learn' ? pathParts.slice(0, -1).join('/') : ''
 const learnSlug = kind === 'learn' ? pathParts.at(-1) ?? '' : '';
 const existingLearnNode = kind === 'learn' ? adminTree.byPath.get(path) : undefined;
 const isLearnDirectoryArticle = Boolean(existingLearnNode && existingLearnNode.children.length > 0);
+const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArticle);
 ---
 
 <BaseLayout title={existing ? `Edit ${existing.title}` : 'New document'}>
-  <header class="page-hero pixel-panel"><p class="section-kicker">/admin/editor</p><h1 class="section-title">{existing ? 'Edit Document' : 'New Document'}</h1><p class="section-copy">{identity.email}</p></header>
-  <form class="editor-shell" data-editor-form data-learn-parent-path={learnParentPath} data-learn-slug={learnSlug}>
-    <section class="pixel-panel editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind" data-kind-select><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label data-path-field hidden={kind === 'learn'}>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label><div data-learn-path-fields hidden={kind !== 'learn'}>{isLearnDirectoryArticle && <input type="hidden" name="parent_path" value={learnParentPath} />}<label>Directory<select name="parent_path" data-learn-parent disabled={isLearnDirectoryArticle}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isLearnDirectoryArticle} required /></label><label>Order<input name="sort_order" type="number" value={String(existingLearnNode?.sort_order ?? 9999)} /></label><output data-learn-path-preview></output>{isLearnDirectoryArticle && <p class="form-hint">This article has child nodes, so its directory and slug cannot be moved.</p>}</div><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label><div class="editor-actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div></section>
-    <section class="pixel-panel editor-markdown"><label>Markdown<textarea name="body_markdown" data-markdown-input spellcheck="false">{existing?.body_markdown ?? ''}</textarea></label></section>
-    <section class="pixel-panel editor-preview"><h2>Preview</h2><article class="prose" data-preview></article></section>
+  <form class="editor-console" data-editor-form data-learn-parent-path={learnParentPath} data-learn-slug={learnSlug}>
+    <header class="editor-toolbar pixel-panel">
+      <div><p class="section-kicker">/admin/editor</p><h1>{existing ? existing.title : 'New Document'}</h1><span>{kind} / {existing?.status ?? 'new'} / {identity.email}</span></div>
+      <div class="editor-toolbar__actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="button" data-editor-sync aria-pressed="true">SYNC: ON</button><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div>
+    </header>
+
+    <div class="editor-shell">
+      <details class="editor-metadata pixel-panel" open>
+        <summary>METADATA</summary>
+        <div class="editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind" data-kind-select><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label data-path-field hidden={kind === 'learn'}>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label><div data-learn-path-fields hidden={kind !== 'learn'}>{isLearnDirectoryArticle && <input type="hidden" name="parent_path" value={learnParentPath} />}<label>Directory<select name="parent_path" data-learn-parent disabled={isLearnDirectoryArticle}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isLearnDirectoryArticle} required /></label><label>Order<input name="sort_order" type="number" value={String(existingLearnNode?.sort_order ?? 9999)} /></label><output data-learn-path-preview></output>{isLearnDirectoryArticle && <p class="form-hint">This article has child nodes, so its directory and slug cannot be moved or deleted.</p>}</div><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label>{existing && <div class="editor-danger"><p>Permanent deletion cannot be undone.</p><button class="text-button danger-button" type="button" data-document-delete disabled={!canDelete}>DELETE DOCUMENT</button></div>}</div>
+      </details>
+
+      <section class="editor-workspace" data-editor-workspace data-active-pane="edit">
+        <div class="editor-pane-tabs" role="tablist" aria-label="Editor view"><button class="text-button" type="button" role="tab" aria-selected="true" data-editor-tab="edit">EDIT</button><button class="text-button" type="button" role="tab" aria-selected="false" data-editor-tab="preview">PREVIEW</button></div>
+        <section class="editor-markdown editor-pane pixel-panel" data-editor-pane="edit"><label>Markdown<textarea name="body_markdown" data-markdown-input spellcheck="false">{existing?.body_markdown ?? ''}</textarea></label></section>
+        <section class="editor-preview editor-pane pixel-panel" data-editor-pane="preview"><h2>Preview</h2><article class="prose" data-preview></article></section>
+      </section>
+    </div>
   </form>
+
+  {existing && <dialog class="delete-dialog pixel-panel" data-delete-dialog><form data-delete-form><h2>Delete Document</h2><p>Type <strong>{existing.title}</strong> to permanently delete this document.</p><label>Confirmation<input data-delete-confirmation autocomplete="off" /></label><div><button class="text-button" type="button" data-dialog-cancel>CANCEL</button><button class="text-button danger-button" type="submit">DELETE</button></div><output data-delete-error aria-live="polite"></output></form></dialog>}
 </BaseLayout>
 
 <script>
   type PreviewPayload = { html?: string; error?: string };
   type SavePayload = { document?: { id?: string }; error?: string };
+  type DeletePayload = { ok?: boolean; redirect?: string; error?: string };
 
   const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Request failed';
   const form = document.querySelector<HTMLFormElement>('[data-editor-form]');
@@ -42,6 +59,9 @@ const isLearnDirectoryArticle = Boolean(existingLearnNode && existingLearnNode.c
   if (form) {
     const textarea = form.querySelector<HTMLTextAreaElement>('[data-markdown-input]');
     const preview = form.querySelector<HTMLElement>('[data-preview]');
+    const previewPane = form.querySelector<HTMLElement>('[data-editor-pane="preview"]');
+    const workspace = form.querySelector<HTMLElement>('[data-editor-workspace]');
+    const syncButton = form.querySelector<HTMLButtonElement>('[data-editor-sync]');
     const kindSelect = form.querySelector<HTMLSelectElement>('[data-kind-select]');
     const pathField = form.querySelector<HTMLElement>('[data-path-field]');
     const pathInput = form.querySelector<HTMLInputElement>('input[name="path"]');
@@ -50,6 +70,25 @@ const isLearnDirectoryArticle = Boolean(existingLearnNode && existingLearnNode.c
     const slugInput = form.querySelector<HTMLInputElement>('[data-learn-slug]');
     const pathPreview = form.querySelector<HTMLOutputElement>('[data-learn-path-preview]');
     let timer: number | undefined;
+    let syncing = false;
+    let syncEnabled = localStorage.getItem('hydroxy-editor-sync') !== 'false';
+
+    const scrollRatio = (element: HTMLElement) => { const range = element.scrollHeight - element.clientHeight; return range > 0 ? element.scrollTop / range : 0; };
+    const setScrollRatio = (element: HTMLElement, ratio: number) => { element.scrollTop = Math.max(0, (element.scrollHeight - element.clientHeight) * ratio); };
+    const setSyncEnabled = (enabled: boolean) => {
+      syncEnabled = enabled;
+      localStorage.setItem('hydroxy-editor-sync', String(enabled));
+      if (syncButton) { syncButton.textContent = enabled ? 'SYNC: ON' : 'SYNC: OFF'; syncButton.setAttribute('aria-pressed', String(enabled)); }
+    };
+    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
+      if (!syncEnabled || syncing) return;
+      syncing = true;
+      requestAnimationFrame(() => { setScrollRatio(target, scrollRatio(source)); syncing = false; });
+    };
+    setSyncEnabled(syncEnabled);
+    syncButton?.addEventListener('click', () => setSyncEnabled(!syncEnabled));
+    textarea?.addEventListener('scroll', () => { if (previewPane) syncScroll(textarea, previewPane); }, { passive: true });
+    previewPane?.addEventListener('scroll', () => { if (textarea) syncScroll(previewPane, textarea); }, { passive: true });
 
     const syncPathFields = () => {
       const isLearn = kindSelect?.value === 'learn';
@@ -66,62 +105,57 @@ const isLearnDirectoryArticle = Boolean(existingLearnNode && existingLearnNode.c
     slugInput?.addEventListener('input', syncPathFields);
     syncPathFields();
 
-    const updatePreview = async () => {
-      if (!textarea || !preview) return;
-      const response = await fetch('/api/admin/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markdown: textarea.value })
-      });
-      const payload = await response.json() as PreviewPayload;
-      preview.innerHTML = payload.html || '';
+    const setActivePane = (pane: 'edit' | 'preview') => {
+      if (workspace) workspace.dataset.activePane = pane;
+      form.querySelectorAll<HTMLButtonElement>('[data-editor-tab]').forEach((button) => button.setAttribute('aria-selected', String(button.dataset.editorTab === pane)));
     };
+    form.querySelectorAll<HTMLButtonElement>('[data-editor-tab]').forEach((button) => button.addEventListener('click', () => setActivePane(button.dataset.editorTab === 'preview' ? 'preview' : 'edit')));
 
-    textarea?.addEventListener('input', () => {
-      if (timer !== undefined) clearTimeout(timer);
-      timer = window.setTimeout(updatePreview, 250);
-    });
+    const updatePreview = async () => {
+      if (!textarea || !preview || !previewPane) return;
+      const ratio = scrollRatio(previewPane);
+      try {
+        const response = await fetch('/api/admin/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ markdown: textarea.value }) });
+        const payload = await response.json() as PreviewPayload;
+        if (!response.ok) throw new Error(payload.error || 'Preview failed.');
+        preview.innerHTML = payload.html || '';
+      } catch (error) { preview.textContent = errorMessage(error); }
+      requestAnimationFrame(() => setScrollRatio(previewPane, ratio));
+    };
+    textarea?.addEventListener('input', () => { if (timer !== undefined) clearTimeout(timer); timer = window.setTimeout(updatePreview, 250); });
     void updatePreview();
 
     form.addEventListener('submit', async (event: SubmitEvent) => {
       event.preventDefault();
       const values = new FormData(form);
-      const field = (name: string) => {
-        const value = values.get(name);
-        return typeof value === 'string' ? value : '';
-      };
+      const field = (name: string) => { const value = values.get(name); return typeof value === 'string' ? value : ''; };
       const publishedAt = field('published_at');
       const parsedPublishedAt = publishedAt ? new Date(publishedAt) : null;
       const submitter = event.submitter;
-      const documentPayload = {
-        id: field('id'),
-        kind: field('kind'),
-        path: field('path'),
-        parent_path: field('parent_path') || form.dataset.learnParentPath || '',
-        slug: field('slug') || form.dataset.learnSlug || '',
-        sort_order: Number(field('sort_order')),
-        title: field('title'),
-        description: field('description'),
-        body_markdown: field('body_markdown'),
-        mood: field('mood'),
-        cover_key: field('cover_key'),
-        status: submitter instanceof HTMLElement ? submitter.dataset.status || 'draft' : 'draft',
-        tags: field('tags').split(',').map((tag) => tag.trim()).filter(Boolean),
-        published_at: parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime()) ? parsedPublishedAt.toISOString() : null
-      };
-
+      const documentPayload = { id: field('id'), kind: field('kind'), path: field('path'), parent_path: field('parent_path') || form.dataset.learnParentPath || '', slug: field('slug') || form.dataset.learnSlug || '', sort_order: Number(field('sort_order')), title: field('title'), description: field('description'), body_markdown: field('body_markdown'), mood: field('mood'), cover_key: field('cover_key'), status: submitter instanceof HTMLElement ? submitter.dataset.status || 'draft' : 'draft', tags: field('tags').split(',').map((tag) => tag.trim()).filter(Boolean), published_at: parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime()) ? parsedPublishedAt.toISOString() : null };
       try {
-        const response = await fetch('/api/admin/content', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'saveDocument', document: documentPayload })
-        });
+        const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveDocument', document: documentPayload }) });
         const payload = await response.json() as SavePayload;
         if (!response.ok || !payload.document?.id) throw new Error(payload.error || 'Save failed');
         window.location.href = '/admin/editor/' + payload.document.id;
-      } catch (error) {
-        alert(errorMessage(error));
-      }
+      } catch (error) { alert(errorMessage(error)); }
     });
   }
+
+  const dialog = document.querySelector<HTMLDialogElement>('[data-delete-dialog]');
+  document.querySelector<HTMLButtonElement>('[data-document-delete]')?.addEventListener('click', () => dialog?.showModal());
+  dialog?.querySelector<HTMLButtonElement>('[data-dialog-cancel]')?.addEventListener('click', () => dialog.close());
+  dialog?.querySelector<HTMLFormElement>('[data-delete-form]')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const confirmation = dialog.querySelector<HTMLInputElement>('[data-delete-confirmation]')?.value ?? '';
+    const output = dialog.querySelector<HTMLOutputElement>('[data-delete-error]');
+    const id = form?.querySelector<HTMLInputElement>('input[name="id"]')?.value;
+    if (!id) return;
+    try {
+      const response = await fetch('/api/admin/documents/' + encodeURIComponent(id), { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation }) });
+      const payload = await response.json() as DeletePayload;
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'Delete failed.');
+      window.location.href = payload.redirect || '/admin/';
+    } catch (error) { if (output) output.textContent = errorMessage(error); }
+  });
 </script>

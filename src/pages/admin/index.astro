@@ -3,17 +3,19 @@ export const prerender = false;
 
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { requireAdmin } from '@/lib/auth';
-import { getDocument, listAnime, listDocuments, listGallery, listLearnDirectories } from '@/lib/cms';
+import { getDocument, listAnime, listDocuments, listGallery, listLearnDirectories, listMediaAssets } from '@/lib/cms';
+import { mediaHref } from '@/lib/runtime';
 
 const identity = await requireAdmin(Astro.request, Astro.locals);
 if (identity instanceof Response) return identity;
-const [learn, essays, profile, anime, gallery, directories] = await Promise.all([
+const [learn, essays, profile, anime, gallery, directories, media] = await Promise.all([
   listDocuments(Astro.locals, { kind: 'learn', includeUnpublished: true }),
   listDocuments(Astro.locals, { kind: 'essay', includeUnpublished: true }),
   getDocument(Astro.locals, 'profile', 'home', true),
   listAnime(Astro.locals, 1, 100, true),
   listGallery(Astro.locals, 1, 100, true),
-  listLearnDirectories(Astro.locals)
+  listLearnDirectories(Astro.locals),
+  listMediaAssets(Astro.locals)
 ]);
 const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
 ---
@@ -23,14 +25,15 @@ const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
   <section class="admin-grid">
     <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Documents</h2><div><a class="text-button" href="/admin/editor/new?kind=learn">NEW LEARN</a><a class="text-button" href="/admin/editor/new?kind=essay">NEW ESSAY</a></div></div><ul class="article-list">{documents.map((document) => <li><a class="article-link" href={`/admin/editor/${document.id}`}><strong>{document.title}</strong><span>{document.kind} / {document.status} / {document.path}</span></a></li>)}</ul></div>
     <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Learn Directories</h2></div><form class="admin-form" data-directory-form><label>Parent<select name="parent_path"><option value="">/learn</option>{directories.map((directory) => <option value={directory.path}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Label<input name="label" placeholder="Computer Science" required /></label><label>Slug<input name="slug" placeholder="computer-science" pattern="[a-z0-9]+(-[a-z0-9]+)*" required /></label><label>Order<input name="sort_order" type="number" value="9999" /></label><button class="text-button">CREATE DIRECTORY</button></form><ul class="article-list">{directories.map((directory) => <li><span class="article-link"><strong>{directory.label}</strong><span>/learn/{directory.path} / order {directory.sort_order}</span></span></li>)}</ul></div>
-    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Media</h2></div><form data-media-form class="admin-form"><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required /><button class="text-button">UPLOAD</button><output data-media-output></output></form></div>
+    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Media</h2></div><form data-media-form class="admin-form"><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required /><button class="text-button">UPLOAD</button><output data-media-output></output></form><ul class="admin-media-list">{media.map((asset) => <li><a href={mediaHref(asset.key)} target="_blank" rel="noreferrer"><img src={mediaHref(asset.key)} alt={asset.original_name} loading="lazy" /></a><div><strong>{asset.original_name}</strong><span>{asset.key}</span><span>{Math.ceil(asset.byte_size / 1024)} KiB / {asset.references} reference(s)</span></div><div><button class="icon-button" type="button" title="Copy media URL" aria-label="Copy media URL" data-media-copy={mediaHref(asset.key)}>COPY</button><button class="text-button danger-button" type="button" data-media-delete data-media-key={asset.key} data-media-name={asset.original_name}>DELETE</button></div></li>)}</ul></div>
     <div class="pixel-panel admin-panel"><h2>Anime Log</h2><form class="admin-form" data-life-form="anime"><input name="id" type="hidden" /><input name="title" placeholder="Original title" required /><input name="cn_title" placeholder="中文标题" /><input name="year" type="number" placeholder="Year" /><input name="score" type="number" min="0" max="10" step="0.1" placeholder="Score" /><input name="status" placeholder="Status" /><input name="cover_key" placeholder="R2 cover key" /><input name="sort_order" type="number" value="0" placeholder="Order" /><textarea name="note" placeholder="Note"></textarea><select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><button class="text-button">SAVE ANIME</button></form><div class="admin-entry-list">{anime.items.map((item) => <button class="admin-entry" type="button" data-life-entry={JSON.stringify(item)} data-life-target="anime">{item.cn_title || item.title} / {item.visibility}</button>)}</div></div>
     <div class="pixel-panel admin-panel"><h2>Gallery</h2><form class="admin-form" data-life-form="gallery"><input name="id" type="hidden" /><input name="title" placeholder="Image title" required /><input name="alt" placeholder="Alt text" /><input name="media_key" placeholder="R2 media key" required /><input name="sort_order" type="number" value="0" placeholder="Order" /><select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><button class="text-button">SAVE GALLERY</button></form><div class="admin-entry-list">{gallery.items.map((item) => <button class="admin-entry" type="button" data-life-entry={JSON.stringify(item)} data-life-target="gallery">{item.title} / {item.visibility}</button>)}</div></div>
   </section>
+  <dialog class="delete-dialog pixel-panel" data-media-delete-dialog><form data-media-delete-form><h2>Delete Media</h2><p>Type <strong data-media-delete-name></strong> to permanently delete this unreferenced file.</p><label>Confirmation<input data-media-delete-confirmation autocomplete="off" /></label><div><button class="text-button" type="button" data-dialog-cancel>CANCEL</button><button class="text-button danger-button" type="submit">DELETE</button></div><output data-media-delete-error aria-live="polite"></output></form></dialog>
 </BaseLayout>
 
 <script>
-  type ApiPayload = { error?: string; key?: string };
+  type ApiPayload = { error?: string; key?: string; ok?: boolean; references?: { type: string; label: string }[] };
 
   const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Request failed';
   const post = async (body: unknown) => {
@@ -103,4 +106,50 @@ const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
       }
     });
   }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-media-copy]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const href = button.dataset.mediaCopy;
+      if (!href) return;
+      await navigator.clipboard.writeText(new URL(href, window.location.origin).href);
+      button.textContent = 'DONE';
+      window.setTimeout(() => { button.textContent = 'COPY'; }, 1200);
+    });
+  });
+
+  const mediaDialog = document.querySelector<HTMLDialogElement>('[data-media-delete-dialog]');
+  mediaDialog?.querySelector<HTMLButtonElement>('[data-dialog-cancel]')?.addEventListener('click', () => mediaDialog.close());
+  let mediaDeletion: { key: string; name: string } | null = null;
+  document.querySelectorAll<HTMLButtonElement>('[data-media-delete]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const key = button.dataset.mediaKey;
+      const name = button.dataset.mediaName;
+      if (!key || !name || !mediaDialog) return;
+      mediaDeletion = { key, name };
+      const label = mediaDialog.querySelector<HTMLElement>('[data-media-delete-name]');
+      const confirmation = mediaDialog.querySelector<HTMLInputElement>('[data-media-delete-confirmation]');
+      const output = mediaDialog.querySelector<HTMLOutputElement>('[data-media-delete-error]');
+      if (label) label.textContent = name;
+      if (confirmation) confirmation.value = '';
+      if (output) output.textContent = '';
+      mediaDialog.showModal();
+    });
+  });
+  mediaDialog?.querySelector<HTMLFormElement>('[data-media-delete-form]')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!mediaDeletion) return;
+    const confirmation = mediaDialog.querySelector<HTMLInputElement>('[data-media-delete-confirmation]')?.value ?? '';
+    const output = mediaDialog.querySelector<HTMLOutputElement>('[data-media-delete-error]');
+    try {
+      const response = await fetch('/api/admin/media/' + mediaDeletion.key.split('/').map(encodeURIComponent).join('/'), { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation }) });
+      const payload = await response.json() as ApiPayload;
+      if (!response.ok || !payload.ok) {
+        const references = payload.references?.map((reference) => reference.label).join(', ');
+        throw new Error(references ? `${payload.error || 'Delete blocked.'} ${references}` : payload.error || 'Delete failed.');
+      }
+      window.location.reload();
+    } catch (error) {
+      if (output) output.textContent = errorMessage(error);
+    }
+  });
 </script>

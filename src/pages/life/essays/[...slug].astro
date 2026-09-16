@@ -3,7 +3,8 @@ export const prerender = false;
 
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import TableOfContents from '@/components/TableOfContents.astro';
-import { getDocument, getRedirect } from '@/lib/cms';
+import ArticleEngagement from '@/components/ArticleEngagement.astro';
+import { getDocument, getEngagementSummary, getRedirect } from '@/lib/cms';
 import { renderMarkdown } from '@/lib/markdown';
 import { formatDate } from '@/utils/site';
 
@@ -15,9 +16,11 @@ if (!entry) {
   return Astro.redirect('/life/essays/');
 }
 const rendered = await renderMarkdown(entry.body_markdown);
+const engagement = await getEngagementSummary(Astro.locals, entry.id);
 ---
 
 <BaseLayout title={entry.title} description={entry.description}>
-  <header class="article-hero pixel-panel"><p class="section-kicker">/life/essays</p><h1 class="section-title">{entry.title}</h1><p class="section-copy">{entry.description}</p><div class="article-meta"><span>{formatDate(entry.published_at ?? entry.updated_at)}</span><span>{entry.mood || 'quiet'}</span>{entry.tags.map((tag) => <span>{tag}</span>)}</div></header>
+  <header class="article-hero pixel-panel"><p class="section-kicker">/life/essays</p><h1 class="section-title">{entry.title}</h1><p class="section-copy">{entry.description}</p><div class="article-meta"><span>{formatDate(entry.published_at ?? entry.updated_at)}</span><span>{entry.mood || 'quiet'}</span>{entry.tags.map((tag) => <span>{tag}</span>)}<ArticleEngagement documentId={entry.id} engagement={engagement} placement="meta" /></div></header>
   <div class="article-shell"><article class="article-body pixel-panel prose" set:html={rendered.html} /><TableOfContents headings={rendered.headings} /></div>
+  <ArticleEngagement documentId={entry.id} engagement={engagement} placement="action" />
 </BaseLayout>

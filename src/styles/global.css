@@ -280,7 +280,8 @@ button {
 }
 
 .tag,
-.article-meta span {
+.article-meta > span,
+.article-engagement-meta > span {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -297,6 +298,52 @@ button {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 18px;
+}
+
+.article-engagement-meta {
+  display: contents;
+}
+
+.article-engagement-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 14px 18px;
+}
+
+.article-engagement-action p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.article-engagement-action p span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 2px solid var(--pink-dark);
+  padding: 0 9px;
+  color: var(--yellow);
+  background: #130d13;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+}
+
+.article-like-button[aria-pressed="true"] {
+  color: var(--yellow);
+  background: #3b1424;
+}
+
+.article-engagement-action output {
+  min-width: 74px;
+  color: var(--muted);
+  font-family: var(--font-pixel);
+  font-size: 0.74rem;
+  text-align: right;
 }
 
 .home-grid {
@@ -412,6 +459,16 @@ button {
 
 .terminal-line--error {
   color: var(--red);
+}
+
+.terminal-line--link a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.terminal-line--link a:hover,
+.terminal-line--link a:focus-visible {
+  color: var(--yellow);
 }
 
 .terminal-form {
@@ -1364,9 +1421,8 @@ button {
 }
 
 .admin-panel,
-.editor-fields,
-.editor-markdown,
-.editor-preview {
+.editor-metadata,
+.editor-pane {
   padding: 18px;
 }
 
@@ -1441,28 +1497,257 @@ button {
   color: var(--yellow);
 }
 
+.admin-media-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.admin-media-list li {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border-muted);
+  padding: 8px;
+  background: #0b080b;
+}
+
+.admin-media-list img {
+  display: block;
+  width: 58px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: #050505;
+}
+
+.admin-media-list strong,
+.admin-media-list span {
+  display: block;
+}
+
+.admin-media-list span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-media-list li > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.editor-console {
+  display: grid;
+  gap: 14px;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+}
+
+.editor-toolbar h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.editor-toolbar .section-kicker {
+  margin-bottom: 4px;
+}
+
+.editor-toolbar > div:first-child > span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.editor-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .editor-shell {
   display: grid;
-  grid-template-columns: minmax(220px, 0.5fr) minmax(360px, 1fr) minmax(360px, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(250px, 0.42fr) minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
 }
 
+.editor-metadata {
+  min-height: 0;
+  max-height: calc(100dvh - 170px);
+  overflow: auto;
+}
+
+.editor-metadata summary {
+  cursor: pointer;
+  color: var(--yellow);
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+}
+
+.editor-metadata[open] summary {
+  margin-bottom: 12px;
+}
+
+.editor-workspace {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.editor-pane {
+  min-width: 0;
+  height: calc(100dvh - 170px);
+  min-height: 480px;
+}
+
+.editor-markdown {
+  display: grid;
+}
+
+.editor-markdown label {
+  min-height: 0;
+}
+
 .editor-markdown textarea {
-  min-height: 68dvh;
-  resize: vertical;
+  height: 100%;
+  min-height: 0;
+  resize: none;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   line-height: 1.55;
 }
 
 .editor-preview {
-  min-height: 68dvh;
   overflow: auto;
+}
+
+.editor-preview h2 {
+  margin-top: 0;
+  color: var(--yellow);
+  font-family: var(--font-pixel);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.editor-preview .prose > :first-child {
+  margin-top: 0;
+}
+
+.editor-pane-tabs {
+  display: none;
+}
+
+.editor-danger {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  border-top: 2px solid var(--red);
+  padding-top: 12px;
+}
+
+.editor-danger p,
+.form-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.danger-button {
+  border-color: var(--red);
+  color: #ff9292;
+}
+
+.danger-button:hover,
+.danger-button:focus-visible {
+  background: #3b1016;
+  color: #fff;
+}
+
+.delete-dialog {
+  width: min(480px, calc(100vw - 32px));
+  border: 4px solid var(--line-strong);
+  padding: 20px;
+  color: var(--text);
+  background: var(--bg-panel);
+}
+
+.delete-dialog::backdrop {
+  background: rgb(0 0 0 / 72%);
+}
+
+.delete-dialog form {
+  display: grid;
+  gap: 14px;
+}
+
+.delete-dialog h2,
+.delete-dialog p {
+  margin: 0;
+}
+
+.delete-dialog h2 {
+  color: var(--yellow);
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.delete-dialog label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.delete-dialog input {
+  width: 100%;
+  border: 2px solid var(--border-muted);
+  padding: 9px 10px;
+  color: var(--text);
+  background: #09070a;
+  font: inherit;
+}
+
+.delete-dialog form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delete-dialog output {
+  color: #ff9292;
+  font-size: 0.8rem;
 }
 
 @media (max-width: 980px) {
   .admin-grid,
   .editor-shell { grid-template-columns: 1fr; }
-  .editor-markdown textarea,
-  .editor-preview { min-height: 45dvh; }
+  .editor-metadata { max-height: 38dvh; }
+  .editor-workspace { grid-template-columns: 1fr; }
+  .editor-pane-tabs { display: flex; gap: 8px; }
+  .editor-workspace[data-active-pane="edit"] [data-editor-pane="preview"],
+  .editor-workspace[data-active-pane="preview"] [data-editor-pane="edit"] { display: none; }
+  .editor-pane { height: 62dvh; min-height: 380px; }
+  .admin-media-list li { grid-template-columns: 48px minmax(0, 1fr); }
+  .admin-media-list li > div:last-child { grid-column: 1 / -1; justify-content: flex-start; }
+  .admin-media-list img { width: 48px; height: 40px; }
 }

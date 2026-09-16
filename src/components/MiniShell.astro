@@ -1,9 +1,16 @@
-<section class="terminal-panel pixel-panel" aria-label="Hydroxy shell">
+---
+type ShellNode = { path: string; label: string; href: string; directory: boolean; children: ShellNode[] };
+type Props = { tree: ShellNode[]; recent: { title: string; href: string }[]; tags: string[]; engagement: { views: number; likes: number }; contentCount: number };
+const { tree, recent, tags, engagement, contentCount } = Astro.props;
+const shellIndex = JSON.stringify({ tree, recent, tags, engagement, contentCount });
+---
+
+<section class="terminal-panel pixel-panel" aria-label="Hydroxy shell" data-shell-index={shellIndex}>
   <div class="terminal-screen" data-shell>
     <div class="terminal-output" data-shell-output>
-      <p class="terminal-line">HYDROXY SHELL v0.1</p>
-      <p class="terminal-line">BOOT: OK</p>
-      <p class="terminal-line">PATH: /</p>
+      <p class="terminal-line">HYDROXY SHELL v0.2</p>
+      <p class="terminal-line">D1 LINK: OK</p>
+      <p class="terminal-line">TYPE help FOR COMMANDS</p>
     </div>
     <form class="terminal-form" data-shell-form>
       <span data-shell-prompt>hydroxy:/ $</span>
@@ -13,21 +20,20 @@
 </section>
 
 <script>
-  const shell = document.querySelector<HTMLElement>('[data-shell]');
+  type ShellNode = { path: string; label: string; href: string; directory: boolean; children: ShellNode[] };
+  type ShellIndex = { tree: ShellNode[]; recent: { title: string; href: string }[]; tags: string[]; engagement: { views: number; likes: number }; contentCount: number };
+
+  const panel = document.querySelector<HTMLElement>('[data-shell-index]');
+  const shell = panel?.querySelector<HTMLElement>('[data-shell]');
   const output = shell?.querySelector<HTMLElement>('[data-shell-output]');
   const form = shell?.querySelector<HTMLFormElement>('[data-shell-form]');
   const input = shell?.querySelector<HTMLInputElement>('[data-shell-input]');
   const prompt = shell?.querySelector<HTMLElement>('[data-shell-prompt]');
-
-  const routes: Record<string, string> = {
-    home: '/',
-    learn: '/learn/',
-    life: '/life/',
-    archive: '/archive/',
-    search: '/search/',
-    about: '/about/'
-  };
-
+  const index = JSON.parse(panel?.dataset.shellIndex || '{"tree":[],"recent":[],"tags":[],"engagement":{"views":0,"likes":0},"contentCount":0}') as ShellIndex;
+  const routes: Record<string, { href: string; directory?: boolean }> = { home: { href: '/' }, life: { href: '/life/', directory: true }, archive: { href: '/archive/' }, search: { href: '/search/' }, about: { href: '/about/' } };
+  const byPath = new Map<string, ShellNode>();
+  const visit = (nodes: ShellNode[]) => nodes.forEach((node) => { byPath.set(node.path, node); visit(node.children); });
+  visit(index.tree);
   let cwd = '/';
 
   function write(text: string, type = '') {
@@ -38,62 +44,72 @@
     output.append(line);
     output.scrollTop = output.scrollHeight;
   }
-
-  function updatePrompt() {
-    if (prompt) prompt.textContent = 'hydroxy:' + cwd + ' $';
+  function writeLink(label: string, href: string, suffix = '') {
+    if (!output) return;
+    const line = document.createElement('p');
+    line.className = 'terminal-line terminal-line--link';
+    const link = document.createElement('a');
+    link.href = href;
+    link.textContent = label;
+    line.append(link, suffix);
+    output.append(line);
+    output.scrollTop = output.scrollHeight;
   }
-
-  function go(path: string) {
-    window.location.href = path;
+  function updatePrompt() { if (prompt) prompt.textContent = 'hydroxy:' + cwd + ' $'; }
+  function learnPath() { return cwd === '/learn' ? '' : cwd.replace(/^\/learn\//, ''); }
+  function currentNode() { return cwd.startsWith('/learn/') ? byPath.get(learnPath()) : undefined; }
+  function children() {
+    if (cwd === '/') return [{ label: 'learn/', href: '/learn/', directory: true }, ...Object.entries(routes).filter(([name]) => name !== 'home').map(([label, route]) => ({ label: route.directory ? `${label}/` : label, href: route.href, directory: Boolean(route.directory) }))];
+    if (cwd === '/learn') return index.tree.map((node) => ({ label: node.directory ? `${node.path.split('/').at(-1)}/` : node.path.split('/').at(-1) || node.label, href: node.href, directory: node.directory }));
+    return currentNode()?.children.map((node) => ({ label: node.directory ? `${node.path.split('/').at(-1)}/` : node.path.split('/').at(-1) || node.label, href: node.href, directory: node.directory })) ?? [];
   }
-
+  function resolveLearn(target: string) {
+    const cleaned = target.replace(/^\/+|\/+$/g, '').replace(/^learn\//, '');
+    if (!cleaned) return { path: '', href: '/learn/', directory: true };
+    const node = byPath.get(cleaned);
+    return node ? { path: node.path, href: node.href, directory: node.directory } : null;
+  }
+  function resolveTarget(target: string) {
+    if (target.startsWith('/')) return target.startsWith('/learn') ? resolveLearn(target) : Object.values(routes).find((route) => route.href === target || route.href === `${target}/`) ? { path: target, href: target.endsWith('/') ? target : `${target}/`, directory: false } : null;
+    if (cwd.startsWith('/learn')) {
+      const base = learnPath();
+      return resolveLearn(base ? `${base}/${target}` : target) ?? resolveLearn(target);
+    }
+    if (target === 'learn') return { path: '', href: '/learn/', directory: true };
+    const route = routes[target];
+    return route ? { path: target, href: route.href, directory: Boolean(route.directory) } : null;
+  }
+  function changeDirectory(target: string) {
+    if (!target || target === '/') { cwd = '/'; updatePrompt(); return true; }
+    if (target === '..') {
+      if (cwd.startsWith('/learn/')) { const path = learnPath().split('/'); path.pop(); cwd = path.length ? `/learn/${path.join('/')}` : '/learn'; }
+      else if (cwd !== '/') cwd = '/';
+      updatePrompt();
+      return true;
+    }
+    const resolved = resolveTarget(target);
+    if (!resolved?.directory) return false;
+    cwd = resolved.href.startsWith('/learn/') ? resolved.path ? `/learn/${resolved.path}` : '/learn' : resolved.path ? `/${resolved.path}` : '/';
+    updatePrompt();
+    return true;
+  }
   function handle(commandLine: string) {
     const [command = '', ...args] = commandLine.trim().split(/\s+/);
     const target = args.join(' ');
-
     if (!command) return;
     write((prompt?.textContent || 'hydroxy:/ $') + ' ' + commandLine, 'terminal-line--command');
-
-    switch (command) {
-      case 'help':
-        write('help ls cd open search clear');
-        break;
-      case 'ls':
-        write(Object.keys(routes).join('  '));
-        break;
-      case 'cd': {
-        const next = target.replace(/^\//, '') || 'home';
-        if (routes[next]) {
-          cwd = next === 'home' ? '/' : '/' + next;
-          updatePrompt();
-          write('PATH: ' + cwd);
-        } else {
-          write('NO SUCH PATH: ' + target, 'terminal-line--error');
-        }
-        break;
-      }
-      case 'open': {
-        const next = target.replace(/^\//, '') || 'home';
-        if (routes[next]) go(routes[next]);
-        else write('NO SUCH ROUTE: ' + target, 'terminal-line--error');
-        break;
-      }
-      case 'search':
-        window.dispatchEvent(new CustomEvent('hydroxy:search', { detail: { query: target } }));
-        break;
-      case 'clear':
-        if (output) output.innerHTML = '';
-        break;
-      default:
-        if (routes[command]) go(routes[command]);
-        else write('UNKNOWN COMMAND: ' + command, 'terminal-line--error');
-    }
+    if (command === 'help') { write('help  ls  cd  pwd  open  recent  tags  stats  search  clear'); return; }
+    if (command === 'pwd') { write(cwd); return; }
+    if (command === 'ls') { const entries = children(); if (!entries.length) write('EMPTY'); else entries.forEach((entry) => writeLink(entry.label, entry.href)); return; }
+    if (command === 'cd') { if (!changeDirectory(target)) write(`NOT A DIRECTORY: ${target}`, 'terminal-line--error'); return; }
+    if (command === 'open') { const resolved = resolveTarget(target); if (resolved) window.location.href = resolved.href; else write(`NO SUCH ROUTE: ${target}`, 'terminal-line--error'); return; }
+    if (command === 'recent') { index.recent.forEach((entry) => writeLink(entry.title, entry.href)); return; }
+    if (command === 'tags') { write(index.tags.join('  ') || 'NO TAGS'); return; }
+    if (command === 'stats') { write(`ARTICLES ${index.contentCount} / VIEWS ${index.engagement.views} / LIKES ${index.engagement.likes}`); return; }
+    if (command === 'search') { window.dispatchEvent(new CustomEvent('hydroxy:search', { detail: { query: target } })); return; }
+    if (command === 'clear') { if (output) output.innerHTML = ''; return; }
+    if (routes[command] || command === 'learn') { const resolved = resolveTarget(command); if (resolved) window.location.href = resolved.href; return; }
+    write(`UNKNOWN COMMAND: ${command}`, 'terminal-line--error');
   }
-
-  form?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!input) return;
-    handle(input.value);
-    input.value = '';
-  });
+  form?.addEventListener('submit', (event) => { event.preventDefault(); if (!input) return; handle(input.value); input.value = ''; });
 </script>

@@ -4,24 +4,29 @@ export const prerender = false;
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import RpgStatus from '@/components/RpgStatus.astro';
 import MiniShell from '@/components/MiniShell.astro';
-import { documentHref, getProfile, listDocuments, listTags } from '@/lib/cms';
+import { documentHref, getEngagementTotals, getLearnTree, getProfile, listDocuments, listTags } from '@/lib/cms';
 import { renderMarkdown } from '@/lib/markdown';
 import { formatDate } from '@/utils/site';
 
-const [learn, essays, profile, tags] = await Promise.all([
+const [learn, essays, profile, tags, tree, engagement] = await Promise.all([
   listDocuments(Astro.locals, { kind: 'learn' }),
   listDocuments(Astro.locals, { kind: 'essay' }),
   getProfile(Astro.locals),
-  listTags(Astro.locals)
+  listTags(Astro.locals),
+  getLearnTree(Astro.locals),
+  getEngagementTotals(Astro.locals)
 ]);
 const recent = [...learn, ...essays].sort((a, b) => Date.parse(b.published_at ?? b.updated_at) - Date.parse(a.published_at ?? a.updated_at)).slice(0, 6);
 const profileRendered = profile ? await renderMarkdown(profile.body_markdown) : null;
+const shellTree = tree.roots.map(function toShellNode(node): { path: string; label: string; href: string; directory: boolean; children: ReturnType<typeof toShellNode>[] } {
+  return { path: node.path, label: node.label, href: node.href, directory: node.children.length > 0, children: node.children.map(toShellNode) };
+});
 ---
 
 <BaseLayout>
   <div class="home-grid">
     <RpgStatus learnCount={learn.length} essayCount={essays.length} tagCount={tags.length} />
-    <MiniShell />
+    <MiniShell tree={shellTree} recent={recent.map((entry) => ({ title: entry.title, href: documentHref(entry) }))} tags={tags.slice(0, 18)} engagement={engagement} contentCount={learn.length + essays.length} />
   </div>
   <section class="dashboard" aria-label="Hydroxy Wiki dashboard">
     <div class="dashboard-section pixel-panel home-profile-card"><h2>{profile?.title ?? 'Profile'}</h2><div class="home-profile-body" set:html={profileRendered?.html ?? '<p>Profile is not published yet.</p>'} /></div>

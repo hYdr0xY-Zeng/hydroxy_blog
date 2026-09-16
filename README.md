@@ -30,6 +30,10 @@ Use `/admin/` for normal publication. Create Learn directories first in the **Le
 
 Empty directories, drafts, and archived Learn items stay available in the admin tree but are hidden from the public Wiki tree until a published article exists beneath them. Equal sort orders are ordered by display label.
 
+Published Learn and Essay articles record one anonymous browser view per UTC day and provide a browser-local like toggle. The site stores only per-article hashes of a first-party `HttpOnly` cookie, never IP addresses or user profiles. The homepage shell reads published D1 content at request time; use `help`, `ls`, `cd`, `pwd`, `open`, `recent`, `tags`, `stats`, `search`, and `clear`.
+
+Permanent deletion requires typing the exact document title or original media filename. Profile documents and Learn documents with child nodes cannot be deleted. Media deletion is blocked while the asset is referenced by Markdown, a document cover, Anime, or Gallery; export content before deleting because these operations are irreversible.
+
 The repository Markdown and JSON files remain a migration/import source and a Git-friendly backup format, not the primary production data source. Download a backup from `/api/admin/export` and commit it when a snapshot is needed. The ZIP includes `data/learn-tree.json`, which preserves Learn directory paths, labels, parents, and ordering for a later import.
 
 ## One-time migration
@@ -70,4 +74,5 @@ PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN (optional)
 - Run `npm run build` before every push. Do not commit `dist/`, `.astro/`, `node_modules/`, or local `.wrangler/` data.
 - Search uses D1 FTS5 through `/api/search`, so it is current immediately after publish; Pagefind is no longer used.
 - Mermaid renders in the browser from `mermaid` fenced blocks. KaTeX, Shiki, and ordinary code-copy buttons are shared by public pages and the admin preview.
+- Apply every new D1 migration to local, preview, and production before deploying code that requires its new tables. Engagement data is operational analytics and is deliberately excluded from content ZIP exports.
 - Legacy local content structure is retained under `src/content/` and `src/data/` for import and backup only. Fonts, favicon, and UI assets remain under `public/`.
