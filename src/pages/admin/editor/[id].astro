@@ -27,14 +27,14 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
 <BaseLayout title={existing ? `Edit ${existing.title}` : 'New document'}>
   <form class="editor-console" data-editor-form data-learn-parent-path={learnParentPath} data-learn-slug={learnSlug}>
     <header class="editor-toolbar pixel-panel">
-      <div><p class="section-kicker">/admin/editor</p><h1>{existing ? existing.title : 'New Document'}</h1><span>{kind} / {existing?.status ?? 'new'} / {identity.email}</span></div>
+      <div><p class="section-kicker">/admin/editor</p><h1>{existing ? existing.title : 'New Document'}</h1><span>{kind} / {existing?.status ?? 'new'} / {identity.email}</span><output class="editor-save-status" data-editor-save-status aria-live="polite"></output></div>
       <div class="editor-toolbar__actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="button" data-editor-sync aria-pressed="true">SYNC: ON</button><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div>
     </header>
 
     <div class="editor-shell">
       <details class="editor-metadata pixel-panel" open>
         <summary>METADATA</summary>
-        <div class="editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind" data-kind-select><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label data-path-field hidden={kind === 'learn'}>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label><div data-learn-path-fields hidden={kind !== 'learn'}>{isLearnDirectoryArticle && <input type="hidden" name="parent_path" value={learnParentPath} />}<label>Directory<select name="parent_path" data-learn-parent disabled={isLearnDirectoryArticle}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isLearnDirectoryArticle} required /></label><label>Order<input name="sort_order" type="number" value={String(existingLearnNode?.sort_order ?? 9999)} /></label><output data-learn-path-preview></output>{isLearnDirectoryArticle && <p class="form-hint">This article has child nodes, so its directory and slug cannot be moved or deleted.</p>}</div><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label>{existing && <div class="editor-danger"><p>Permanent deletion cannot be undone.</p><button class="text-button danger-button" type="button" data-document-delete disabled={!canDelete}>DELETE DOCUMENT</button></div>}</div>
+        <div class="editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind" data-kind-select><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label data-path-field hidden={kind === 'learn'}>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label><div data-learn-path-fields hidden={kind !== 'learn'}>{isLearnDirectoryArticle && <input type="hidden" name="parent_path" value={learnParentPath} />}<label>Directory<select name="parent_path" data-learn-parent data-locked={isLearnDirectoryArticle ? 'true' : undefined} disabled={kind !== 'learn' || isLearnDirectoryArticle}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isLearnDirectoryArticle} disabled={kind !== 'learn'} required={kind === 'learn'} /></label><label>Order<input name="sort_order" data-learn-sort-order type="number" value={String(existingLearnNode?.sort_order ?? 9999)} disabled={kind !== 'learn'} /></label><output data-learn-path-preview></output>{isLearnDirectoryArticle && <p class="form-hint">This article has child nodes, so its directory and slug cannot be moved or deleted.</p>}</div><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label>{existing && <div class="editor-danger"><p>Permanent deletion cannot be undone.</p><button class="text-button danger-button" type="button" data-document-delete disabled={!canDelete}>DELETE DOCUMENT</button></div>}</div>
       </details>
 
       <section class="editor-workspace" data-editor-workspace data-active-pane="edit">
@@ -62,12 +62,14 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
     const previewPane = form.querySelector<HTMLElement>('[data-editor-pane="preview"]');
     const workspace = form.querySelector<HTMLElement>('[data-editor-workspace]');
     const syncButton = form.querySelector<HTMLButtonElement>('[data-editor-sync]');
+    const saveStatus = form.querySelector<HTMLOutputElement>('[data-editor-save-status]');
     const kindSelect = form.querySelector<HTMLSelectElement>('[data-kind-select]');
     const pathField = form.querySelector<HTMLElement>('[data-path-field]');
     const pathInput = form.querySelector<HTMLInputElement>('input[name="path"]');
     const learnPathFields = form.querySelector<HTMLElement>('[data-learn-path-fields]');
     const parentInput = form.querySelector<HTMLSelectElement>('[data-learn-parent]');
     const slugInput = form.querySelector<HTMLInputElement>('[data-learn-slug]');
+    const sortOrderInput = form.querySelector<HTMLInputElement>('[data-learn-sort-order]');
     const pathPreview = form.querySelector<HTMLOutputElement>('[data-learn-path-preview]');
     let timer: number | undefined;
     let syncing = false;
@@ -95,6 +97,9 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
       if (pathField) pathField.hidden = isLearn;
       if (pathInput) pathInput.required = !isLearn;
       if (learnPathFields) learnPathFields.hidden = !isLearn;
+      if (parentInput) parentInput.disabled = !isLearn || parentInput.dataset.locked === 'true';
+      if (slugInput) { slugInput.disabled = !isLearn; slugInput.required = isLearn; }
+      if (sortOrderInput) sortOrderInput.disabled = !isLearn;
       if (pathPreview) {
         const parts = [parentInput?.value, slugInput?.value.trim()].filter(Boolean);
         pathPreview.textContent = isLearn ? `/learn/${parts.join('/') || '...'}/` : '';
@@ -127,6 +132,7 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
 
     form.addEventListener('submit', async (event: SubmitEvent) => {
       event.preventDefault();
+      if (saveStatus) { saveStatus.textContent = 'SAVING...'; saveStatus.dataset.state = 'saving'; }
       const values = new FormData(form);
       const field = (name: string) => { const value = values.get(name); return typeof value === 'string' ? value : ''; };
       const publishedAt = field('published_at');
@@ -137,8 +143,14 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
         const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveDocument', document: documentPayload }) });
         const payload = await response.json() as SavePayload;
         if (!response.ok || !payload.document?.id) throw new Error(payload.error || 'Save failed');
-        window.location.href = '/admin/editor/' + payload.document.id;
-      } catch (error) { alert(errorMessage(error)); }
+        const status = documentPayload.status.toUpperCase();
+        if (saveStatus) { saveStatus.textContent = `${status} SAVED`; saveStatus.dataset.state = 'success'; }
+        if (!field('id')) window.location.href = '/admin/editor/' + payload.document.id;
+      } catch (error) {
+        const message = errorMessage(error);
+        if (saveStatus) { saveStatus.textContent = message; saveStatus.dataset.state = 'error'; }
+        alert(message);
+      }
     });
   }
 

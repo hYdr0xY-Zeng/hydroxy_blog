@@ -432,9 +432,12 @@ button {
 }
 
 .terminal-screen {
+  height: min(540px, 62dvh);
   min-height: 320px;
+  max-height: 540px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border: 4px solid var(--line-strong);
   background: #030303;
   color: var(--yellow);
@@ -443,7 +446,9 @@ button {
 
 .terminal-output {
   flex: 1;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 16px;
   line-height: 1.65;
   color: var(--muted);
@@ -1621,15 +1626,20 @@ button {
 }
 
 .editor-markdown {
-  display: grid;
+  display: flex;
+  flex-direction: column;
 }
 
 .editor-markdown label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   min-height: 0;
 }
 
 .editor-markdown textarea {
-  height: 100%;
+  flex: 1;
+  height: auto;
   min-height: 0;
   resize: none;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -1654,6 +1664,18 @@ button {
 
 .editor-pane-tabs {
   display: none;
+}
+
+.editor-save-status {
+  display: block;
+  min-height: 1.2em;
+  margin-top: 4px;
+  color: var(--yellow);
+  font-size: 0.76rem;
+}
+
+.editor-save-status[data-state="error"] {
+  color: #ff9292;
 }
 
 .editor-danger {
@@ -1747,6 +1769,7 @@ button {
   .editor-workspace[data-active-pane="edit"] [data-editor-pane="preview"],
   .editor-workspace[data-active-pane="preview"] [data-editor-pane="edit"] { display: none; }
   .editor-pane { height: 62dvh; min-height: 380px; }
+  .terminal-screen { height: min(520px, 58dvh); }
   .admin-media-list li { grid-template-columns: 48px minmax(0, 1fr); }
   .admin-media-list li > div:last-child { grid-column: 1 / -1; justify-content: flex-start; }
   .admin-media-list img { width: 48px; height: 40px; }
