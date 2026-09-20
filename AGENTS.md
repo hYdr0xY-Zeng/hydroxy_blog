@@ -71,7 +71,7 @@ public/
 ## Dynamic content operation
 
 - Use `/admin/` for regular publishing and Life management. Create Learn directories in the dedicated **Learn Directories** panel before assigning articles to them. The editor uses Markdown split preview and supports drafts, publish, archive, tags, KaTeX, Mermaid, and code blocks.
-- Learn articles use a parent directory plus lowercase `kebab-case` slug; the server composes and validates the final path. Empty, draft-only, and archived directories are visible to admins but hidden from the public tree until they contain a published descendant. Order siblings by `sort_order`, then display label.
+- Learn articles use a parent directory plus lowercase `kebab-case` slug; the server composes and validates the final path. Any existing Learn node, including an article with its own body, can become a parent directory. Empty, draft-only, and archived directories are visible to admins but hidden from the public tree until they contain a published descendant. Order siblings by `sort_order`, then display label.
 - D1 is the online source of truth. The Markdown/JSON tree below is a one-time migration source and a Git-backup format after cutover.
 - Use `/api/admin/export` to download Markdown/JSON/media-manifest backups before committing an archive snapshot. Its `data/learn-tree.json` preserves Learn directory paths, labels, parent relationships, and order; `npm run content:migrate` prefers this manifest when present.
 - Run `npm run content:migrate` to produce an inspectable report and SQL seed in `/tmp/hydroxy-wiki-migration`. Only `npm run content:migrate -- --apply --database <name> --bucket <name> --env production` writes the production D1/R2 resources.

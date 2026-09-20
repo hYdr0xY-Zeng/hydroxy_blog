@@ -82,7 +82,7 @@ export async function listLearnDirectories(locals: App.Locals) {
   const tree = await getLearnTree(locals, { includeUnpublished: true, includeEmpty: true });
   const directories: LearnDirectory[] = [];
   const visit = (nodes: LearnNode[], depth: number) => nodes.forEach((node) => {
-    if (!node.document_id || node.children.length > 0) directories.push({ path: node.path, label: node.label, sort_order: node.sort_order, depth });
+    directories.push({ path: node.path, label: node.label, sort_order: node.sort_order, depth });
     visit(node.children, depth + 1);
   });
   visit(tree.roots, 0);
@@ -161,8 +161,8 @@ const normalizedSortOrder = (value: number | undefined) => Number.isInteger(valu
 
 async function assertLearnParent(database: D1Database, parentPath: string) {
   if (!parentPath) return;
-  const parent = await database.prepare(`SELECT n.document_id, EXISTS(SELECT 1 FROM learn_nodes child WHERE child.parent_path = n.path) AS has_children FROM learn_nodes n WHERE n.path = ?`).bind(parentPath).first<{ document_id: string | null; has_children: number }>();
-  if (!parent || (parent.document_id && !parent.has_children)) throw new Error('Choose an existing Learn directory as the parent.');
+  const parent = await database.prepare('SELECT path FROM learn_nodes WHERE path = ?').bind(parentPath).first<{ path: string }>();
+  if (!parent) throw new Error('Choose an existing Learn directory as the parent.');
 }
 
 export async function saveLearnDirectory(locals: App.Locals, input: SaveLearnDirectoryInput) {

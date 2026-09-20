@@ -681,6 +681,17 @@ button {
   gap: 16px;
 }
 
+.directory-children {
+  margin-top: 24px;
+}
+
+.directory-children > h2 {
+  margin: 0 0 14px;
+  color: var(--yellow);
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+}
+
 .article-card {
   display: block;
   padding: 18px 18px 18px 36px;
