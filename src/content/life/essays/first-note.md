@@ -11,6 +11,6 @@ mood: "quiet"
 
 ## 维护方式
 
-以后可以直接在 `src/content/life/essays` 下新增 Markdown 文件。
+以后可以直接在后台创建和发布新的随笔。
 
-生活页的追番和图片数据分别来自 `src/data/anime.json` 与 `src/data/gallery.json`。
+生活页的追番和图片内容由后台管理，数据保存在 D1，媒体文件保存在 R2。

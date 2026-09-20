@@ -7,14 +7,14 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     <p class="section-kicker">/about</p>
     <h1 class="section-title">About Hydroxy Wiki</h1>
     <p class="section-copy">
-      这是一个由 GitHub 文件树驱动的个人 Wiki。学习内容归入 Learn，生活内容归入 Life，所有公开页面都可以静态部署到 Cloudflare Pages。
+      这是一个由 D1 与 R2 驱动的个人 Wiki。学习内容归入 Learn，生活内容归入 Life，公开页面通过 Cloudflare Pages Functions 按请求渲染。
     </p>
   </header>
 
   <section class="content-card prose">
     <h2>How To Maintain</h2>
-    <p>学习内容放在 <code>src/content/learn</code>。目录和文件建议使用英文 kebab-case，并用数字前缀控制排序。</p>
-    <p>生活随笔放在 <code>src/content/life/essays</code>。追番和图片分别维护 <code>src/data/anime.json</code> 与 <code>src/data/gallery.json</code>。</p>
-    <p>重要旧链接迁移时，在 <code>public/_redirects</code> 手动添加重定向。</p>
+    <p>在后台的 Learn Directories 面板创建目录，再在编辑器中选择父目录并填写文章 Slug。发布后，目录树、文章页和搜索会立即读取最新的 D1 内容。</p>
+    <p>Life 随笔、追番和图片均在后台维护；文章与元数据保存到 D1，上传媒体保存到私有 R2 并通过站内媒体路由提供。</p>
+    <p>移动已发布文章时，后台会自动在 D1 中创建 301 重定向。<code>public/_redirects</code> 仅保留站点级固定规则。</p>
   </section>
 </BaseLayout>
