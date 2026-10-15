@@ -10,6 +10,11 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare({ imageService: 'passthrough', platformProxy: { enabled: true } }),
   integrations: [mdx()],
+  vite: {
+    // The shared Markdown pipeline must use DOM-free package exports inside a Worker.
+    resolve: { conditions: ['worker', 'module', 'browser', 'development|production'] },
+    worker: { format: 'es' }
+  },
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],

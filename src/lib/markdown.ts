@@ -33,30 +33,64 @@ const SHIKI_LANGUAGES = new Set(Object.keys(SHIKI_LANGUAGE_LOADERS));
 const SHIKI_ALIASES: Record<string, string> = { js: 'javascript', sh: 'bash', shell: 'bash', ts: 'typescript', yml: 'yaml', md: 'markdown' };
 type ShikiHighlighter = {
   codeToHtml(code: string, options: { lang: string; theme: string }): string;
+  loadLanguage(language: Awaited<ReturnType<typeof SHIKI_LANGUAGE_LOADERS.bash>>['default']): Promise<void>;
 };
 
-const shikiHighlighters = new Map<string, Promise<ShikiHighlighter>>();
+let shikiHighlighter: Promise<ShikiHighlighter> | undefined;
+const languageLoads = new Map<string, Promise<void>>();
+const highlightedBlocks = new Map<string, string>();
+let highlightedBytes = 0;
+const MAX_HIGHLIGHT_BYTES = 2 * 1024 * 1024;
+const MAX_HIGHLIGHT_BLOCKS = 128;
 
-function getHighlighter(languages: string[]) {
-  const key = [...new Set(languages)].sort().join(',');
-  const cached = shikiHighlighters.get(key);
-  if (cached) return cached;
-
-  const highlighter = (async () => {
-    const [core, engine, theme, languageModules] = await Promise.all([
+async function getHighlighter(languages: string[]) {
+  shikiHighlighter ??= (async () => {
+    const [core, engine, theme] = await Promise.all([
       import('shiki/core'),
       import('shiki/engine/javascript'),
-      import('@shikijs/themes/github-dark'),
-      Promise.all(languages.map((language) => SHIKI_LANGUAGE_LOADERS[language as keyof typeof SHIKI_LANGUAGE_LOADERS]()))
+      import('@shikijs/themes/github-dark')
     ]);
     return core.createHighlighterCore({
       themes: [theme.default],
-      langs: languageModules.map((language) => language.default),
+      langs: [],
       engine: engine.createJavaScriptRegexEngine({ forgiving: true })
     });
-  })();
-  shikiHighlighters.set(key, highlighter);
+  })().catch((error) => { shikiHighlighter = undefined; throw error; });
+  const highlighter = await shikiHighlighter;
+  await Promise.all([...new Set(languages)].map((language) => {
+    let loading = languageLoads.get(language);
+    if (!loading) {
+      loading = SHIKI_LANGUAGE_LOADERS[language as keyof typeof SHIKI_LANGUAGE_LOADERS]()
+        .then((module) => highlighter.loadLanguage(module.default))
+        .catch((error) => { languageLoads.delete(language); throw error; });
+      languageLoads.set(language, loading);
+    }
+    return loading;
+  }));
   return highlighter;
+}
+
+function highlightedCode(highlighter: ShikiHighlighter, language: string, source: string) {
+  const key = `${language}\0${source}`;
+  const cached = highlightedBlocks.get(key);
+  if (cached !== undefined) {
+    highlightedBlocks.delete(key);
+    highlightedBlocks.set(key, cached);
+    return cached;
+  }
+  const html = highlighter.codeToHtml(source, { lang: language, theme: 'github-dark' });
+  const size = (key.length + html.length) * 2;
+  if (size <= MAX_HIGHLIGHT_BYTES) {
+    while (highlightedBlocks.size >= MAX_HIGHLIGHT_BLOCKS || highlightedBytes + size > MAX_HIGHLIGHT_BYTES) {
+      const oldest = highlightedBlocks.entries().next().value;
+      if (!oldest) break;
+      highlightedBytes -= (oldest[0].length + oldest[1].length) * 2;
+      highlightedBlocks.delete(oldest[0]);
+    }
+    highlightedBlocks.set(key, html);
+    highlightedBytes += size;
+  }
+  return html;
 }
 
 function codeElement(pre: Element) {
@@ -95,7 +129,7 @@ function highlightCodeBlocks() {
     if (!blocks.length) return;
     const highlighter = await getHighlighter(blocks.map((block) => block.language));
     blocks.forEach(({ code, index, parent, rawLanguage, language }) => {
-      const rendered = highlighter.codeToHtml(toString(code), { lang: language, theme: 'github-dark' });
+      const rendered = highlightedCode(highlighter, language, toString(code));
       const html = rendered.replace('<pre', '<pre data-language="' + rawLanguage + '"');
       parent.children[index] = { type: 'raw', value: html } as unknown as ElementContent;
     });

@@ -26,6 +26,12 @@ For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then r
 
 ## Content Publishing
 
+The editor renders live previews in a dedicated browser Web Worker using the same Markdown renderer as public pages. Unchanged code blocks and diagrams are reused; if the Worker cannot load, the protected server preview endpoint is used instead. Preview failures do not discard the editor text or the last successful preview. New slugs use lowercase `kebab-case`; existing imported URLs retain their original case when saved unchanged. Existing D1 nodes can be selected as parent directories regardless of their historical casing.
+
+Keep the direct KaTeX dependency pinned to the version used by `rehype-katex` and Mermaid so the generated HTML, CSS, and fonts match. Run `npm test` (WSL Node 24+) for path, content-save, and math-version regression tests, followed by `npm run check` and `npm run build`.
+
+After building, run `node --experimental-strip-types tests/browser-regression.mjs` with an existing Playwright installation and Chrome (`PLAYWRIGHT_MODULE` can specify its module directory). This serves local, in-memory fixtures using the real production editor/Worker bundles; it never authenticates against or writes to production. It covers typing latency, IME, preview fallback, scroll sync, legacy form validation, code/diagram reuse, and desktop/mobile math layout, and writes screenshots to the system temporary directory. Set `PREVIEW_ORIGIN` to a deployed preview URL to additionally check the deployed assets against local fixture HTML without publishing test articles or bypassing admin authentication.
+
 Use `/admin/` for normal publication. Create Learn directories first in the **Learn Directories** panel, choosing a parent (or `/learn`), a display label, lowercase `kebab-case` slug, and sort order. A Learn article then uses **Directory + Slug** to produce its stable path; published moves create a D1-backed 301 redirect. A Learn article that contains child nodes cannot be moved from the normal editor.
 
 Empty directories, drafts, and archived Learn items stay available in the admin tree but are hidden from the public Wiki tree until a published article exists beneath them. Equal sort orders are ordered by display label.

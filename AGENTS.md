@@ -109,6 +109,10 @@ The interface is a readable technical Wiki with an original retro pixel-RPG acce
 
 ## Shared behavior
 
+- Admin live previews run in a browser Web Worker with the shared Markdown renderer; retain the authenticated server-preview fallback, latest-result protection, IME handling, bounded code cache, and unchanged diagram reuse. Do not load the editor Worker on public pages.
+- Preserve imported Learn URLs exactly when editing existing content. Validate parent paths by D1 node existence, not by applying new-slug rules to every ancestor. New or changed slugs remain lowercase `kebab-case`.
+- Keep KaTeX HTML generation and imported CSS/fonts on the same pinned version; `npm test` checks renderer and Mermaid resolution alongside content/path regression tests (Node 24+).
+
 - Navigation and social links are centralized in `src/utils/site.ts`.
 - The homepage avatar is a static asset under `public/images/profile/`; preserve its square pixel-frame treatment.
 - The mini shell supports `help`, `ls`, `cd`, `pwd`, `open`, `recent`, `tags`, `stats`, `search`, and `clear`. Keep it read-only, D1-backed, and limited to published public data.

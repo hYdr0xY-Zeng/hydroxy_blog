@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { getEnv, mediaHref } from './runtime';
+import { learnPathFor, normalizeLearnParentPath, normalizeLearnSlug, resolveLearnDocumentPath } from './learn-path';
 
 export type DocumentKind = 'learn' | 'essay' | 'profile';
 export type Visibility = 'draft' | 'published' | 'archived';
@@ -145,18 +146,6 @@ async function syncSearch(locals: App.Locals, entity: { id: string; kind: string
 export type SaveDocumentInput = Pick<ContentDocument, 'kind' | 'title' | 'description' | 'body_markdown' | 'mood' | 'cover_key' | 'status'> & { id?: string; path?: string; parent_path?: string; slug?: string; sort_order?: number; published_at?: string | null; tags: string[] };
 export type SaveLearnDirectoryInput = { parent_path?: string; slug: string; label: string; sort_order?: number };
 
-const learnSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const normalizeLearnSlug = (value: string) => {
-  const slug = value.trim();
-  if (!learnSlugPattern.test(slug)) throw new Error('Learn slug must use lowercase letters, numbers, and hyphens only.');
-  return slug;
-};
-const normalizeLearnParentPath = (value: string | undefined) => {
-  const parent = pathFor(value ?? '');
-  if (parent && !parent.split('/').every((segment) => learnSlugPattern.test(segment))) throw new Error('Learn parent path is invalid.');
-  return parent;
-};
-const learnPathFor = (parentPath: string, slug: string) => parentPath ? `${parentPath}/${slug}` : slug;
 const normalizedSortOrder = (value: number | undefined) => Number.isInteger(value) ? Number(value) : 9999;
 
 async function assertLearnParent(database: D1Database, parentPath: string) {
@@ -181,11 +170,14 @@ export async function saveLearnDirectory(locals: App.Locals, input: SaveLearnDir
 
 export async function saveDocument(locals: App.Locals, input: SaveDocumentInput) {
   const database = db(locals);
-  const learnParentPath = input.kind === 'learn' ? normalizeLearnParentPath(input.parent_path) : '';
-  const learnSlug = input.kind === 'learn' ? normalizeLearnSlug(input.slug ?? '') : '';
-  const id = input.id ?? crypto.randomUUID(), path = input.kind === 'learn' ? learnPathFor(learnParentPath, learnSlug) : pathFor(input.path ?? '');
-  if (!path) throw new Error('A content path is required.');
+  const id = input.id ?? crypto.randomUUID();
   const existing = await database.prepare('SELECT * FROM documents WHERE id = ?').bind(id).first<ContentDocument>();
+  const learnParentPath = input.kind === 'learn' ? normalizeLearnParentPath(input.parent_path) : '';
+  const path = input.kind === 'learn' ? resolveLearnDocumentPath(learnParentPath, input.slug ?? '', existing?.kind === 'learn' ? existing.path : undefined) : pathFor(input.path ?? '');
+  if (!path) throw new Error('A content path is required.');
+  if (existing?.kind === 'learn' && (learnParentPath === existing.path || learnParentPath.startsWith(existing.path + '/'))) {
+    throw new Error('A Learn article cannot be its own parent or be moved into its descendants.');
+  }
   const existingLearnNode = existing?.kind === 'learn' ? await database.prepare(`SELECT path, EXISTS(SELECT 1 FROM learn_nodes child WHERE child.parent_path = learn_nodes.path) AS has_children FROM learn_nodes WHERE path = ?`).bind(existing.path).first<{ path: string; has_children: number }>() : null;
   if (existingLearnNode?.has_children && (input.kind !== 'learn' || existing!.path !== path)) throw new Error('A Learn article with child nodes cannot be moved.');
   if (input.kind === 'learn') {

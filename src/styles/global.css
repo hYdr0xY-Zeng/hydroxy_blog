@@ -817,9 +817,13 @@ button {
 
 .prose .katex-display {
   margin: 1.5em 0;
-  padding: 0 2px;
+  padding: 0.4em 2px;
   text-align: center;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
+
+.prose .katex-display > .katex { min-width: min-content; }
 
 .prose pre {
   position: relative;
@@ -1619,6 +1623,8 @@ button {
   font-size: 0.85rem;
 }
 
+.editor-fields [hidden] { display: none; }
+
 .editor-metadata[open] summary {
   margin-bottom: 12px;
 }
@@ -1661,13 +1667,23 @@ button {
   overflow: auto;
 }
 
-.editor-preview h2 {
+.editor-preview > h2 {
   margin-top: 0;
   color: var(--yellow);
   font-family: var(--font-pixel);
   font-size: 0.95rem;
   font-weight: 400;
 }
+
+.editor-preview-status {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.editor-preview-status:empty { display: none; }
+.editor-preview-status[data-state="error"] { color: #ff9292; }
 
 .editor-preview .prose > :first-child {
   margin-top: 0;
