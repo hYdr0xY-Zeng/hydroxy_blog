@@ -5,9 +5,10 @@ import { learnPathFor, normalizeLearnParentPath, normalizeLearnSlug, resolveLear
 export type DocumentKind = 'learn' | 'essay' | 'profile';
 export type Visibility = 'draft' | 'published' | 'archived';
 export type ContentDocument = { id: string; kind: DocumentKind; path: string; source_path: string | null; title: string; description: string; body_markdown: string; published_at: string | null; mood: string | null; cover_key: string | null; status: Visibility; created_at: string; updated_at: string; tags: string[] };
-export type LearnNode = { path: string; parent_path: string | null; label: string; sort_order: number; document_id: string | null; href: string; children: LearnNode[]; entry?: ContentDocument };
+export type LearnNodeType = 'directory' | 'article';
+export type LearnNode = { path: string; parent_path: string | null; label: string; sort_order: number; document_id: string | null; node_type: LearnNodeType; href: string; children: LearnNode[]; entry?: ContentDocument };
 export type LearnTreeOptions = { includeUnpublished?: boolean; includeEmpty?: boolean };
-export type LearnDirectory = Pick<LearnNode, 'path' | 'label' | 'sort_order'> & { depth: number };
+export type LearnDirectory = Pick<LearnNode, 'path' | 'label' | 'sort_order' | 'document_id'> & { depth: number };
 export type AnimeEntry = { id: string; title: string; cn_title: string; status: string; year: number | null; score: number | null; note: string; cover_key: string | null; sort_order: number; visibility: Visibility; created_at: string; updated_at: string };
 export type GalleryEntry = { id: string; title: string; alt: string; media_key: string; sort_order: number; visibility: Visibility; created_at: string; updated_at: string };
 export type EngagementSummary = { views: number; likes: number; liked: boolean };
@@ -37,8 +38,9 @@ async function attachTags(locals: App.Locals, rows: Omit<ContentDocument, 'tags'
   return rows.map((row) => ({ ...row, tags: byId.get(row.id) ?? [] }));
 }
 
-export async function listDocuments(locals: App.Locals, options: { kind?: DocumentKind; includeUnpublished?: boolean; limit?: number } = {}) {
+export async function listDocuments(locals: App.Locals, options: { kind?: DocumentKind; includeUnpublished?: boolean; includeDirectoryIndexes?: boolean; limit?: number } = {}) {
   const filters = [options.kind ? 'kind = ?' : "kind IN ('learn', 'essay')", options.includeUnpublished ? '1 = 1' : "status = 'published'"];
+  if (!options.includeDirectoryIndexes) filters.push("NOT EXISTS (SELECT 1 FROM learn_nodes n WHERE n.document_id = documents.id AND n.node_type = 'directory')");
   const statement = db(locals).prepare(`SELECT * FROM documents WHERE ${filters.join(' AND ')} ORDER BY COALESCE(published_at, updated_at) DESC${options.limit ? ` LIMIT ${Math.min(options.limit, 200)}` : ''}`);
   const result = options.kind ? await statement.bind(options.kind).all<Omit<ContentDocument, 'tags'>>() : await statement.all<Omit<ContentDocument, 'tags'>>();
   return attachTags(locals, result.results);
@@ -51,17 +53,19 @@ export async function getDocument(locals: App.Locals, kind: DocumentKind, path: 
 export const getProfile = (locals: App.Locals) => getDocument(locals, 'profile', 'home');
 export async function getDocumentById(locals: App.Locals, id: string) {
   const row = await db(locals).prepare('SELECT * FROM documents WHERE id = ?').bind(id).first<Omit<ContentDocument, 'tags'>>();
-  return row ? (await attachTags(locals, [row]))[0] : null;
+  if (!row) return null;
+  const node = row.kind === 'learn' ? await db(locals).prepare('SELECT node_type FROM learn_nodes WHERE document_id = ?').bind(id).first<{ node_type: LearnNodeType }>() : null;
+  return { ...(await attachTags(locals, [row]))[0], learn_node_type: node?.node_type };
 }
 export async function listTags(locals: App.Locals) { const result = await db(locals).prepare(`SELECT DISTINCT tags.label FROM tags JOIN document_tags ON document_tags.tag_slug = tags.slug JOIN documents ON documents.id = document_tags.document_id WHERE documents.status = 'published' ORDER BY tags.label`).all<{ label: string }>(); return result.results.map((row) => row.label); }
 
 export async function getLearnTree(locals: App.Locals, options: LearnTreeOptions = {}) {
   const documentFilter = options.includeUnpublished ? '' : "AND d.status = 'published'";
-  const result = await db(locals).prepare(`SELECT n.path AS node_path, n.parent_path, n.label, n.sort_order, n.document_id, d.* FROM learn_nodes n LEFT JOIN documents d ON d.id = n.document_id ${documentFilter} ORDER BY n.sort_order, n.label`).all<Record<string, unknown>>();
+  const result = await db(locals).prepare(`SELECT n.path AS node_path, n.parent_path, n.label, n.sort_order, n.document_id, n.node_type, d.* FROM learn_nodes n LEFT JOIN documents d ON d.id = n.document_id ${documentFilter} ORDER BY n.sort_order, n.label`).all<Record<string, unknown>>();
   const documentRows = result.results.filter((row) => typeof row.id === 'string').map((row) => ({ id: String(row.id), kind: 'learn' as const, path: String(row.path), source_path: row.source_path ? String(row.source_path) : null, title: String(row.title), description: String(row.description ?? ''), body_markdown: String(row.body_markdown ?? ''), published_at: row.published_at ? String(row.published_at) : null, mood: row.mood ? String(row.mood) : null, cover_key: row.cover_key ? String(row.cover_key) : null, status: String(row.status) as Visibility, created_at: String(row.created_at), updated_at: String(row.updated_at) }));
   const documents = new Map((await attachTags(locals, documentRows)).map((entry) => [entry.id, entry]));
   const byPath = new Map<string, LearnNode>();
-  result.results.forEach((row) => byPath.set(String(row.node_path), { path: String(row.node_path), parent_path: row.parent_path ? String(row.parent_path) : null, label: String(row.label), sort_order: Number(row.sort_order), document_id: row.document_id ? String(row.document_id) : null, href: `/learn/${String(row.node_path)}/`, entry: row.document_id ? documents.get(String(row.document_id)) : undefined, children: [] }));
+  result.results.forEach((row) => byPath.set(String(row.node_path), { path: String(row.node_path), parent_path: row.parent_path ? String(row.parent_path) : null, label: String(row.label), sort_order: Number(row.sort_order), document_id: row.document_id ? String(row.document_id) : null, node_type: row.node_type as LearnNodeType, href: `/learn/${String(row.node_path)}/`, entry: row.document_id ? documents.get(String(row.document_id)) : undefined, children: [] }));
   const roots: LearnNode[] = [];
   byPath.forEach((node) => { const parent = node.parent_path ? byPath.get(node.parent_path) : undefined; parent ? parent.children.push(node) : roots.push(node); });
   const sortNodes = (nodes: LearnNode[]) => {
@@ -72,7 +76,8 @@ export async function getLearnTree(locals: App.Locals, options: LearnTreeOptions
   const visibleByPath = new Map<string, LearnNode>();
   const prune = (node: LearnNode): LearnNode | null => {
     node.children = node.children.map(prune).filter((child): child is LearnNode => child !== null);
-    if (!options.includeEmpty && !node.entry && node.children.length === 0) return null;
+    const hasContent = Boolean(node.entry && (node.node_type === 'article' || node.entry.body_markdown.trim()));
+    if (!options.includeEmpty && !hasContent && node.children.length === 0) return null;
     visibleByPath.set(node.path, node);
     return node;
   };
@@ -83,7 +88,7 @@ export async function listLearnDirectories(locals: App.Locals) {
   const tree = await getLearnTree(locals, { includeUnpublished: true, includeEmpty: true });
   const directories: LearnDirectory[] = [];
   const visit = (nodes: LearnNode[], depth: number) => nodes.forEach((node) => {
-    directories.push({ path: node.path, label: node.label, sort_order: node.sort_order, depth });
+    if (node.node_type === 'directory') directories.push({ path: node.path, label: node.label, sort_order: node.sort_order, document_id: node.document_id, depth });
     visit(node.children, depth + 1);
   });
   visit(tree.roots, 0);
@@ -127,8 +132,8 @@ export async function toggleDocumentLike(locals: App.Locals, documentId: string,
 export async function getEngagementTotals(locals: App.Locals) {
   const database = db(locals);
   const [viewRow, likeRow] = await Promise.all([
-    database.prepare(`SELECT COUNT(*) AS total FROM document_daily_views JOIN documents ON documents.id = document_daily_views.document_id WHERE documents.status = 'published'`).first<{ total: number }>(),
-    database.prepare(`SELECT COUNT(*) AS total FROM document_likes JOIN documents ON documents.id = document_likes.document_id WHERE documents.status = 'published'`).first<{ total: number }>()
+    database.prepare(`SELECT COUNT(*) AS total FROM document_daily_views JOIN documents ON documents.id = document_daily_views.document_id WHERE documents.status = 'published' AND documents.kind IN ('learn','essay') AND NOT EXISTS (SELECT 1 FROM learn_nodes n WHERE n.document_id = documents.id AND n.node_type = 'directory')`).first<{ total: number }>(),
+    database.prepare(`SELECT COUNT(*) AS total FROM document_likes JOIN documents ON documents.id = document_likes.document_id WHERE documents.status = 'published' AND documents.kind IN ('learn','essay') AND NOT EXISTS (SELECT 1 FROM learn_nodes n WHERE n.document_id = documents.id AND n.node_type = 'directory')`).first<{ total: number }>()
   ]);
   return { views: Number(viewRow?.total ?? 0), likes: Number(likeRow?.total ?? 0) } satisfies EngagementTotals;
 }
@@ -143,14 +148,14 @@ async function syncSearch(locals: App.Locals, entity: { id: string; kind: string
   if (visible) await db(locals).prepare('INSERT INTO search_index (entity_id, entity_kind, path, title, description, body, tags) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(entity.id, entity.kind, entity.path, entity.title, entity.description, entity.body, entity.tags ?? '').run();
 }
 
-export type SaveDocumentInput = Pick<ContentDocument, 'kind' | 'title' | 'description' | 'body_markdown' | 'mood' | 'cover_key' | 'status'> & { id?: string; path?: string; parent_path?: string; slug?: string; sort_order?: number; published_at?: string | null; tags: string[] };
+export type SaveDocumentInput = Pick<ContentDocument, 'kind' | 'title' | 'description' | 'body_markdown' | 'mood' | 'cover_key' | 'status'> & { id?: string; path?: string; directory_path?: string; parent_path?: string; slug?: string; sort_order?: number; published_at?: string | null; tags: string[] };
 export type SaveLearnDirectoryInput = { parent_path?: string; slug: string; label: string; sort_order?: number };
 
 const normalizedSortOrder = (value: number | undefined) => Number.isInteger(value) ? Number(value) : 9999;
 
 async function assertLearnParent(database: D1Database, parentPath: string) {
   if (!parentPath) return;
-  const parent = await database.prepare('SELECT path FROM learn_nodes WHERE path = ?').bind(parentPath).first<{ path: string }>();
+  const parent = await database.prepare("SELECT path FROM learn_nodes WHERE path = ? AND node_type = 'directory'").bind(parentPath).first<{ path: string }>();
   if (!parent) throw new Error('Choose an existing Learn directory as the parent.');
 }
 
@@ -164,7 +169,7 @@ export async function saveLearnDirectory(locals: App.Locals, input: SaveLearnDir
   await assertLearnParent(database, parentPath);
   const existing = await database.prepare('SELECT path FROM learn_nodes WHERE path = ?').bind(path).first<{ path: string }>();
   if (existing) throw new Error('That Learn path is already in use.');
-  await database.prepare('INSERT INTO learn_nodes (path, parent_path, label, sort_order) VALUES (?, ?, ?, ?)').bind(path, parentPath || null, label, normalizedSortOrder(input.sort_order)).run();
+  await database.prepare("INSERT INTO learn_nodes (path, parent_path, label, sort_order, node_type) VALUES (?, ?, ?, ?, 'directory')").bind(path, parentPath || null, label, normalizedSortOrder(input.sort_order)).run();
   return { path, parent_path: parentPath || null, label, sort_order: normalizedSortOrder(input.sort_order) };
 }
 
@@ -172,30 +177,42 @@ export async function saveDocument(locals: App.Locals, input: SaveDocumentInput)
   const database = db(locals);
   const id = input.id ?? crypto.randomUUID();
   const existing = await database.prepare('SELECT * FROM documents WHERE id = ?').bind(id).first<ContentDocument>();
+  const existingNode = existing?.kind === 'learn' ? await database.prepare('SELECT path, node_type FROM learn_nodes WHERE document_id = ?').bind(id).first<{ path: string; node_type: LearnNodeType }>() : null;
+  const directoryPath = input.directory_path === undefined ? undefined : normalizeLearnParentPath(input.directory_path);
+  if (existingNode?.node_type === 'directory' && (input.kind !== 'learn' || directoryPath !== existingNode.path)) throw new Error('A directory introduction cannot be moved or converted to an article.');
+  const directory = directoryPath !== undefined ? await database.prepare("SELECT path, document_id FROM learn_nodes WHERE path = ? AND node_type = 'directory'").bind(directoryPath).first<{ path: string; document_id: string | null }>() : null;
+  if (directoryPath !== undefined && (input.kind !== 'learn' || !directory || (directory.document_id && directory.document_id !== id) || (existing && existingNode?.node_type !== 'directory'))) throw new Error('Choose an existing directory without another introduction. Articles cannot become directory introductions.');
   const learnParentPath = input.kind === 'learn' ? normalizeLearnParentPath(input.parent_path) : '';
-  const path = input.kind === 'learn' ? resolveLearnDocumentPath(learnParentPath, input.slug ?? '', existing?.kind === 'learn' ? existing.path : undefined) : pathFor(input.path ?? '');
+  const path = directory?.path ?? (input.kind === 'learn' ? resolveLearnDocumentPath(learnParentPath, input.slug ?? '', existing?.kind === 'learn' ? existing.path : undefined) : pathFor(input.path ?? ''));
   if (!path) throw new Error('A content path is required.');
   if (existing?.kind === 'learn' && (learnParentPath === existing.path || learnParentPath.startsWith(existing.path + '/'))) {
     throw new Error('A Learn article cannot be its own parent or be moved into its descendants.');
   }
   const existingLearnNode = existing?.kind === 'learn' ? await database.prepare(`SELECT path, EXISTS(SELECT 1 FROM learn_nodes child WHERE child.parent_path = learn_nodes.path) AS has_children FROM learn_nodes WHERE path = ?`).bind(existing.path).first<{ path: string; has_children: number }>() : null;
   if (existingLearnNode?.has_children && (input.kind !== 'learn' || existing!.path !== path)) throw new Error('A Learn article with child nodes cannot be moved.');
-  if (input.kind === 'learn') {
+  if (input.kind === 'learn' && !directory) {
     await assertLearnParent(database, learnParentPath);
     const targetNode = await database.prepare('SELECT document_id FROM learn_nodes WHERE path = ?').bind(path).first<{ document_id: string | null }>();
     if (targetNode && targetNode.document_id !== id) throw new Error('That Learn path is already in use.');
   }
   const publishedAt = input.status === 'published' ? input.published_at ?? existing?.published_at ?? new Date().toISOString() : input.published_at ?? existing?.published_at ?? null;
-  await database.prepare(`INSERT INTO documents (id, kind, path, title, description, body_markdown, published_at, mood, cover_key, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind, path=excluded.path, title=excluded.title, description=excluded.description, body_markdown=excluded.body_markdown, published_at=excluded.published_at, mood=excluded.mood, cover_key=excluded.cover_key, status=excluded.status, updated_at=CURRENT_TIMESTAMP`).bind(id, input.kind, path, input.title.trim(), input.description.trim(), input.body_markdown, publishedAt, input.mood || null, input.cover_key || null, input.status).run();
-  if (existing?.status === 'published' && existing.path !== path) await database.prepare('INSERT OR REPLACE INTO redirects (from_path, to_path) VALUES (?, ?)').bind(documentHref(existing), documentHref({ kind: input.kind, path })).run();
-  if (existing?.kind === 'learn' && (input.kind !== 'learn' || existing.path !== path)) await database.prepare('DELETE FROM learn_nodes WHERE path = ?').bind(existing.path).run();
-  if (input.kind === 'learn') {
-    await database.prepare('INSERT INTO learn_nodes (path, parent_path, label, sort_order, document_id) VALUES (?, ?, ?, ?, ?) ON CONFLICT(path) DO UPDATE SET parent_path=excluded.parent_path, label=excluded.label, sort_order=excluded.sort_order, document_id=excluded.document_id').bind(path, learnParentPath || null, input.title.trim(), normalizedSortOrder(input.sort_order), id).run();
+  const statements = [database.prepare(`INSERT INTO documents (id, kind, path, title, description, body_markdown, published_at, mood, cover_key, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind, path=excluded.path, title=excluded.title, description=excluded.description, body_markdown=excluded.body_markdown, published_at=excluded.published_at, mood=excluded.mood, cover_key=excluded.cover_key, status=excluded.status, updated_at=CURRENT_TIMESTAMP`).bind(id, input.kind, path, input.title.trim(), input.description.trim(), input.body_markdown, publishedAt, input.mood || null, input.cover_key || null, input.status)];
+  if (existing?.published_at && (existing.path !== path || existing.kind !== input.kind)) {
+    const oldHref = documentHref(existing), newHref = documentHref({ kind: input.kind, path });
+    statements.push(database.prepare('INSERT OR REPLACE INTO redirects (from_path, to_path) VALUES (?, ?)').bind(oldHref, newHref), database.prepare('UPDATE redirects SET to_path = ? WHERE to_path = ?').bind(newHref, oldHref));
   }
-  await database.prepare('DELETE FROM document_tags WHERE document_id = ?').bind(id).run();
+  if (existing?.kind === 'learn' && (input.kind !== 'learn' || existing.path !== path)) statements.push(database.prepare('DELETE FROM learn_nodes WHERE path = ?').bind(existing.path));
+  if (directory) {
+    statements.push(database.prepare('UPDATE learn_nodes SET document_id = ? WHERE path = ?').bind(id, directory.path));
+  } else if (input.kind === 'learn') {
+    statements.push(database.prepare("INSERT INTO learn_nodes (path, parent_path, label, sort_order, document_id, node_type) VALUES (?, ?, ?, ?, ?, 'article') ON CONFLICT(path) DO UPDATE SET parent_path=excluded.parent_path, label=excluded.label, sort_order=excluded.sort_order, document_id=excluded.document_id").bind(path, learnParentPath || null, input.title.trim(), normalizedSortOrder(input.sort_order), id));
+  }
+  statements.push(database.prepare('DELETE FROM document_tags WHERE document_id = ?').bind(id));
   const tags = [...new Set(input.tags.map((tag) => tag.trim()).filter(Boolean))];
-  for (const label of tags) { const slug = tagId(label); await database.prepare('INSERT INTO tags (slug, label) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET label=excluded.label').bind(slug, label).run(); await database.prepare('INSERT INTO document_tags (document_id, tag_slug) VALUES (?, ?)').bind(id, slug).run(); }
-  await syncSearch(locals, { id, kind: input.kind, path, title: input.title, description: input.description, body: input.body_markdown, tags: tags.join(' ') }, input.status === 'published');
+  for (const label of tags) { const slug = tagId(label); statements.push(database.prepare('INSERT INTO tags (slug, label) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET label=excluded.label').bind(slug, label), database.prepare('INSERT OR IGNORE INTO document_tags (document_id, tag_slug) VALUES (?, ?)').bind(id, slug)); }
+  statements.push(database.prepare('DELETE FROM search_index WHERE entity_id = ?').bind(id));
+  if (input.status === 'published' && (!directory || Boolean(input.body_markdown.trim()))) statements.push(database.prepare('INSERT INTO search_index (entity_id, entity_kind, path, title, description, body, tags) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(id, input.kind, path, input.title, input.description, input.body_markdown, tags.join(' ')));
+  await database.batch(statements);
   return getDocument(locals, input.kind, path, true);
 }
 export async function archiveDocument(locals: App.Locals, id: string) { await db(locals).prepare("UPDATE documents SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(id).run(); await db(locals).prepare('DELETE FROM search_index WHERE entity_id = ?').bind(id).run(); }
@@ -204,6 +221,7 @@ export async function deleteDocument(locals: App.Locals, id: string, confirmatio
   const document = await getDocumentById(locals, id);
   if (!document) throw new CmsOperationError('Document not found.', 404);
   if (document.kind === 'profile') throw new CmsOperationError('The homepage profile cannot be deleted.', 409);
+  if (document.learn_node_type === 'directory') throw new CmsOperationError('Directory introductions cannot be permanently deleted. Archive the introduction instead.', 409);
   if (confirmation !== document.title) throw new CmsOperationError('Type the exact document title to confirm deletion.', 400);
 
   const database = db(locals);

@@ -16,7 +16,19 @@ const editor = assets.find((name) => name.startsWith('_id_.astro_astro_type_scri
 const layout = assets.find((name) => name.startsWith('BaseLayout.astro_astro_type_script_') && name.endsWith('.js'));
 const css = assets.find((name) => name.endsWith('.css'));
 assert.ok(editor && layout && css, 'Build the project before browser tests.');
-const benchmark = await readFile(join(root, 'src/content/learn/01-computer-science/01-XCPC-Algorithm/03-data-structrue/template.md'), 'utf8');
+const benchmark = '# Synthetic preview benchmark\n\n' + Array.from({ length: 32 }, (_, section) => [
+  `## Iteration ${section}`,
+  'This generated workload exercises incremental Markdown rendering, code highlighting, and unchanged code-node reuse without relying on published content.',
+  '```cpp',
+  `int reduce_${section}(const std::vector<int>& values) {`,
+  '    int total = 0;',
+  ...Array.from({ length: 8 }, (_, line) => `    total += values[${line}] * ${section + line + 1};`),
+  '    return total;',
+  '}',
+  '```',
+  `- Sample ${section}: deterministic input\n- Expected result: stable highlighted blocks`
+].join('\n\n')).join('\n\n');
+assert.ok(Buffer.byteLength(benchmark) >= 18000 && Buffer.byteLength(benchmark) <= 24000, 'Keep the synthetic performance sample approximately 20 KB.');
 const sample = '## Math\n\n$$\n\\boxed{\\nabla^2p^{n+1}=\\frac{\\rho}{\\Delta t}\\nabla\\cdot\\mathbf u^*}\n$$\n\n$$\n\\sqrt{x^2+y^2}, \\left|x\\right|, \\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}\n$$\n\n$$\n\\boxed{\\text{A deliberately wide formula tests horizontal scrolling without overflowing the article}}\n$$\n\n```mermaid\nflowchart LR\nA-->B\n```\n\n```mermaid\nsequenceDiagram\nA->>B: Hello\n```\n\n```mermaid\nnot a diagram\n```\n\n```cpp\nint x = 1;\n```\n\n' + Array.from({length: 30}, (_, i) => `Paragraph ${i}.\n\n`).join('');
 const escaped = (value) => value.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shell = (body, script) => `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/_astro/${css}"></head><body><header class="site-header"><div class="site-header__inner">HYDROXY WIKI</div></header><main class="site-main">${body}</main><script type="module" src="/_astro/${script}"></script></body></html>`;

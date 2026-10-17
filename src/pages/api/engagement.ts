@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     const documentId = typeof payload.documentId === 'string' ? payload.documentId : '';
     const action = payload.action === 'view' || payload.action === 'toggle-like' ? payload.action : null;
     const document = documentId ? await getDocumentById(locals, documentId) : null;
-    if (!action || !document || document.status !== 'published' || document.kind === 'profile') return Response.json({ error: 'Published article not found.' }, { status: 404 });
+    if (!action || !document || document.status !== 'published' || document.kind === 'profile' || document.learn_node_type === 'directory') return Response.json({ error: 'Published article not found.' }, { status: 404 });
 
     let visitorId = cookies.get(visitorCookie)?.value;
     if (!visitorId || !validVisitorId.test(visitorId)) {

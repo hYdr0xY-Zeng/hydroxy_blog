@@ -10,22 +10,26 @@ if (identity instanceof Response) return identity;
 const requestedId = Astro.params.id ?? 'new';
 const existing = requestedId === 'new' ? null : await getDocumentById(Astro.locals, requestedId);
 if (requestedId !== 'new' && !existing) return Astro.redirect('/admin/');
-const kind = existing?.kind ?? (Astro.url.searchParams.get('kind') === 'essay' ? 'essay' : 'learn');
-const path = existing?.path ?? '';
 const [directories, adminTree] = await Promise.all([
   listLearnDirectories(Astro.locals),
   getLearnTree(Astro.locals, { includeUnpublished: true, includeEmpty: true })
 ]);
+const requestedDirectory = requestedId === 'new' ? Astro.url.searchParams.get('directory') : null;
+const directoryNode = requestedDirectory !== null ? adminTree.byPath.get(requestedDirectory) : undefined;
+if (requestedDirectory !== null && directoryNode?.node_type !== 'directory') return Astro.redirect('/admin/');
+if (directoryNode?.document_id) return Astro.redirect(`/admin/editor/${directoryNode.document_id}`);
+const kind = directoryNode ? 'learn' : existing?.kind ?? (Astro.url.searchParams.get('kind') === 'essay' ? 'essay' : 'learn');
+const path = existing?.path ?? directoryNode?.path ?? '';
 const pathParts = path.split('/').filter(Boolean);
 const learnParentPath = kind === 'learn' ? pathParts.slice(0, -1).join('/') : '';
 const learnSlug = kind === 'learn' ? pathParts.at(-1) ?? '' : '';
 const existingLearnNode = kind === 'learn' ? adminTree.byPath.get(path) : undefined;
-const isLearnDirectoryArticle = Boolean(existingLearnNode && existingLearnNode.children.length > 0);
-const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArticle);
+const isDirectoryIntro = Boolean(directoryNode || (kind === 'learn' && (existing?.learn_node_type === 'directory' || existingLearnNode?.node_type === 'directory')));
+const canDelete = Boolean(existing && kind !== 'profile' && !isDirectoryIntro);
 ---
 
 <BaseLayout title={existing ? `Edit ${existing.title}` : 'New document'}>
-  <form class="editor-console" data-editor-form data-learn-parent-path={learnParentPath} data-learn-slug={learnSlug}>
+  <form class="editor-console" data-editor-form data-learn-parent-path={learnParentPath} data-learn-slug={learnSlug} data-directory-intro={isDirectoryIntro ? 'true' : undefined}>
     <header class="editor-toolbar pixel-panel">
       <div><p class="section-kicker">/admin/editor</p><h1>{existing ? existing.title : 'New Document'}</h1><span>{kind} / {existing?.status ?? 'new'} / {identity.email}</span><output class="editor-save-status" data-editor-save-status aria-live="polite"></output></div>
       <div class="editor-toolbar__actions"><a class="text-button" href="/admin/">BACK</a><button class="text-button" type="button" data-editor-sync aria-pressed="true">SYNC: ON</button><button class="text-button" type="submit" data-status="draft">SAVE DRAFT</button><button class="text-button" type="submit" data-status="published">PUBLISH</button>{existing && <button class="text-button" type="submit" data-status="archived">ARCHIVE</button>}</div>
@@ -34,7 +38,19 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
     <div class="editor-shell">
       <details class="editor-metadata pixel-panel" open>
         <summary>METADATA</summary>
-        <div class="editor-fields"><input type="hidden" name="id" value={existing?.id ?? ''} /><label>Kind<select name="kind" data-kind-select><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label><label data-path-field hidden={kind === 'learn'}>Path<input name="path" value={path} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label><div data-learn-path-fields hidden={kind !== 'learn'}>{isLearnDirectoryArticle && <input type="hidden" name="parent_path" value={learnParentPath} />}<label>Directory<select name="parent_path" data-learn-parent data-locked={isLearnDirectoryArticle ? 'true' : undefined} disabled={kind !== 'learn' || isLearnDirectoryArticle}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isLearnDirectoryArticle} disabled={kind !== 'learn'} required={kind === 'learn'} /></label><label>Order<input name="sort_order" data-learn-sort-order type="number" value={String(existingLearnNode?.sort_order ?? 9999)} disabled={kind !== 'learn'} /></label><output data-learn-path-preview></output>{isLearnDirectoryArticle && <p class="form-hint">This article has child nodes, so its directory and slug cannot be moved or deleted.</p>}</div><label>Title<input name="title" value={existing?.title ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label>{existing && <div class="editor-danger"><p>Permanent deletion cannot be undone.</p><button class="text-button danger-button" type="button" data-document-delete disabled={!canDelete}>DELETE DOCUMENT</button></div>}</div>
+        <div class="editor-fields">
+          <input type="hidden" name="id" value={existing?.id ?? ''} />
+          {isDirectoryIntro && <><input type="hidden" name="kind" value="learn" /><input type="hidden" name="directory_path" value={path} /></>}
+          <label>Kind<select name="kind" data-kind-select disabled={isDirectoryIntro}><option value="learn" selected={kind === 'learn'}>Learn</option><option value="essay" selected={kind === 'essay'}>Essay</option><option value="profile" selected={kind === 'profile'}>Profile</option></select></label>
+          <label data-path-field hidden={kind === 'learn' && !isDirectoryIntro}>Path<input name="path" value={path} readonly={isDirectoryIntro} placeholder={kind === 'profile' ? 'home' : 'essay-name'} required={kind !== 'learn'} /></label>
+          <div data-learn-path-fields hidden={kind !== 'learn' || isDirectoryIntro}>
+            <label>Directory<select name="parent_path" data-learn-parent disabled={kind !== 'learn' || isDirectoryIntro}><option value="" selected={!learnParentPath}>/learn</option>{directories.map((directory) => <option value={directory.path} selected={directory.path === learnParentPath}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label>
+            <label>Slug<input name="slug" data-learn-slug value={learnSlug} placeholder="parallel-computing" pattern="[a-z0-9]+(-[a-z0-9]+)*" readonly={isDirectoryIntro} disabled={kind !== 'learn' || isDirectoryIntro} required={kind === 'learn' && !isDirectoryIntro} /></label>
+            <label>Order<input name="sort_order" data-learn-sort-order type="number" value={String(existingLearnNode?.sort_order ?? 9999)} disabled={kind !== 'learn' || isDirectoryIntro} /></label><output data-learn-path-preview></output>
+          </div>
+          <label>Title<input name="title" value={existing?.title ?? directoryNode?.label ?? ''} required /></label><label>Description<input name="description" value={existing?.description ?? ''} /></label><label>Tags<input name="tags" value={existing?.tags.join(', ') ?? ''} placeholder="cs, note" /></label><label>Mood<input name="mood" value={existing?.mood ?? ''} /></label><label>Cover key<input name="cover_key" value={existing?.cover_key ?? ''} placeholder="uploads/2026-08/..." /></label><label>Publish time<input name="published_at" type="datetime-local" value={existing?.published_at ? existing.published_at.slice(0, 16) : ''} /></label>
+          {canDelete && <div class="editor-danger"><p>Permanent deletion cannot be undone.</p><button class="text-button danger-button" type="button" data-document-delete>DELETE DOCUMENT</button></div>}
+        </div>
       </details>
 
       <section class="editor-workspace" data-editor-workspace data-active-pane="edit">
@@ -45,7 +61,7 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
     </div>
   </form>
 
-  {existing && <dialog class="delete-dialog pixel-panel" data-delete-dialog><form data-delete-form><h2>Delete Document</h2><p>Type <strong>{existing.title}</strong> to permanently delete this document.</p><label>Confirmation<input data-delete-confirmation autocomplete="off" /></label><div><button class="text-button" type="button" data-dialog-cancel>CANCEL</button><button class="text-button danger-button" type="submit">DELETE</button></div><output data-delete-error aria-live="polite"></output></form></dialog>}
+  {canDelete && existing && <dialog class="delete-dialog pixel-panel" data-delete-dialog><form data-delete-form><h2>Delete Document</h2><p>Type <strong>{existing.title}</strong> to permanently delete this document.</p><label>Confirmation<input data-delete-confirmation autocomplete="off" /></label><div><button class="text-button" type="button" data-dialog-cancel>CANCEL</button><button class="text-button danger-button" type="submit">DELETE</button></div><output data-delete-error aria-live="polite"></output></form></dialog>}
 </BaseLayout>
 
 <script>
@@ -72,6 +88,7 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
     const slugInput = form.querySelector<HTMLInputElement>('[data-learn-slug]');
     const sortOrderInput = form.querySelector<HTMLInputElement>('[data-learn-sort-order]');
     const pathPreview = form.querySelector<HTMLOutputElement>('[data-learn-path-preview]');
+    const isDirectoryIntro = form.dataset.directoryIntro === 'true';
     let syncing = false;
     let syncEnabled = localStorage.getItem('hydroxy-editor-sync') !== 'false';
 
@@ -94,12 +111,12 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
 
     const syncPathFields = () => {
       const isLearn = kindSelect?.value === 'learn';
-      if (pathField) pathField.hidden = isLearn;
+      if (pathField) pathField.hidden = isLearn && !isDirectoryIntro;
       if (pathInput) pathInput.required = !isLearn;
-      if (learnPathFields) learnPathFields.hidden = !isLearn;
-      if (parentInput) parentInput.disabled = !isLearn || parentInput.dataset.locked === 'true';
-      if (slugInput) { slugInput.disabled = !isLearn; slugInput.required = isLearn; }
-      if (sortOrderInput) sortOrderInput.disabled = !isLearn;
+      if (learnPathFields) learnPathFields.hidden = !isLearn || isDirectoryIntro;
+      if (parentInput) parentInput.disabled = !isLearn || isDirectoryIntro;
+      if (slugInput) { slugInput.disabled = !isLearn || isDirectoryIntro; slugInput.required = isLearn && !isDirectoryIntro; }
+      if (sortOrderInput) sortOrderInput.disabled = !isLearn || isDirectoryIntro;
       if (pathPreview) {
         const parts = [parentInput?.value, slugInput?.value.trim()].filter(Boolean);
         pathPreview.textContent = isLearn ? `/learn/${parts.join('/') || '...'}/` : '';
@@ -107,7 +124,7 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
       if (slugInput) {
         const unchanged = parentInput?.value === form.dataset.learnParentPath && slugInput.value.trim() === form.dataset.learnSlug && Boolean(form.dataset.learnSlug);
         slugInput.removeAttribute('pattern');
-        slugInput.setCustomValidity(isLearn && !unchanged && !learnSlugPattern.test(slugInput.value.trim()) ? 'Use lowercase letters, numbers, and hyphens for a new slug.' : '');
+        slugInput.setCustomValidity(isLearn && !isDirectoryIntro && !unchanged && !learnSlugPattern.test(slugInput.value.trim()) ? 'Use lowercase letters, numbers, and hyphens for a new slug.' : '');
       }
     };
     kindSelect?.addEventListener('change', syncPathFields);
@@ -131,7 +148,7 @@ const canDelete = Boolean(existing && kind !== 'profile' && !isLearnDirectoryArt
       const publishedAt = field('published_at');
       const parsedPublishedAt = publishedAt ? new Date(publishedAt) : null;
       const submitter = event.submitter;
-      const documentPayload = { id: field('id'), kind: field('kind'), path: field('path'), parent_path: values.has('parent_path') ? field('parent_path') : form.dataset.learnParentPath ?? '', slug: values.has('slug') ? field('slug') : form.dataset.learnSlug ?? '', sort_order: Number(field('sort_order')), title: field('title'), description: field('description'), body_markdown: field('body_markdown'), mood: field('mood'), cover_key: field('cover_key'), status: submitter instanceof HTMLElement ? submitter.dataset.status || 'draft' : 'draft', tags: field('tags').split(',').map((tag) => tag.trim()).filter(Boolean), published_at: parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime()) ? parsedPublishedAt.toISOString() : null };
+      const documentPayload = { id: field('id'), kind: field('kind'), path: field('path'), ...(isDirectoryIntro ? { directory_path: field('directory_path') } : { parent_path: values.has('parent_path') ? field('parent_path') : form.dataset.learnParentPath ?? '', slug: values.has('slug') ? field('slug') : form.dataset.learnSlug ?? '', sort_order: Number(field('sort_order')) }), title: field('title'), description: field('description'), body_markdown: field('body_markdown'), mood: field('mood'), cover_key: field('cover_key'), status: submitter instanceof HTMLElement ? submitter.dataset.status || 'draft' : 'draft', tags: field('tags').split(',').map((tag) => tag.trim()).filter(Boolean), published_at: parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime()) ? parsedPublishedAt.toISOString() : null };
       try {
         const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveDocument', document: documentPayload }) });
         const payload = await response.json() as SavePayload;

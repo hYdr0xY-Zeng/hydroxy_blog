@@ -1,70 +1,87 @@
 # Hydroxy Wiki
 
-Dark pixel-styled personal Wiki built with Astro, Cloudflare Pages Functions, D1, and R2.
+Dark pixel-styled personal Wiki built with Astro, Cloudflare Workers SSR, D1, and R2.
 
 ## Commands
+
+Use Node 24+ for tests, builds, and checks.
 
 ```bash
 npm install
 npm run dev
+npm test
 npm run build
 npm run check
 npm run preview
+npm run dev:pages
 npm run db:migrate:local
-npm run content:migrate
 ```
 
-For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then run `npm run dev:pages`.
+For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then run `npm run dev:pages`. This local command remains available; deployment uses Workers, not Pages.
 
 ## Runtime
 
-- Public routes are server-rendered by Cloudflare Pages Functions.
-- D1 is the primary store for Learn, Essays, homepage Profile, Anime Log, Gallery, tags, redirects, and full-text search.
-- R2 stores article media, anime covers, gallery images, and new admin uploads. Public media is served through `/media/*`.
+- Public routes are server-rendered by Cloudflare Workers using `wrangler.toml`.
+- D1 is the sole content source for Learn, Essays, homepage Profile, Anime Log, Gallery, tags, redirects, and full-text search.
+- R2 stores article media, anime covers, gallery images, and admin uploads. Public media is served through `/media/*`.
 - `/admin/` and `/api/admin/*` must be protected by Cloudflare Access. The app verifies the Access JWT and `ADMIN_EMAILS` allowlist before every read or write.
-- `wrangler.toml` contains binding names and placeholders only. Add production IDs and `ADMIN_EMAILS` as Cloudflare Pages secrets; never commit real credentials.
+- `wrangler.toml` defines the Worker entry point, assets, and separate preview/production D1 and R2 resources; default bindings use preview resources. It contains resource IDs, not just placeholders. IDs are not credentials; never commit credentials or secret values.
 
 ## Content Publishing
 
-The editor renders live previews in a dedicated browser Web Worker using the same Markdown renderer as public pages. Unchanged code blocks and diagrams are reused; if the Worker cannot load, the protected server preview endpoint is used instead. Preview failures do not discard the editor text or the last successful preview. New slugs use lowercase `kebab-case`; existing imported URLs retain their original case when saved unchanged. Existing D1 nodes can be selected as parent directories regardless of their historical casing.
+Use `/admin/` for publication and Life management. Learn nodes have explicit `node_type` values: `directory` or `article`. Only directories can be parents; articles are leaves. Create directories in **Learn Directories**, choosing a parent (or `/learn`), display label, lowercase `kebab-case` slug, and sort order. Edit a directory's introduction through its directory intro editor. Articles use **Directory + Slug**; published article moves create D1-backed 301 redirects. Node types are fixed, and directories with children cannot be moved. Profile and all directory introductions are protected from permanent deletion, even when empty.
+
+New or changed slugs use lowercase `kebab-case`. Existing Learn URLs, including historical casing, are preserved when unchanged. Parent paths must resolve to existing D1 directories without revalidating their historical slugs. Equal sort orders are ordered by display label.
+
+A directory is publicly visible only when it has a nonempty published introduction or a published descendant. Empty, draft-only, and archived items remain available to admins; draft and archived bodies are never public. Directory introductions are excluded from ordinary article lists, article statistics, RSS, and view/like engagement.
+
+The editor renders live previews in a dedicated browser Web Worker using the same Markdown renderer as public pages. Unchanged code blocks and diagrams are reused; if the Worker cannot load, the protected server preview endpoint is used instead. Preview failures do not discard the editor text or the last successful preview.
 
 Keep the direct KaTeX dependency pinned to the version used by `rehype-katex` and Mermaid so the generated HTML, CSS, and fonts match. Run `npm test` (WSL Node 24+) for path, content-save, and math-version regression tests, followed by `npm run check` and `npm run build`.
 
 After building, run `node --experimental-strip-types tests/browser-regression.mjs` with an existing Playwright installation and Chrome (`PLAYWRIGHT_MODULE` can specify its module directory). This serves local, in-memory fixtures using the real production editor/Worker bundles; it never authenticates against or writes to production. It covers typing latency, IME, preview fallback, scroll sync, legacy form validation, code/diagram reuse, and desktop/mobile math layout, and writes screenshots to the system temporary directory. Set `PREVIEW_ORIGIN` to a deployed preview URL to additionally check the deployed assets against local fixture HTML without publishing test articles or bypassing admin authentication.
 
-Use `/admin/` for normal publication. Create Learn directories first in the **Learn Directories** panel, choosing a parent (or `/learn`), a display label, lowercase `kebab-case` slug, and sort order. A Learn article then uses **Directory + Slug** to produce its stable path; published moves create a D1-backed 301 redirect. A Learn article that contains child nodes cannot be moved from the normal editor.
+Optional directory browser regression: after building, run `node --experimental-strip-types tests/directory-browser.mjs` with Node 24+, Playwright (`PLAYWRIGHT_MODULE` if needed), and Chrome (`PLAYWRIGHT_CHANNEL` can override). It checks new/existing intro field locks, draft/publish payloads, historical paths, directory-only parent wiring, article payload isolation, and desktop/mobile layout using local fixtures and the built editor script. It does not authenticate against SSR or write D1; screenshots go to the system temporary directory.
 
-Empty directories, drafts, and archived Learn items stay available in the admin tree but are hidden from the public Wiki tree until a published article exists beneath them. Equal sort orders are ordered by display label.
+Published Learn articles and Essays record one anonymous browser view per UTC day and provide a browser-local like toggle. The site stores only per-article hashes of a first-party `HttpOnly` cookie, never IP addresses or user profiles. The homepage shell reads published D1 content at request time; use `help`, `ls`, `cd`, `pwd`, `open`, `recent`, `tags`, `stats`, `search`, and `clear`.
 
-Published Learn and Essay articles record one anonymous browser view per UTC day and provide a browser-local like toggle. The site stores only per-article hashes of a first-party `HttpOnly` cookie, never IP addresses or user profiles. The homepage shell reads published D1 content at request time; use `help`, `ls`, `cd`, `pwd`, `open`, `recent`, `tags`, `stats`, `search`, and `clear`.
+Permanent deletion requires the exact document title or original media filename. Profile and all directory introductions cannot be permanently deleted, even when empty; directories with children are also protected. Media deletion is blocked while referenced by Markdown, a document cover, Anime, or Gallery; export content before irreversible deletion.
 
-Permanent deletion requires typing the exact document title or original media filename. Profile documents and Learn documents with child nodes cannot be deleted. Media deletion is blocked while the asset is referenced by Markdown, a document cover, Anime, or Gallery; export content before deleting because these operations are irreversible.
+## Backups and Schema Rollout
 
-The repository Markdown and JSON files remain a migration/import source and a Git-friendly backup format, not the primary production data source. Download a backup from `/api/admin/export` and commit it when a snapshot is needed. The ZIP includes `data/learn-tree.json`, which preserves Learn directory paths, labels, parents, and ordering for a later import.
+There is no static content source or supported static import. `src/content/`, `src/data/`, the `content:migrate` command, and its script are removed; do not recreate an import or backup-in-Git workflow.
 
-## One-time migration
+Download content from `/api/admin/export` and keep archives outside this repository. The ZIP contains Markdown, Anime/Gallery JSON, `data/learn-tree.json` with paths, labels, parents, order, and explicit `nodeType`, and `media-manifest.json`. Directory introductions use `learn/<path>/index.md`; articles normally use `learn/<path>.md`. An article whose final slug is `index` uses `learn/<path>/article.md` (for example, `learn/topic/index/article.md`) to avoid colliding with its parent's intro; frontmatter retains the original `path`. The ZIP is a content/metadata export, not an automatic import or full database backup. It excludes engagement data and R2 binary files; back up R2 objects separately when needed.
 
-1. Create separate D1 and R2 resources for Pages production and preview, then replace the placeholders in `wrangler.toml`.
-2. Apply the schema with `wrangler d1 migrations apply <database> --remote`.
-3. Run `npm run content:migrate` to generate `/tmp/hydroxy-wiki-migration/report.json` and `seed.sql`; inspect the counts and generated URLs.
-4. Upload/import only after review:
+For schema changes, including explicit Learn node types:
+
+1. Pause admin writes and prevent automatic deployment of schema-dependent code.
+2. Export D1 SQL and the backend content ZIP to storage outside the repository; verify backups. Bare full D1 export fails on FTS5: explicitly select ordinary table names with `--table` and save a separate FTS snapshot. Preserve R2 binaries separately if needed.
+3. Apply database schema migrations from `migrations/` to local, preview, and production before deploying code that requires them. The node-type migration classifies existing nodes without changing URLs; existing parent nodes become directories and their bodies become introductions.
+4. Run Node 24+ `npm test`, `npm run check`, and `npm run build`; verify preview before production rollout.
+5. Verify directory intros, parent restrictions, unchanged URLs, public visibility, article exclusions, and exports, then resume writes.
+
+Remote schema migration commands (not static content imports):
 
 ```bash
-npm run content:migrate -- --apply --database <d1-database-name> --bucket <r2-bucket-name> --env production
+npx wrangler d1 migrations apply HYDROXY_DB --remote --env preview
+npx wrangler d1 migrations apply HYDROXY_DB --remote --env production
 ```
 
-5. Configure the Cloudflare Access application for `/admin/*` and `/api/admin/*`, set `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and `ADMIN_EMAILS`, then deploy a Pages preview branch.
+## Cloudflare Workers
 
-The migration rewrites local content-image links inside D1 Markdown to `/media/migration/...`, preserves public article routes, and does not edit source Markdown/JSON files.
+`wrangler.toml` uses `dist/_worker.js/index.js` and static assets from `dist`. Pushes to `main` trigger the existing Worker's build/deployment integration. Apply required schema migrations before pushing schema-dependent code.
 
-## Cloudflare Pages
+After building, explicit deployment commands are (verify the actual target Worker before deploying):
 
-```text
-Build command: npm run build
-Build output directory: dist
+```bash
+npx wrangler deploy --env preview
+npx wrangler deploy --env production --name hydroxy-wiki --keep-vars
 ```
 
-Required bindings and variables:
+The confirmed production Worker is `hydroxy-wiki`; `--env production` alone defaults to `hydroxy-wiki-production`. Keep `--name hydroxy-wiki` explicit and use `--keep-vars` to preserve dashboard-managed plain variables, including Access settings; secrets remain managed per environment.
+
+Required bindings and environment-specific variables/secrets:
 
 ```text
 D1 binding: HYDROXY_DB
@@ -75,10 +92,11 @@ ADMIN_EMAILS
 PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN (optional)
 ```
 
+Configure Access values and the admin allowlist per Worker environment through Cloudflare settings or Wrangler secrets, never in Git. Keep the canonical `site` URL in `astro.config.mjs` synchronized with the custom domain for RSS and sitemap.
+
 ## Development Notes
 
-- Run `npm run build` before every push. Do not commit `dist/`, `.astro/`, `node_modules/`, or local `.wrangler/` data.
+- Do not commit `dist/`, `.astro/`, `node_modules/`, local `.wrangler/` data, or content/SQL backups.
 - Search uses D1 FTS5 through `/api/search`, so it is current immediately after publish; Pagefind is no longer used.
 - Mermaid renders in the browser from `mermaid` fenced blocks. KaTeX, Shiki, and ordinary code-copy buttons are shared by public pages and the admin preview.
-- Apply every new D1 migration to local, preview, and production before deploying code that requires its new tables. Engagement data is operational analytics and is deliberately excluded from content ZIP exports.
-- Legacy local content structure is retained under `src/content/` and `src/data/` for import and backup only. Fonts, favicon, and UI assets remain under `public/`.
+- Fonts, favicon, avatar, and UI assets remain under `public/`; published content and uploaded media live in D1/R2.

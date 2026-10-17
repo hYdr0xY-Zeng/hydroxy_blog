@@ -19,7 +19,7 @@ const [learn, essays, profile, tags, tree, engagement] = await Promise.all([
 const recent = [...learn, ...essays].sort((a, b) => Date.parse(b.published_at ?? b.updated_at) - Date.parse(a.published_at ?? a.updated_at)).slice(0, 6);
 const profileRendered = profile ? await renderMarkdown(profile.body_markdown) : null;
 const shellTree = tree.roots.map(function toShellNode(node): { path: string; label: string; href: string; directory: boolean; children: ReturnType<typeof toShellNode>[] } {
-  return { path: node.path, label: node.label, href: node.href, directory: node.children.length > 0, children: node.children.map(toShellNode) };
+  return { path: node.path, label: node.label, href: node.href, directory: node.node_type === 'directory', children: node.children.map(toShellNode) };
 });
 ---
 

@@ -17,10 +17,10 @@ function isOpen(node: LearnNode) {
   {nodes.map((node) => (
     <li>
       <a class="tree-link" href={node.href} aria-current={activeSlug === node.path ? 'page' : undefined}>
-        <span class="tree-link__icon" aria-hidden="true">{node.children.length ? (isOpen(node) ? '[-]' : '[+]') : '[*]'}</span>
+        <span class="tree-link__icon" aria-hidden="true">{node.node_type === 'directory' ? (isOpen(node) ? '[-]' : '[+]') : '[*]'}</span>
         <span>{node.label}</span>
       </a>
-      {node.children.length > 0 && isOpen(node) && <Astro.self nodes={node.children} activeSlug={activeSlug} />}
+      {node.node_type === 'directory' && node.children.length > 0 && isOpen(node) && <Astro.self nodes={node.children} activeSlug={activeSlug} />}
     </li>
   ))}
 </ul>

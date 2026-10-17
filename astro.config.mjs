@@ -1,6 +1,5 @@
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
-import mdx from '@astrojs/mdx';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 
@@ -9,7 +8,6 @@ export default defineConfig({
   session: { driver: 'memory' },
   output: 'server',
   adapter: cloudflare({ imageService: 'passthrough', platformProxy: { enabled: true } }),
-  integrations: [mdx()],
   vite: {
     // The shared Markdown pipeline must use DOM-free package exports inside a Worker.
     resolve: { conditions: ['worker', 'module', 'browser', 'development|production'] },
