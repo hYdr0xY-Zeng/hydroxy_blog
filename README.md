@@ -1,6 +1,6 @@
 # Hydroxy Wiki
 
-Dark pixel-styled personal Wiki built with Astro, Cloudflare Workers SSR, D1, and R2.
+Dark pixel-styled personal Wiki built with Astro, Cloudflare Pages Functions SSR, D1, and R2.
 
 ## Commands
 
@@ -17,15 +17,15 @@ npm run dev:pages
 npm run db:migrate:local
 ```
 
-For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then run `npm run dev:pages`. This local command remains available; deployment uses Workers, not Pages.
+For local D1/R2 binding emulation, run `npm run db:migrate:local`, build, then run `npm run dev:pages`. The public site deploys through Cloudflare Pages; the separate Worker is optional.
 
 ## Runtime
 
-- Public routes are server-rendered by Cloudflare Workers using `wrangler.toml`.
+- Public routes are server-rendered by Astro on Cloudflare Pages Functions. The Pages project `hydroxy-wiki` serves `hydroxy-wiki.com` and `www.hydroxy-wiki.com`; the same-named standalone Worker and its `workers.dev` endpoint do not serve those domains.
 - D1 is the sole content source for Learn, Essays, homepage Profile, Anime Log, Gallery, tags, redirects, and full-text search.
 - R2 stores article media, anime covers, gallery images, and admin uploads. Public media is served through `/media/*`.
 - `/admin/` and `/api/admin/*` must be protected by Cloudflare Access. The app verifies the Access JWT and `ADMIN_EMAILS` allowlist before every read or write.
-- `wrangler.toml` defines the Worker entry point, assets, and separate preview/production D1 and R2 resources; default bindings use preview resources. It contains resource IDs, not just placeholders. IDs are not credentials; never commit credentials or secret values.
+- `wrangler.toml` is for optional standalone Worker deployment and local bindings, not the formal site's deployment topology. It defines the Worker entry point, assets, and separate preview/production D1 and R2 resources; default bindings use preview resources. It contains resource IDs, not just placeholders. IDs are not credentials; never commit credentials or secret values.
 
 ## Content Publishing
 
@@ -68,18 +68,18 @@ npx wrangler d1 migrations apply HYDROXY_DB --remote --env preview
 npx wrangler d1 migrations apply HYDROXY_DB --remote --env production
 ```
 
-## Cloudflare Workers
+## Cloudflare Deployment
 
-`wrangler.toml` uses `dist/_worker.js/index.js` and static assets from `dist`. Pushes to `main` trigger the existing Worker's build/deployment integration. Apply required schema migrations before pushing schema-dependent code.
+The public site uses the Cloudflare Pages project `hydroxy-wiki`: build command `npm run build`, output directory `dist`. Pushes to `main` trigger Pages automatic deployment; a separate Worker build integration also exists. Apply required schema migrations before pushing schema-dependent code, and verify the Pages deployment and formal custom domains afterward. Do not change domain routing or deployment topology as part of routine publishing.
 
-After building, explicit deployment commands are (verify the actual target Worker before deploying):
+Optional standalone Worker commands after building (verify the target before deploying; these are not the primary public-site deployment):
 
 ```bash
 npx wrangler deploy --env preview
 npx wrangler deploy --env production --name hydroxy-wiki --keep-vars
 ```
 
-The confirmed production Worker is `hydroxy-wiki`; `--env production` alone defaults to `hydroxy-wiki-production`. Keep `--name hydroxy-wiki` explicit and use `--keep-vars` to preserve dashboard-managed plain variables, including Access settings; secrets remain managed per environment.
+The manual production command updates ONLY the standalone Worker `hydroxy-wiki`, not the Pages project or formal site. `--env production` alone defaults to `hydroxy-wiki-production`; keep the explicit name and `--keep-vars` to preserve dashboard-managed plain variables, including Access settings. The preview Worker remains valid for preview testing, but is not a Pages deployment.
 
 Required bindings and environment-specific variables/secrets:
 
@@ -92,7 +92,7 @@ ADMIN_EMAILS
 PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN (optional)
 ```
 
-Configure Access values and the admin allowlist per Worker environment through Cloudflare settings or Wrangler secrets, never in Git. Keep the canonical `site` URL in `astro.config.mjs` synchronized with the custom domain for RSS and sitemap.
+Configure bindings, Access values, and the admin allowlist in the Pages project's production/preview settings for the public site; configure optional Workers separately through Cloudflare settings or Wrangler secrets. Never commit secret values. Keep the canonical `site` URL in `astro.config.mjs` synchronized with the custom domain for RSS and sitemap.
 
 ## Development Notes
 

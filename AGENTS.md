@@ -2,7 +2,7 @@
 
 ## Project identity
 
-Hydroxy Wiki is a dynamic personal knowledge base and blog. It is maintained in GitHub and served through Cloudflare Workers with D1 and R2.
+Hydroxy Wiki is a dynamic personal knowledge base and blog. It is maintained in GitHub and served through Cloudflare Pages Functions with D1 and R2.
 
 - Owner and writing voice: Hydroxy (羟), a computer science student interested in algorithms, high-performance computing, anime, Chinese poetry, and industrial simulation software for ship and marine engineering.
 - Site focus: technical articles, course notes, experiment and lab records, personal essays, anime log, and gallery.
@@ -13,12 +13,12 @@ When assisting the owner in this repository, address them as “羟桑”. Keep 
 
 ## Stack and commands
 
-- Framework: Astro 5 with Cloudflare Workers SSR.
+- Framework: Astro 5 with Cloudflare Pages Functions SSR for the public site.
 - Primary content: D1. Learn, Essays, Profile, Anime, Gallery, tags, redirects, and D1 FTS5 are served at request time.
 - Media: private R2 binding `HYDROXY_MEDIA`, publicly streamed through `/media/*`.
 - Markdown: shared Astro Markdown processor with Shiki, KaTeX, and client-side Mermaid rendering.
 - Admin: `/admin/*` and `/api/admin/*` require Cloudflare Access; the app also validates the Access JWT and `ADMIN_EMAILS` allowlist.
-- Deployment: pushes to `main` trigger the existing Worker's build/deployment integration.
+- Deployment: pushes to `main` trigger automatic deployment of Pages project `hydroxy-wiki`, which serves `hydroxy-wiki.com` and `www.hydroxy-wiki.com`. A separate same-named Worker and build integration also exist; its `workers.dev` endpoint does not serve the formal domains.
 
 ```bash
 npm install
@@ -33,19 +33,20 @@ npm run db:migrate:local
 
 Use Node 24+ for `npm test`, `npm run check`, and `npm run build`. `npm run build` runs `astro build` only. Do not commit generated `dist/`, `.astro/`, `.wrangler/`, or `node_modules/` output. Search is D1-backed; Pagefind is no longer part of the build.
 
-Cloudflare Workers configuration (`wrangler.toml`):
+Public-site Pages settings:
 
 ```text
 Build command: npm run build
-Worker entry point: dist/_worker.js/index.js
-Static assets directory: dist
+Build output directory: dist
 D1 binding: HYDROXY_DB
 R2 binding: HYDROXY_MEDIA
 ```
 
-Set `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and `ADMIN_EMAILS` per Worker environment through Cloudflare settings or Wrangler secrets. Never commit credentials or secret values. `wrangler.toml` contains actual resource IDs and separate production/preview bindings; defaults use preview resources. Resource IDs are not credentials.
+Set `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and `ADMIN_EMAILS` in the Pages project's production/preview environment settings, along with its D1/R2 bindings. Configure optional Workers separately. Never commit credentials or secret values. `wrangler.toml` contains actual resource IDs and separate production/preview bindings for optional Worker deployment and local use; defaults use preview resources. Resource IDs are not credentials, and this file does not establish the formal site's routing.
 
-After building, deploy explicitly with `npx wrangler deploy --env preview` or `npx wrangler deploy --env production --name hydroxy-wiki --keep-vars`. The confirmed production Worker is `hydroxy-wiki`; `--env production` alone defaults to `hydroxy-wiki-production`. Verify the target before deploying; keep the explicit name and `--keep-vars` to preserve dashboard-managed plain variables, including Access settings, while secrets remain environment-managed. Apply required D1 migrations before deploying schema-dependent code, including before a triggering push to `main`. `npm run dev:pages` remains available for local binding emulation; it does not imply Pages deployment.
+Pages auto deploy on `main` is the primary public-site deployment. Apply required D1 migrations before deploying schema-dependent code, including before a triggering push. `npm run dev:pages` remains available for local binding emulation. Do not change deployment topology or domain routing during routine publishing.
+
+Optional Worker deployment after building: `npx wrangler deploy --env preview`. Manual `npx wrangler deploy --env production --name hydroxy-wiki --keep-vars` updates ONLY the standalone Worker, not Pages or the formal site; `--env production` alone defaults to `hydroxy-wiki-production`. Verify the target first, keep the explicit name and `--keep-vars` to preserve dashboard-managed plain variables, and manage secrets per environment. Preview Worker testing remains valid but does not deploy Pages.
 
 `astro.config.mjs` contains the canonical `site` URL used by dynamic RSS and sitemap. Keep it synchronized with the active Cloudflare custom domain before publishing a domain change.
 ## Repository map
@@ -125,7 +126,7 @@ Before publishing content or code:
 4. Check the homepage Profile renders from D1, and that Tags remain beneath the Dashboard.
 5. Optionally run `node --experimental-strip-types tests/directory-browser.mjs` after building with Node 24+, Playwright (`PLAYWRIGHT_MODULE` if needed), and Chrome (`PLAYWRIGHT_CHANNEL` can override). Local fixtures check directory intro locks, draft/publish payloads, historical paths, parent wiring, article payload isolation, and desktop/mobile layout without authenticated SSR or D1 writes; screenshots go to the system temporary directory. Check desktop and mobile layouts for navigation, Learn tree drawer, article width/TOC, code blocks, Anime pagination, and Gallery masonry layout.
 6. For visual asset or favicon updates, test in a private window or with browser cache disabled. Chrome can cache favicons separately from normal page assets.
-7. After a GitHub push, inspect the Cloudflare Worker deployment and verify HTTPS, sitemap, RSS, and search on the deployed domain.
+7. After a GitHub push, inspect the Cloudflare Pages deployment and verify HTTPS, sitemap, RSS, and search on the formal custom domains; a successful standalone Worker deployment does not verify the public site.
 
 ## Change discipline
 
