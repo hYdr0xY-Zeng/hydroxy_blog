@@ -25,14 +25,44 @@ const [learn, essays, profile, anime, gallery, directories, media] = await Promi
   listMediaAssets(Astro.locals)
 ]);
 const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
+const modules = [
+  { id: 'documents', label: 'Documents' },
+  { id: 'directories', label: 'Learn Directories' },
+  { id: 'media', label: 'Media' },
+  { id: 'anime', label: 'Anime' },
+  { id: 'gallery', label: 'Gallery' }
+];
 ---
 
 <BaseLayout title="Admin" description="Hydroxy Wiki private editor.">
-  <header class="page-hero pixel-panel"><p class="section-kicker">/admin</p><h1 class="section-title">Content Console</h1><p class="section-copy">{identity.email}</p><a class="text-button" href="/api/admin/export">EXPORT</a></header>
-  <section class="admin-grid">
-    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Documents</h2><div><a class="text-button" href="/admin/editor/new?kind=learn">NEW LEARN</a><a class="text-button" href="/admin/editor/new?kind=essay">NEW ESSAY</a></div></div><ul class="article-list">{documents.map((document) => <li><a class="article-link" href={`/admin/editor/${document.id}`}><strong>{document.title}</strong><span>{document.kind} / {document.status} / {document.path}</span></a></li>)}</ul></div>
-    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Learn Directories</h2></div><form class="admin-form" data-directory-form><label>Parent<select name="parent_path"><option value="">/learn</option>{directories.map((directory) => <option value={directory.path}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Label<input name="label" placeholder="Computer Science" required /></label><label>Slug<input name="slug" placeholder="computer-science" pattern="[a-z0-9]+(-[a-z0-9]+)*" required /></label><label>Order<input name="sort_order" type="number" value="9999" /></label><button class="text-button">CREATE DIRECTORY</button></form><ul class="article-list">{directories.map((directory) => <li><a class="article-link" href={directory.document_id ? `/admin/editor/${directory.document_id}` : `/admin/editor/new?directory=${encodeURIComponent(directory.path)}`}><strong>{directory.label}</strong><span>/learn/{directory.path} / order {directory.sort_order} / {directory.document_id ? 'EDIT INTRO' : 'ADD INTRO'}</span></a></li>)}</ul></div>
-    <div class="pixel-panel admin-panel"><div class="admin-panel__head"><h2>Media</h2></div><form data-media-form class="admin-form"><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required /><button class="text-button">UPLOAD</button><output data-media-output></output></form><ul class="admin-media-list">{media.map((asset) => <li><a href={mediaHref(asset.key)} target="_blank" rel="noreferrer"><img src={mediaHref(asset.key)} alt={asset.original_name} loading="lazy" /></a><div><strong>{asset.original_name}</strong><span>{asset.key}</span><span>{Math.ceil(asset.byte_size / 1024)} KiB / {asset.references} reference(s)</span></div><div><button class="icon-button" type="button" title="Copy media URL" aria-label="Copy media URL" data-media-copy={mediaHref(asset.key)}>COPY</button><button class="text-button danger-button" type="button" data-media-delete data-media-key={asset.key} data-media-name={asset.original_name}>DELETE</button></div></li>)}</ul></div>
+  <header class="admin-console-header">
+    <div><p class="section-kicker">/admin</p><h1>Content Console</h1></div>
+    <div class="admin-console-header__actions"><span>{identity.email}</span><a class="text-button" href="/api/admin/export">EXPORT</a></div>
+  </header>
+  <nav class="admin-module-nav" data-admin-tabs aria-label="Content modules">
+    {modules.map((module) => <a class="text-button" id={`tab-admin-${module.id}`} href={`#admin-${module.id}`} data-admin-tab>{module.label}</a>)}
+  </nav>
+  <section class="admin-workspace" data-admin-workspace>
+    <section class="admin-panel" id="admin-documents" data-admin-panel aria-labelledby="admin-documents-heading">
+      <div class="admin-panel__head"><h2 id="admin-documents-heading">Documents</h2><div><a class="text-button" href="/admin/editor/new?kind=learn">NEW LEARN</a><a class="text-button" href="/admin/editor/new?kind=essay">NEW ESSAY</a></div></div>
+      <ul class="article-list admin-scroll-list admin-document-list" tabindex="0" aria-label="Documents">
+        {documents.map((document) => <li><a class="article-link" href={`/admin/editor/${document.id}`}><strong>{document.title}</strong><span>{document.kind} / {document.status}</span><span>{document.path}</span></a></li>)}
+      </ul>
+    </section>
+    <section class="admin-panel" id="admin-directories" data-admin-panel aria-labelledby="admin-directories-heading">
+      <div class="admin-panel__head"><h2 id="admin-directories-heading">Learn Directories</h2></div>
+      <div class="admin-split">
+        <ul class="article-list admin-scroll-list admin-directory-list" tabindex="0" aria-label="Learn directories">
+          {directories.map((directory) => <li><a class="article-link" href={directory.document_id ? `/admin/editor/${directory.document_id}` : `/admin/editor/new?directory=${encodeURIComponent(directory.path)}`}><strong>{directory.label}</strong><span>/learn/{directory.path}</span><span>order {directory.sort_order} / {directory.document_id ? 'EDIT INTRO' : 'ADD INTRO'}</span></a></li>)}
+        </ul>
+        <form class="admin-form admin-directory-form" data-directory-form aria-label="Create directory"><label>Parent<select name="parent_path"><option value="">/learn</option>{directories.map((directory) => <option value={directory.path}>{'-- '.repeat(directory.depth)}{directory.label} / {directory.path}</option>)}</select></label><label>Label<input name="label" placeholder="Computer Science" required /></label><label>Slug<input name="slug" placeholder="computer-science" pattern="[a-z0-9]+(-[a-z0-9]+)*" required /></label><label>Order<input name="sort_order" type="number" value="9999" /></label><button class="text-button">CREATE DIRECTORY</button></form>
+      </div>
+    </section>
+    <section class="admin-panel" id="admin-media" data-admin-panel aria-labelledby="admin-media-heading">
+      <div class="admin-panel__head"><h2 id="admin-media-heading">Media</h2></div>
+      <form data-media-form class="admin-form admin-upload-toolbar"><label>Image<input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required /></label><button class="text-button">UPLOAD</button><output data-media-output></output></form>
+      <ul class="admin-media-list admin-scroll-list" tabindex="0" aria-label="Media files">{media.map((asset) => <li><a href={mediaHref(asset.key)} target="_blank" rel="noreferrer"><img src={mediaHref(asset.key)} alt={asset.original_name} loading="lazy" /></a><div><strong>{asset.original_name}</strong><span>{asset.key}</span><span>{Math.ceil(asset.byte_size / 1024)} KiB / {asset.references} reference(s)</span></div><div><button class="icon-button" type="button" title="Copy media URL" aria-label="Copy media URL" data-media-copy={mediaHref(asset.key)}>COPY</button><button class="text-button danger-button" type="button" data-media-delete data-media-key={asset.key} data-media-name={asset.original_name}>DELETE</button></div></li>)}</ul>
+    </section>
     <AdminLifePanel kind="anime" result={anime} query={animeQuery} />
     <AdminLifePanel kind="gallery" result={gallery} query={galleryQuery} />
   </section>
@@ -40,6 +70,7 @@ const documents = [...learn, ...essays, ...(profile ? [profile] : [])];
 </BaseLayout>
 
 <script>
+  import '@/scripts/admin-workspace';
   type ApiPayload = { error?: string; key?: string; ok?: boolean; references?: { type: string; label: string }[] };
 
   const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Request failed';

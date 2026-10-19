@@ -29,54 +29,60 @@ const pages = pageNumbers.map((page) => ({ href: hrefFor(page), label: String(pa
 const entryTitle = (item: AnimeEntry | GalleryEntry) => 'cn_title' in item ? item.cn_title || item.title : item.title;
 ---
 
-<section class="pixel-panel admin-panel admin-life" id={anchor} data-life-panel={kind} aria-labelledby={`${anchor}-heading`}>
+<section class="admin-panel admin-life" id={anchor} data-admin-panel data-life-panel={kind} aria-labelledby={`${anchor}-heading`}>
   <div class="admin-panel__head">
     <h2 id={`${anchor}-heading`}>{title}</h2>
-    <button class="text-button" type="button" data-life-new>NEW / RESET</button>
   </div>
-  <form class="admin-form admin-life__editor" data-life-form={kind} aria-label={`${title} editor`}>
-    <p class="admin-life__selection" data-life-selection aria-live="polite">新建 / published</p>
-    <fieldset data-life-fields>
-      <input name="id" type="hidden" />
-      <label>标题 / title<input name="title" required /></label>
-      {isAnime && <>
-        <label>中文标题 / cn_title<input name="cn_title" /></label>
-        <label>年份 / year<input name="year" type="number" /></label>
-        <label>评分 / score<input name="score" type="number" min="0" max="10" step="0.1" /></label>
-        <label>观看状态 / status<input name="status" list={`${anchor}-statuses`} /></label>
-        <datalist id={`${anchor}-statuses`}>{['想看', '在看', '看过', '搁置', '抛弃'].map((status) => <option value={status} />)}</datalist>
-        <label>封面 R2 key / cover_key<input name="cover_key" /></label>
-      </>}
-      {!isAnime && <>
-        <label>替代文本 / alt<input name="alt" /></label>
-        <label>图片 R2 key / media_key<input name="media_key" required /></label>
-      </>}
-      <label>排序 / sort_order<input name="sort_order" type="number" value="0" /></label>
-      {isAnime && <label class="admin-life__wide">笔记 / note<textarea name="note"></textarea></label>}
-      <label>可见性 / visibility<select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>
-      <div class="admin-life__wide"><button class="text-button" type="submit">{isAnime ? 'SAVE ANIME' : 'SAVE GALLERY'}</button></div>
-    </fieldset>
-    <output data-life-error aria-live="polite"></output>
-  </form>
-  <form class="admin-form admin-life__search" method="get" action={`${Astro.url.pathname}#${anchor}`} role="search" aria-label={`${title} search`}>
-    {preserved.map(({ name, value }) => <input type="hidden" name={name} value={value} />)}
-    <input type="hidden" name={`${kind}_page`} value="1" />
-    <label>搜索 / Search<input type="search" name={`${kind}_q`} value={query} /></label>
-    <button class="text-button" type="submit">SEARCH</button>
-  </form>
-  <p class="admin-life__count">{result.totalItems} 条记录 / 第 {result.currentPage} 页，共 {result.totalPages} 页</p>
-  <ul class="admin-life__list">
-    {result.items.map((item) => <li>
-      <button class="text-button admin-life__edit" type="button" data-life-entry={JSON.stringify(item)} aria-pressed="false" aria-label={`EDIT ${entryTitle(item)}`}>
-        <strong>{entryTitle(item)}</strong>
-        <span>{'status' in item ? `${item.status || '未设置'} / ` : ''}{item.visibility} / order {item.sort_order}</span>
-        <span>EDIT</span>
-      </button>
-      <button class="text-button danger-button" type="button" data-life-delete data-life-id={item.id} data-life-title={entryTitle(item)} aria-label={`DELETE ${entryTitle(item)}`}>DELETE</button>
-    </li>)}
-  </ul>
-  {result.items.length === 0 && <p class="admin-life__count">暂无记录</p>}
-  <Pagination previousHref={result.currentPage > 1 ? hrefFor(result.currentPage - 1) : undefined} nextHref={result.currentPage < result.totalPages ? hrefFor(result.currentPage + 1) : undefined} pages={pages} label={`${title} pages`} />
+  <div class="admin-split admin-life__workspace">
+    <div class="admin-life__collection">
+      <form class="admin-form admin-life__search" method="get" action={`${Astro.url.pathname}#${anchor}`} role="search" aria-label={`${title} search`}>
+        {preserved.map(({ name, value }) => <input type="hidden" name={name} value={value} />)}
+        <input type="hidden" name={`${kind}_page`} value="1" />
+        <label>搜索 / Search<input type="search" name={`${kind}_q`} value={query} /></label>
+        <button class="text-button" type="submit">SEARCH</button>
+      </form>
+      <p class="admin-life__count">{result.totalItems} 条记录 / 第 {result.currentPage} 页，共 {result.totalPages} 页</p>
+      <ul class="admin-life__list admin-scroll-list" tabindex="0" aria-label={`${title} entries`}>
+        {result.items.map((item) => <li>
+          <button class="text-button admin-life__edit" type="button" data-life-entry={JSON.stringify(item)} aria-pressed="false" aria-label={`EDIT ${entryTitle(item)}`}>
+            <strong>{entryTitle(item)}</strong>
+            <span>{'status' in item ? `${item.status || '未设置'} / ` : ''}{item.visibility} / order {item.sort_order}</span>
+            <span>EDIT</span>
+          </button>
+          <button class="text-button danger-button" type="button" data-life-delete data-life-id={item.id} data-life-title={entryTitle(item)} aria-label={`DELETE ${entryTitle(item)}`}>DELETE</button>
+        </li>)}
+      </ul>
+      {result.items.length === 0 && <p class="admin-life__count">暂无记录</p>}
+      <Pagination previousHref={result.currentPage > 1 ? hrefFor(result.currentPage - 1) : undefined} nextHref={result.currentPage < result.totalPages ? hrefFor(result.currentPage + 1) : undefined} pages={pages} label={`${title} pages`} />
+    </div>
+    <div class="admin-life__editing">
+      <div class="admin-life__editor-actions"><button class="text-button" type="button" data-life-new>NEW / RESET</button></div>
+      <form class="admin-form admin-life__editor" data-life-form={kind} aria-label={`${title} editor`}>
+        <p class="admin-life__selection" data-life-selection aria-live="polite">新建 / published</p>
+        <fieldset data-life-fields>
+          <input name="id" type="hidden" />
+          <label>标题 / title<input name="title" required /></label>
+          {isAnime && <>
+            <label>中文标题 / cn_title<input name="cn_title" /></label>
+            <label>年份 / year<input name="year" type="number" /></label>
+            <label>评分 / score<input name="score" type="number" min="0" max="10" step="0.1" /></label>
+            <label>观看状态 / status<input name="status" list={`${anchor}-statuses`} /></label>
+            <datalist id={`${anchor}-statuses`}>{['想看', '在看', '看过', '搁置', '抛弃'].map((status) => <option value={status} />)}</datalist>
+            <label>封面 R2 key / cover_key<input name="cover_key" /></label>
+          </>}
+          {!isAnime && <>
+            <label>替代文本 / alt<input name="alt" /></label>
+            <label>图片 R2 key / media_key<input name="media_key" required /></label>
+          </>}
+          <label>排序 / sort_order<input name="sort_order" type="number" value="0" /></label>
+          {isAnime && <label class="admin-life__wide">笔记 / note<textarea name="note"></textarea></label>}
+          <label>可见性 / visibility<select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>
+          <div class="admin-life__wide"><button class="text-button" type="submit">{isAnime ? 'SAVE ANIME' : 'SAVE GALLERY'}</button></div>
+        </fieldset>
+        <output data-life-error aria-live="polite"></output>
+      </form>
+    </div>
+  </div>
   <dialog class="delete-dialog pixel-panel" data-life-delete-dialog aria-labelledby={`${anchor}-delete-heading`} aria-describedby={`${anchor}-delete-description`}>
     <form data-life-delete-form>
       <h2 id={`${anchor}-delete-heading`}>Delete {title}</h2>
@@ -111,7 +117,7 @@ const entryTitle = (item: AnimeEntry | GalleryEntry) => 'cn_title' in item ? ite
       selection.textContent = `${selectedTitle} / ${kind === 'anime' ? `${values.get('status') || '未设置'} / ` : ''}${values.get('visibility')}`;
     };
     const reveal = () => {
-      form.scrollIntoView({ behavior: 'instant', block: 'start' });
+      if (window.matchMedia('(max-width: 899px)').matches) form.scrollIntoView({ behavior: 'instant', block: 'start' });
       form.querySelector<HTMLInputElement>('[name="title"]')?.focus({ preventScroll: true });
     };
     const reset = () => {

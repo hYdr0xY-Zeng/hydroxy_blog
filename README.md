@@ -45,11 +45,15 @@ Optional directory browser regression: after building, run `node --experimental-
 
 Published Learn articles and Essays record one anonymous browser view per UTC day and provide a browser-local like toggle. The site stores only per-article hashes of a first-party `HttpOnly` cookie, never IP addresses or user profiles. The homepage shell reads published D1 content at request time; use `help`, `ls`, `cd`, `pwd`, `open`, `recent`, `tags`, `stats`, `search`, and `clear`.
 
+The admin console uses hash-linked Documents, Learn Directories, Media, Anime, and Gallery workspaces. Switching modules preserves unsaved inputs without a request; search, pagination, and refresh remain full-page navigation and do not autosave. Desktop lists scroll independently beside forms; below 900px, lists precede forms and selecting a Life entry reveals its editor. Without JavaScript, all modules remain available through ordinary anchors.
+
 Anime Log and Gallery have independently searchable, paginated admin lists. Select EDIT to populate the labeled fields, or NEW / RESET to create another entry. Anime viewing status accepts custom values. DELETE requires the exact displayed title (Chinese title when set for Anime); deleting an entry removes its search record but retains its R2 media. Delete unreferenced media separately in Media.
 
 Permanent deletion requires the exact document title or original media filename. Profile and all directory introductions cannot be permanently deleted, even when empty; directories with children are also protected. Media deletion is blocked while referenced by Markdown, a document cover, Anime, or Gallery; export content before irreversible deletion.
 
 After building, `node --experimental-strip-types tests/life-browser.mjs` checks Life editing, reset, deletion confirmation, failure handling, and desktop/mobile layouts using local fixtures and the real built script. It uses the same existing Playwright setup as the other browser regressions and never writes production data.
+
+`node --experimental-strip-types tests/admin-browser.mjs` additionally checks the whole console at 1440/1920/768/390px: long/empty lists, tabs, keyboard navigation, history, deep links, input preservation, upload/copy wiring, and no-JavaScript anchors. It uses synthetic fixtures and production scripts/CSS, never production content or media writes.
 
 ## Backups and Schema Rollout
 

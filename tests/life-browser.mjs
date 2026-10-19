@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fields, entries, displayTitle, panel } from './helpers/life-fixture.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -29,41 +30,9 @@ assert.match(admin, /<AdminLifePanel kind="anime"/);
 assert.match(admin, /<AdminLifePanel kind="gallery"/);
 assert.doesNotMatch(admin, /list(?:Anime|Gallery)\(Astro.locals,\s*1,\s*100/);
 
-const fields = {
-  anime: ['title', 'cn_title', 'year', 'score', 'status', 'cover_key', 'sort_order', 'note', 'visibility'],
-  gallery: ['title', 'alt', 'media_key', 'sort_order', 'visibility']
-};
 for (const field of new Set(Object.values(fields).flat())) assert.ok(source.includes(`name="${field}"`), `Real panel must expose ${field}`);
 for (const selector of ['data-life-panel', 'data-life-new', 'data-life-form', 'data-life-fields', 'data-life-selection', 'data-life-entry', 'data-life-delete', 'data-life-delete-dialog', 'data-life-delete-form', 'data-life-confirmation', 'data-life-cancel', 'data-life-delete-error']) assert.ok(source.includes(selector), `Fixture contract: ${selector}`);
 
-const entries = {
-  anime: [
-    { id: 'anime-a', title: 'Original anime', cn_title: '\u4e2d\u6587\u6807\u9898', year: 2026, score: 9.1, status: 'watching', cover_key: 'shared.png', sort_order: 12, note: 'A multiline note\nwith details.', visibility: 'draft' },
-    { id: 'anime-b', title: 'Fallback original title', cn_title: '', year: null, score: null, status: 'completed', cover_key: null, sort_order: -2, note: '', visibility: 'archived' }
-  ],
-  gallery: [
-    { id: 'gallery-a', title: 'Gallery title', alt: 'Original alt text', media_key: 'shared.png', sort_order: 11, visibility: 'draft' },
-    { id: 'gallery-b', title: 'Other gallery title', alt: '', media_key: 'second.png', sort_order: -3, visibility: 'archived' }
-  ]
-};
-const displayTitle = (entry) => entry.cn_title || entry.title;
-const escape = (value) => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-function panel(kind, deleted) {
-  const controls = fields[kind].map((name) => {
-    const label = source.match(new RegExp(`<label[^>]*>([^<]+)<(?:input|textarea|select)[^>]*name="${name}"`))?.[1];
-    assert.ok(label, `Real label for ${name}`);
-    if (name === 'visibility') return `<label>${label}<select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>`;
-    if (name === 'note') return `<label class="admin-life__wide">${label}<textarea name="note"></textarea></label>`;
-    const numeric = ['year', 'score', 'sort_order'].includes(name);
-    return `<label>${label}<input name="${name}" ${numeric ? 'type="number" step="any"' : ''} ${name === 'sort_order' ? 'value="0"' : ''} ${['title', 'media_key'].includes(name) ? 'required' : ''}></label>`;
-  }).join('');
-  return `<section class="pixel-panel admin-panel admin-life" id="admin-${kind}" data-life-panel="${kind}">
-    <div class="admin-panel__head"><h2>${kind === 'anime' ? 'Anime Log' : 'Gallery'}</h2><button class="text-button" type="button" data-life-new>NEW / RESET</button></div>
-    <form class="admin-form admin-life__editor" data-life-form="${kind}"><p class="admin-life__selection" data-life-selection>New / published</p><fieldset data-life-fields><input name="id" type="hidden">${controls}<div class="admin-life__wide"><button class="text-button" type="submit">SAVE</button></div></fieldset><output data-life-error></output></form>
-    <ul class="admin-life__list">${entries[kind].filter((entry) => !deleted.has(entry.id)).map((entry) => `<li><button class="text-button admin-life__edit" type="button" data-life-entry="${escape(JSON.stringify(entry))}" aria-pressed="false"><strong>${escape(displayTitle(entry))}</strong><span>${entry.visibility}</span><span>EDIT</span></button><button class="text-button danger-button" type="button" data-life-delete data-life-id="${entry.id}" data-life-title="${escape(displayTitle(entry))}">DELETE</button></li>`).join('')}</ul>
-    <dialog class="delete-dialog pixel-panel" data-life-delete-dialog><form data-life-delete-form><h2>Delete ${kind}</h2><p>Confirm <strong data-life-delete-title></strong></p><label>Confirmation<input data-life-confirmation autocomplete="off" required autofocus></label><div><button class="text-button" type="button" data-life-cancel>CANCEL</button><button class="text-button danger-button" type="submit">DELETE</button></div><output data-life-delete-error aria-live="polite"></output></form></dialog>
-    </section>`;
-}
 
 const deleted = new Set();
 const deletes = [];
@@ -82,7 +51,7 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/admin/' && req.method === 'GET') {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">${styles.map((name) => `<link rel="stylesheet" href="/_astro/${name}">`).join('')}</head><body><main class="site-main"><section class="admin-grid">${Object.keys(entries).map((kind) => panel(kind, deleted)).join('')}</section></main><script type="module" src="/_fixture/life.js"></script></body></html>`);
+      return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">${styles.map((name) => `<link rel="stylesheet" href="/_astro/${name}">`).join('')}</head><body><main class="site-main"><section class="admin-workspace">${Object.keys(entries).map((kind) => panel(kind, deleted)).join('')}</section></main><script type="module" src="/_fixture/life.js"></script></body></html>`);
     }
     if (req.method === 'DELETE' && /^\/api\/admin\/(anime|gallery)\//.test(url.pathname)) {
       let body = '';
