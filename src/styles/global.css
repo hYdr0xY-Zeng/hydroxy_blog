@@ -1517,6 +1517,127 @@ button {
   color: var(--yellow);
 }
 
+.admin-life {
+  min-width: 0;
+  align-self: start;
+  scroll-margin-top: 90px;
+}
+
+.admin-life__editor {
+  margin-top: 12px;
+  scroll-margin-top: 90px;
+}
+
+.admin-life__editor fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-life label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-life input,
+.admin-life select,
+.admin-life textarea {
+  min-width: 0;
+}
+
+.admin-life__wide {
+  grid-column: 1 / -1;
+}
+
+.admin-life__selection,
+.admin-life__count {
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-life__selection {
+  color: var(--yellow);
+}
+
+.admin-life__editor output {
+  color: #ff9292;
+  overflow-wrap: anywhere;
+}
+
+.admin-life__search {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-muted);
+}
+
+.admin-life__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-life__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.admin-life__edit {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+  justify-content: stretch;
+  justify-items: start;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.admin-life__edit span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.admin-life__edit[aria-pressed="true"] strong {
+  color: var(--yellow);
+}
+
+.admin-life :disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.admin-life .pagination,
+.admin-life .pagination__pages {
+  flex-wrap: wrap;
+}
+
+.admin-life .delete-dialog p,
+.admin-life .delete-dialog output {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .admin-life__editor fieldset {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .admin-media-list {
   display: grid;
   gap: 8px;

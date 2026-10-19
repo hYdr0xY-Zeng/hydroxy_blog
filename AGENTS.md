@@ -88,6 +88,7 @@ Database schema migrations in `migrations/` remain required; they are not static
 
 - Edit the homepage Profile through the admin editor. Homepage tags are generated from published D1 Learn article and Essay tags; keep them below the three dashboard panels using the established `pixel-panel`, `tag-list`, and `tag` styles.
 - Manage Life Essays, Anime Log, Gallery, covers, and media from `/admin/`. Articles and metadata live in D1; uploaded media lives in private R2 and is served through `/media/*`.
+- Anime and Gallery admin lists have independent search and pagination; never silently limit editable entries to the first page. Keep all editable fields labeled and preserve custom Anime viewing statuses. Entry deletion requires the exact displayed title and atomically removes its search record, but never deletes R2 media; media deletion remains a separate reference-checked action.
 - `/life/`, `/life/essays/`, `/life/anime/`, and `/life/gallery/` are SSR pages backed by published D1 data. Preserve the compact Anime list and Gallery's original-aspect-ratio masonry display.
 
 ## Design and interaction invariants
@@ -130,6 +131,7 @@ Before publishing content or code:
 
 ## Change discipline
 
+- After requested code changes pass the applicable acceptance checks, commit and push them to GitHub without asking again, unless the owner explicitly requests otherwise. Keep unrelated changes out of the commit. A push to `main` triggers the public Pages deployment; retain backup and migration safeguards for production data changes.
 - Preserve user-authored Markdown, JSON, images, and unrelated working-tree changes.
 - Keep implementation changes scoped. Reuse existing Astro components, utility functions, CSS variables, and pagination helpers before introducing new abstractions.
 - Prefer repository-maintained D1/R2 data and local UI assets over third-party runtime APIs.

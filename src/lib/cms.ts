@@ -95,15 +95,26 @@ export async function listLearnDirectories(locals: App.Locals) {
   return directories;
 }
 
-async function page<T>(locals: App.Locals, table: 'anime_entries' | 'gallery_entries', pageNumber: number, size: number, includeUnpublished: boolean) {
-  const filter = includeUnpublished ? '1 = 1' : "visibility = 'published'";
-  const count = await db(locals).prepare(`SELECT COUNT(*) AS total FROM ${table} WHERE ${filter}`).first<{ total: number }>();
-  const totalItems = Number(count?.total ?? 0), totalPages = Math.max(1, Math.ceil(totalItems / size)), currentPage = Math.max(1, Math.min(pageNumber, totalPages));
-  const items = await db(locals).prepare(`SELECT * FROM ${table} WHERE ${filter} ORDER BY sort_order DESC, created_at DESC LIMIT ? OFFSET ?`).bind(size, (currentPage - 1) * size).all<T>();
+async function page<T>(locals: App.Locals, table: 'anime_entries' | 'gallery_entries', pageNumber: number, size: number, includeUnpublished: boolean, query = '') {
+  const filters = [includeUnpublished ? '1 = 1' : "visibility = 'published'"];
+  const values: string[] = [];
+  const term = query.trim().slice(0, 200);
+  if (term) {
+    const fields = table === 'anime_entries' ? ['title', 'cn_title', 'note'] : ['title', 'alt'];
+    filters.push(`(${fields.map((field) => `${field} LIKE ? ESCAPE '\\'`).join(' OR ')})`);
+    const pattern = `%${term.replace(/[\\%_]/g, '\\$&')}%`;
+    values.push(...fields.map(() => pattern));
+  }
+  const filter = filters.join(' AND ');
+  const pageSize = Number.isFinite(size) ? Math.max(1, Math.min(100, Math.trunc(size))) : 20;
+  const requestedPage = Number.isFinite(pageNumber) ? Math.max(1, Math.trunc(pageNumber)) : 1;
+  const count = await db(locals).prepare(`SELECT COUNT(*) AS total FROM ${table} WHERE ${filter}`).bind(...values).first<{ total: number }>();
+  const totalItems = Number(count?.total ?? 0), totalPages = Math.max(1, Math.ceil(totalItems / pageSize)), currentPage = Math.min(requestedPage, totalPages);
+  const items = await db(locals).prepare(`SELECT * FROM ${table} WHERE ${filter} ORDER BY sort_order DESC, created_at DESC, id ASC LIMIT ? OFFSET ?`).bind(...values, pageSize, (currentPage - 1) * pageSize).all<T>();
   return { items: items.results, currentPage, totalPages, totalItems };
 }
-export const listAnime = (locals: App.Locals, pageNumber: number, size = 20, includeUnpublished = false) => page<AnimeEntry>(locals, 'anime_entries', pageNumber, size, includeUnpublished);
-export const listGallery = (locals: App.Locals, pageNumber: number, size = 30, includeUnpublished = false) => page<GalleryEntry>(locals, 'gallery_entries', pageNumber, size, includeUnpublished);
+export const listAnime = (locals: App.Locals, pageNumber: number, size = 20, includeUnpublished = false, query = '') => page<AnimeEntry>(locals, 'anime_entries', pageNumber, size, includeUnpublished, query);
+export const listGallery = (locals: App.Locals, pageNumber: number, size = 30, includeUnpublished = false, query = '') => page<GalleryEntry>(locals, 'gallery_entries', pageNumber, size, includeUnpublished, query);
 export const getRedirect = (locals: App.Locals, path: string) => db(locals).prepare('SELECT to_path FROM redirects WHERE from_path = ?').bind(path).first<{ to_path: string }>();
 
 export async function getEngagementSummary(locals: App.Locals, documentId: string, visitorHash?: string) {
@@ -282,6 +293,22 @@ export async function deleteMediaAsset(locals: App.Locals, key: string, confirma
 export async function upsertAnime(locals: App.Locals, entry: Omit<AnimeEntry, 'created_at' | 'updated_at'>) {
   await db(locals).prepare(`INSERT INTO anime_entries (id,title,cn_title,status,year,score,note,cover_key,sort_order,visibility) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,cn_title=excluded.cn_title,status=excluded.status,year=excluded.year,score=excluded.score,note=excluded.note,cover_key=excluded.cover_key,sort_order=excluded.sort_order,visibility=excluded.visibility,updated_at=CURRENT_TIMESTAMP`).bind(entry.id, entry.title, entry.cn_title, entry.status, entry.year, entry.score, entry.note, entry.cover_key, entry.sort_order, entry.visibility).run();
   await syncSearch(locals, { id: entry.id, kind: 'anime', path: '', title: entry.cn_title || entry.title, description: entry.title, body: entry.note }, entry.visibility === 'published');
+}
+
+export async function deleteLifeEntry(locals: App.Locals, kind: 'anime' | 'gallery', id: string, confirmation: string) {
+  if (kind !== 'anime' && kind !== 'gallery') throw new CmsOperationError('Unknown Life entry type.', 400);
+  const database = db(locals);
+  const table = kind === 'anime' ? 'anime_entries' : 'gallery_entries';
+  const labelSql = kind === 'anime' ? "COALESCE(NULLIF(cn_title, ''), title)" : 'title';
+  const entry = await database.prepare(`SELECT ${labelSql} AS label FROM ${table} WHERE id = ?`).bind(id).first<{ label: string }>();
+  if (!entry) throw new CmsOperationError('Entry not found.', 404);
+  if (confirmation !== entry.label) throw new CmsOperationError('Type the exact entry title to confirm deletion.', 400);
+  // Check the title again in the transaction so a concurrent rename cannot bypass confirmation.
+  const results = await database.batch<{ id: string }>([
+    database.prepare(`DELETE FROM search_index WHERE entity_id = ? AND entity_kind = ? AND EXISTS (SELECT 1 FROM ${table} WHERE id = ? AND ${labelSql} = ?)`).bind(id, kind, id, confirmation),
+    database.prepare(`DELETE FROM ${table} WHERE id = ? AND ${labelSql} = ? RETURNING id`).bind(id, confirmation)
+  ]);
+  if (!results[1].results.length) throw new CmsOperationError('This entry changed. Reload it before deleting.', 409);
 }
 export async function upsertGallery(locals: App.Locals, entry: Omit<GalleryEntry, 'created_at' | 'updated_at'>) {
   await db(locals).prepare(`INSERT INTO gallery_entries (id,title,alt,media_key,sort_order,visibility) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,alt=excluded.alt,media_key=excluded.media_key,sort_order=excluded.sort_order,visibility=excluded.visibility,updated_at=CURRENT_TIMESTAMP`).bind(entry.id, entry.title, entry.alt, entry.media_key, entry.sort_order, entry.visibility).run();

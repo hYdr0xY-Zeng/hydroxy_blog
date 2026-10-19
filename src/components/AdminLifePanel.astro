@@ -1,0 +1,222 @@
+---
+import Pagination from '@/components/Pagination.astro';
+import type { AnimeEntry, GalleryEntry, PageResult } from '@/lib/cms';
+
+type Props = {
+  kind: 'anime' | 'gallery';
+  result: PageResult<AnimeEntry> | PageResult<GalleryEntry>;
+  query: string;
+};
+
+const { kind, result, query } = Astro.props;
+const isAnime = kind === 'anime';
+const title = isAnime ? 'Anime Log' : 'Gallery';
+const anchor = `admin-${kind}`;
+const other = isAnime ? 'gallery' : 'anime';
+const preserved = [`${other}_q`, `${other}_page`].flatMap((name) => {
+  const value = Astro.url.searchParams.get(name);
+  return value === null ? [] : [{ name, value }];
+});
+const hrefFor = (page: number) => {
+  const url = new URL(Astro.url);
+  url.searchParams.set(`${kind}_page`, String(page));
+  url.hash = anchor;
+  return `${url.pathname}${url.search}${url.hash}`;
+};
+const pageNumbers = [...new Set([1, result.totalPages, ...Array.from({ length: 5 }, (_, index) => result.currentPage + index - 2)])]
+  .filter((page) => page >= 1 && page <= result.totalPages).sort((left, right) => left - right);
+const pages = pageNumbers.map((page) => ({ href: hrefFor(page), label: String(page), current: page === result.currentPage }));
+const entryTitle = (item: AnimeEntry | GalleryEntry) => 'cn_title' in item ? item.cn_title || item.title : item.title;
+---
+
+<section class="pixel-panel admin-panel admin-life" id={anchor} data-life-panel={kind} aria-labelledby={`${anchor}-heading`}>
+  <div class="admin-panel__head">
+    <h2 id={`${anchor}-heading`}>{title}</h2>
+    <button class="text-button" type="button" data-life-new>NEW / RESET</button>
+  </div>
+  <form class="admin-form admin-life__editor" data-life-form={kind} aria-label={`${title} editor`}>
+    <p class="admin-life__selection" data-life-selection aria-live="polite">新建 / published</p>
+    <fieldset data-life-fields>
+      <input name="id" type="hidden" />
+      <label>标题 / title<input name="title" required /></label>
+      {isAnime && <>
+        <label>中文标题 / cn_title<input name="cn_title" /></label>
+        <label>年份 / year<input name="year" type="number" /></label>
+        <label>评分 / score<input name="score" type="number" min="0" max="10" step="0.1" /></label>
+        <label>观看状态 / status<input name="status" list={`${anchor}-statuses`} /></label>
+        <datalist id={`${anchor}-statuses`}>{['想看', '在看', '看过', '搁置', '抛弃'].map((status) => <option value={status} />)}</datalist>
+        <label>封面 R2 key / cover_key<input name="cover_key" /></label>
+      </>}
+      {!isAnime && <>
+        <label>替代文本 / alt<input name="alt" /></label>
+        <label>图片 R2 key / media_key<input name="media_key" required /></label>
+      </>}
+      <label>排序 / sort_order<input name="sort_order" type="number" value="0" /></label>
+      {isAnime && <label class="admin-life__wide">笔记 / note<textarea name="note"></textarea></label>}
+      <label>可见性 / visibility<select name="visibility"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>
+      <div class="admin-life__wide"><button class="text-button" type="submit">{isAnime ? 'SAVE ANIME' : 'SAVE GALLERY'}</button></div>
+    </fieldset>
+    <output data-life-error aria-live="polite"></output>
+  </form>
+  <form class="admin-form admin-life__search" method="get" action={`${Astro.url.pathname}#${anchor}`} role="search" aria-label={`${title} search`}>
+    {preserved.map(({ name, value }) => <input type="hidden" name={name} value={value} />)}
+    <input type="hidden" name={`${kind}_page`} value="1" />
+    <label>搜索 / Search<input type="search" name={`${kind}_q`} value={query} /></label>
+    <button class="text-button" type="submit">SEARCH</button>
+  </form>
+  <p class="admin-life__count">{result.totalItems} 条记录 / 第 {result.currentPage} 页，共 {result.totalPages} 页</p>
+  <ul class="admin-life__list">
+    {result.items.map((item) => <li>
+      <button class="text-button admin-life__edit" type="button" data-life-entry={JSON.stringify(item)} aria-pressed="false" aria-label={`EDIT ${entryTitle(item)}`}>
+        <strong>{entryTitle(item)}</strong>
+        <span>{'status' in item ? `${item.status || '未设置'} / ` : ''}{item.visibility} / order {item.sort_order}</span>
+        <span>EDIT</span>
+      </button>
+      <button class="text-button danger-button" type="button" data-life-delete data-life-id={item.id} data-life-title={entryTitle(item)} aria-label={`DELETE ${entryTitle(item)}`}>DELETE</button>
+    </li>)}
+  </ul>
+  {result.items.length === 0 && <p class="admin-life__count">暂无记录</p>}
+  <Pagination previousHref={result.currentPage > 1 ? hrefFor(result.currentPage - 1) : undefined} nextHref={result.currentPage < result.totalPages ? hrefFor(result.currentPage + 1) : undefined} pages={pages} label={`${title} pages`} />
+  <dialog class="delete-dialog pixel-panel" data-life-delete-dialog aria-labelledby={`${anchor}-delete-heading`} aria-describedby={`${anchor}-delete-description`}>
+    <form data-life-delete-form>
+      <h2 id={`${anchor}-delete-heading`}>Delete {title}</h2>
+      <p id={`${anchor}-delete-description`}>输入完整标题 <strong data-life-delete-title></strong> 以永久删除此记录。R2 文件将保留。</p>
+      <label>确认标题 / Confirmation<input data-life-confirmation autocomplete="off" required autofocus /></label>
+      <div><button class="text-button" type="button" data-life-cancel>CANCEL</button><button class="text-button danger-button" type="submit">DELETE</button></div>
+      <output data-life-delete-error aria-live="polite"></output>
+    </form>
+  </dialog>
+</section>
+
+<script>
+  const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Request failed';
+  document.querySelectorAll<HTMLElement>('[data-life-panel]').forEach((panel) => {
+    const kind = panel.dataset.lifePanel;
+    const form = panel.querySelector<HTMLFormElement>('[data-life-form]')!;
+    const fields = panel.querySelector<HTMLFieldSetElement>('[data-life-fields]')!;
+    const output = panel.querySelector<HTMLOutputElement>('[data-life-error]')!;
+    const selection = panel.querySelector<HTMLElement>('[data-life-selection]')!;
+    const newButton = panel.querySelector<HTMLButtonElement>('[data-life-new]')!;
+    const entries = panel.querySelectorAll<HTMLButtonElement>('[data-life-entry]');
+    let saving = false;
+    let selectedTitle = '新建';
+    const reload = () => {
+      const url = new URL(window.location.href);
+      url.hash = panel.id;
+      window.history.replaceState(window.history.state, '', url.href);
+      window.location.reload();
+    };
+    const updateSelection = () => {
+      const values = new FormData(form);
+      selection.textContent = `${selectedTitle} / ${kind === 'anime' ? `${values.get('status') || '未设置'} / ` : ''}${values.get('visibility')}`;
+    };
+    const reveal = () => {
+      form.scrollIntoView({ behavior: 'instant', block: 'start' });
+      form.querySelector<HTMLInputElement>('[name="title"]')?.focus({ preventScroll: true });
+    };
+    const reset = () => {
+      form.reset();
+      // reset() restores defaults; it must also clear the selected record ID.
+      const id = form.elements.namedItem('id') as HTMLInputElement;
+      id.value = '';
+      output.textContent = '';
+      selectedTitle = '新建';
+      entries.forEach((entry) => entry.setAttribute('aria-pressed', 'false'));
+    };
+    newButton.addEventListener('click', () => {
+      if (saving) return;
+      reset();
+      updateSelection();
+      reveal();
+    });
+    form.addEventListener('input', updateSelection);
+    entries.forEach((button) => button.addEventListener('click', () => {
+      if (saving) return;
+      reset();
+      const entry = JSON.parse(button.dataset.lifeEntry ?? '{}') as Record<string, unknown>;
+      Object.entries(entry).forEach(([key, value]) => {
+        const control = form.elements.namedItem(key);
+        if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement || control instanceof HTMLSelectElement) {
+          control.value = value == null ? '' : String(value);
+        }
+      });
+      selectedTitle = String(entry.cn_title || entry.title);
+      button.setAttribute('aria-pressed', 'true');
+      updateSelection();
+      reveal();
+    }));
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (saving) return;
+      const entry = Object.fromEntries(new FormData(form));
+      saving = true;
+      fields.disabled = true;
+      newButton.disabled = true;
+      form.setAttribute('aria-busy', 'true');
+      output.textContent = '';
+      try {
+        const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: kind === 'anime' ? 'saveAnime' : 'saveGallery', entry }) });
+        const payload = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(payload.error || 'Save failed');
+        reload();
+      } catch (error) {
+        output.textContent = errorMessage(error);
+      } finally {
+        saving = false;
+        fields.disabled = false;
+        newButton.disabled = false;
+        form.removeAttribute('aria-busy');
+      }
+    });
+
+    const dialog = panel.querySelector<HTMLDialogElement>('[data-life-delete-dialog]')!;
+    const deleteForm = dialog.querySelector<HTMLFormElement>('[data-life-delete-form]')!;
+    const confirmation = dialog.querySelector<HTMLInputElement>('[data-life-confirmation]')!;
+    const deleteError = dialog.querySelector<HTMLOutputElement>('[data-life-delete-error]')!;
+    const cancel = dialog.querySelector<HTMLButtonElement>('[data-life-cancel]')!;
+    let deletion: { id: string; title: string } | null = null;
+    let deleting = false;
+    cancel.addEventListener('click', () => { if (!deleting) dialog.close(); });
+    dialog.addEventListener('cancel', (event) => { if (deleting) event.preventDefault(); });
+    confirmation.addEventListener('input', () => {
+      confirmation.setCustomValidity('');
+      deleteError.textContent = '';
+    });
+    panel.querySelectorAll<HTMLButtonElement>('[data-life-delete]').forEach((button) => button.addEventListener('click', () => {
+      if (saving || deleting) return;
+      deletion = { id: button.dataset.lifeId!, title: button.dataset.lifeTitle! };
+      dialog.querySelector<HTMLElement>('[data-life-delete-title]')!.textContent = deletion.title;
+      deleteForm.reset();
+      confirmation.setCustomValidity('');
+      deleteError.textContent = '';
+      dialog.showModal();
+      confirmation.focus();
+    }));
+    deleteForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!deletion || deleting) return;
+      if (confirmation.value !== deletion.title) {
+        deleteError.textContent = '请输入完全一致的标题。';
+        confirmation.setCustomValidity('请输入完全一致的标题。');
+        confirmation.reportValidity();
+        return;
+      }
+      deleting = true;
+      deleteForm.setAttribute('aria-busy', 'true');
+      deleteForm.querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button').forEach((control) => { control.disabled = true; });
+      deleteError.textContent = '';
+      try {
+        const response = await fetch(`/api/admin/${kind}/${encodeURIComponent(deletion.id)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation: confirmation.value }) });
+        const payload = await response.json() as { ok?: boolean; error?: string };
+        if (!response.ok || !payload.ok) throw new Error(payload.error || 'Delete failed');
+        reload();
+      } catch (error) {
+        deleteError.textContent = errorMessage(error);
+      } finally {
+        deleting = false;
+        deleteForm.removeAttribute('aria-busy');
+        deleteForm.querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button').forEach((control) => { control.disabled = false; });
+      }
+    });
+  });
+</script>
