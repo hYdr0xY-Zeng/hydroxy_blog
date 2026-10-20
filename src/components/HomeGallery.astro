@@ -1,0 +1,23 @@
+---
+type Props = { images: { title: string; alt: string; src: string }[] };
+const { images } = Astro.props;
+---
+{images.length > 0 && <section class="home-gallery" data-home-gallery data-images={JSON.stringify(images)} aria-label="Gallery" aria-roledescription="carousel">
+  <div class="home-gallery__head"><h2>Gallery</h2><a href="/life/gallery/">View all</a></div>
+  <figure>
+    <a class="home-gallery__image" href={images[0].src} data-gallery-link aria-label={images[0].title}>
+      <img src={images[0].src} alt={images[0].alt} loading="lazy" decoding="async" width="640" height="400" data-gallery-image />
+    </a>
+    <figcaption><span data-gallery-title>{images[0].title}</span><span data-gallery-count>1 / {images.length}</span></figcaption>
+  </figure>
+  {images.length > 1 && <div class="home-gallery__controls" data-gallery-controls hidden>
+    <button class="icon-button" type="button" data-gallery-prev aria-label="Previous image" title="Previous image">&#8592;</button>
+    <button class="icon-button" type="button" data-gallery-play aria-label="Pause slideshow" title="Pause slideshow">&#8545;</button>
+    <button class="icon-button" type="button" data-gallery-next aria-label="Next image" title="Next image">&#8594;</button>
+  </div>}
+</section>}
+
+<script>
+  import { initHomeGallery } from '@/scripts/home-gallery';
+  document.querySelectorAll<HTMLElement>('[data-home-gallery]').forEach(initHomeGallery);
+</script>

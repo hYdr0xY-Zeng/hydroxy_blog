@@ -1,0 +1,51 @@
+<label class="motion-control" data-motion-controls hidden>
+  <input type="checkbox" data-motion-toggle checked />
+  动态效果
+</label>
+
+<script>
+  import { motionAllowed, setMotionEnabled } from '@/scripts/motion-state';
+  const toggle = document.querySelector<HTMLInputElement>('[data-motion-toggle]');
+  const wind = document.querySelector<HTMLButtonElement>('[data-wind-toggle]');
+  let stop: (() => void) | undefined;
+  let pending = false;
+  let generation = 0;
+  function resetWind() {
+    generation++;
+    pending = false;
+    stop?.();
+    stop = undefined;
+    wind?.setAttribute('aria-pressed', 'false');
+  }
+  function sync() {
+    const allowed = motionAllowed();
+    if (toggle) toggle.checked = allowed;
+    if (wind) {
+      wind.disabled = !allowed;
+      wind.title = allowed ? 'Mysterious wind' : '动态效果已关闭';
+    }
+    if (!allowed) resetWind();
+  }
+  document.querySelector<HTMLElement>('[data-motion-controls]')?.removeAttribute('hidden');
+  wind?.removeAttribute('hidden');
+  toggle?.addEventListener('change', () => { setMotionEnabled(toggle.checked); sync(); });
+  async function summonWind() {
+    if (pending || stop) { resetWind(); return; }
+    if (!motionAllowed() || document.hidden) return;
+    pending = true;
+    const ticket = ++generation;
+    wind?.setAttribute('aria-pressed', 'true');
+    try {
+      const { startPetals } = await import('@/scripts/petals');
+      if (ticket !== generation || !motionAllowed() || document.hidden) return;
+      pending = false;
+      stop = startPetals(() => { stop = undefined; wind?.setAttribute('aria-pressed', 'false'); });
+    } catch { if (ticket === generation) resetWind(); }
+  }
+  wind?.addEventListener('click', () => void summonWind());
+  window.addEventListener('hydroxy:wind', () => void summonWind());
+  window.addEventListener('hydroxy:motion-change', sync);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) resetWind(); });
+  window.addEventListener('pagehide', resetWind);
+  sync();
+</script>

@@ -8,9 +8,9 @@ const shellIndex = JSON.stringify({ tree, recent, tags, engagement, contentCount
 <section class="terminal-panel pixel-panel" aria-label="Hydroxy shell" data-shell-index={shellIndex}>
   <div class="terminal-screen" data-shell>
     <div class="terminal-output" data-shell-output>
-      <p class="terminal-line">HYDROXY SHELL v0.2</p>
-      <p class="terminal-line">D1 LINK: OK</p>
-      <p class="terminal-line">TYPE help FOR COMMANDS</p>
+      <p class="terminal-line" data-boot-line>HYDROXY SHELL v0.2</p>
+      <p class="terminal-line" data-boot-line data-boot-link>D1 LINK: OK</p>
+      <p class="terminal-line" data-boot-line>TYPE help FOR COMMANDS</p>
     </div>
     <form class="terminal-form" data-shell-form>
       <span data-shell-prompt>hydroxy:/ $</span>
@@ -20,6 +20,7 @@ const shellIndex = JSON.stringify({ tree, recent, tags, engagement, contentCount
 </section>
 
 <script>
+  import { initShellBoot } from '@/scripts/shell-boot';
   type ShellNode = { path: string; label: string; href: string; directory: boolean; children: ShellNode[] };
   type ShellIndex = { tree: ShellNode[]; recent: { title: string; href: string }[]; tags: string[]; engagement: { views: number; likes: number }; contentCount: number };
 
@@ -98,7 +99,8 @@ const shellIndex = JSON.stringify({ tree, recent, tags, engagement, contentCount
     const target = args.join(' ');
     if (!command) return;
     write((prompt?.textContent || 'hydroxy:/ $') + ' ' + commandLine, 'terminal-line--command');
-    if (command === 'help') { write('help  ls  cd  pwd  open  recent  tags  stats  search  clear'); return; }
+    if (command === 'help') { write('help  ls  cd  pwd  open  recent  tags  stats  search  clear  mysterious-wind'); return; }
+    if (command === 'mysterious-wind') { window.dispatchEvent(new Event('hydroxy:wind')); write('MYSTERIOUS WIND'); return; }
     if (command === 'pwd') { write(cwd); return; }
     if (command === 'ls') { const entries = children(); if (!entries.length) write('EMPTY'); else entries.forEach((entry) => writeLink(entry.label, entry.href)); return; }
     if (command === 'cd') { if (!changeDirectory(target)) write(`NOT A DIRECTORY: ${target}`, 'terminal-line--error'); return; }
@@ -112,4 +114,5 @@ const shellIndex = JSON.stringify({ tree, recent, tags, engagement, contentCount
     write(`UNKNOWN COMMAND: ${command}`, 'terminal-line--error');
   }
   form?.addEventListener('submit', (event) => { event.preventDefault(); if (!input) return; handle(input.value); input.value = ''; });
+  if (shell && input) initShellBoot(shell, input);
 </script>

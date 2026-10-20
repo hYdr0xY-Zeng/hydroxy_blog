@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 
 const compiled = await build({ entryPoints: ['src/lib/cms.ts'], bundle: true, platform: 'node', format: 'esm', write: false });
-const { saveDocument, saveLearnDirectory, getLearnTree, listLearnDirectories, listDocuments, deleteDocument, getDocument, getDocumentById, documentHref, getEngagementTotals, searchContent } = await import('data:text/javascript;base64,' + Buffer.from(compiled.outputFiles[0].contents).toString('base64'));
+const { getHomeGallery, saveDocument, saveLearnDirectory, getLearnTree, listLearnDirectories, listDocuments, deleteDocument, getDocument, getDocumentById, documentHref, getEngagementTotals, searchContent } = await import('data:text/javascript;base64,' + Buffer.from(compiled.outputFiles[0].contents).toString('base64'));
 
 const migrations = ['0001_dynamic_content.sql', '0002_article_engagement.sql', '0003_learn_node_types.sql'];
 function migrate(sql, names = migrations) {
@@ -54,6 +54,33 @@ function fixture({ beforeNodeTypes } = {}) {
   };
   return { sql, database, locals, node, input };
 }
+
+test('homepage gallery exposes at most six ordered published lightweight images', async () => {
+  const { sql, locals } = fixture();
+  try {
+    assert.deepEqual(await getHomeGallery(locals), []);
+    const add = (id, size, visibility = 'published', type = 'image/png', order = 0) => {
+      sql.prepare('INSERT INTO media_assets(key,original_name,content_type,byte_size,sha256) VALUES(?,?,?,?,?)').run(`${id}.png`, id, type, size, id);
+      sql.prepare('INSERT INTO gallery_entries(id,title,alt,media_key,sort_order,visibility) VALUES(?,?,?,?,?,?)').run(id, id, id === 'boundary' ? 'Image description' : '', `${id}.png`, order, visibility);
+    };
+    add('too-big', 1048577, 'published', 'image/png', 100);
+    add('draft', 50, 'draft', 'image/png', 99);
+    add('archived', 50, 'archived', 'image/png', 98);
+    add('non-image', 50, 'published', 'text/plain', 97);
+    add('empty', 0, 'published', 'image/png', 96);
+    add('boundary', 1048576, 'published', 'image/png', 80);
+    for (let i = 0; i < 8; i++) add(`small-${i}`, 50, 'published', 'image/jpeg', i);
+    const images = await getHomeGallery(locals);
+    assert.equal(images.length, 6);
+    assert.deepEqual(images.map((image) => image.title), ['boundary', 'small-7', 'small-6', 'small-5', 'small-4', 'small-3']);
+    assert.deepEqual(images[0], { title: 'boundary', alt: 'Image description', src: '/media/boundary.png' });
+    assert.equal(images[1].alt, 'small-7');
+    assert.deepEqual(Object.keys(images[0]).sort(), ['alt', 'src', 'title']);
+    sql.exec('PRAGMA foreign_keys=OFF');
+    sql.prepare("DELETE FROM media_assets WHERE key='boundary.png'").run();
+    assert.equal((await getHomeGallery(locals))[0].title, 'small-7');
+  } finally { sql.close(); }
+});
 
 test('legacy parent supports publishing, drafting, archiving and immediate tree updates', async () => {
   const { sql, locals, input } = fixture();

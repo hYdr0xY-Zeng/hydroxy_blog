@@ -29,6 +29,16 @@ export function documentHref(document: Pick<ContentDocument, 'kind' | 'path'>) {
 export const animeCover = (entry: AnimeEntry) => mediaHref(entry.cover_key);
 export const galleryImage = (entry: GalleryEntry) => mediaHref(entry.media_key);
 
+export async function getHomeGallery(locals: App.Locals) {
+  const rows = await db(locals).prepare(`SELECT g.title, g.alt, g.media_key
+    FROM gallery_entries g JOIN media_assets m ON m.key = g.media_key
+    WHERE g.visibility = 'published' AND m.byte_size > 0 AND m.byte_size <= ?
+      AND m.content_type LIKE 'image/%'
+    ORDER BY g.sort_order DESC, g.created_at DESC, g.id ASC LIMIT 6`)
+    .bind(1024 * 1024).all<Pick<GalleryEntry, 'title' | 'alt' | 'media_key'>>();
+  return rows.results.map((entry) => ({ title: entry.title, alt: entry.alt || entry.title, src: mediaHref(entry.media_key)! }));
+}
+
 async function attachTags(locals: App.Locals, rows: Omit<ContentDocument, 'tags'>[]) {
   if (!rows.length) return [] as ContentDocument[];
   const ids = rows.map((row) => row.id);

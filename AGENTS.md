@@ -113,6 +113,7 @@ The interface is a readable technical Wiki with an original retro pixel-RPG acce
 - Navigation and social links are centralized in `src/utils/site.ts`.
 - The homepage avatar is a static asset under `public/images/profile/`; preserve its square pixel-frame treatment.
 - The mini shell supports `help`, `ls`, `cd`, `pwd`, `open`, `recent`, `tags`, `stats`, `search`, and `clear`. Keep it read-only, D1-backed, and limited to published public data.
+- The home status panel previews up to six published Gallery images with media metadata and original size <= 1 MiB. Keep sequential loading, fixed framing without cropping, pause/manual controls, and static fallbacks. `mysterious-wind` and public WIND buttons share a lazy-loaded, 12-second Canvas effect; never enable it automatically or in admin. All optional motion respects the persisted footer toggle and system reduced-motion; stop work when hidden and keep shell input immediately usable. `tests/motion-browser.mjs` checks real built scripts with local fixtures; do not use real content writes for effect testing.
 - Search is D1 FTS5-backed. Published articles, tags, Anime metadata, and Gallery metadata can be found without rebuilding the site.
 - Code blocks receive a browser-side Copy button. Mermaid fenced blocks are specially rendered by `BaseLayout.astro`; use a `mermaid` code fence for diagrams.
 - Published article redirects are stored in D1 by the admin save flow. Reserve `public/_redirects` for fixed, site-level Cloudflare rules.

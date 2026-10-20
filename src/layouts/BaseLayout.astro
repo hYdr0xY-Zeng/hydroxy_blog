@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import SiteHeader from '@/components/SiteHeader.astro';
 import SearchModal from '@/components/SearchModal.astro';
 import Analytics from '@/components/Analytics.astro';
+import PublicEffects from '@/components/PublicEffects.astro';
 import { SITE } from '@/utils/site';
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 
 const title = Astro.props.title ? `${Astro.props.title} | ${SITE.title}` : SITE.title;
 const description = Astro.props.description ?? SITE.description;
+const publicPage = !/^\/(?:admin|api)(?:\/|$)/.test(Astro.url.pathname);
 ---
 
 <!doctype html>
@@ -37,6 +39,7 @@ const description = Astro.props.description ?? SITE.description;
       </main>
       <footer class="site-footer">
         Hydroxy Wiki / built with Astro / content lives in D1.
+        {publicPage && <PublicEffects />}
       </footer>
     </div>
     <SearchModal />

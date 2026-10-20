@@ -357,6 +357,51 @@ button {
   padding: 24px;
   display: grid;
   gap: 24px;
+  align-content: start;
+}
+.rpg-status .section-title { font-size: 1.8rem; line-height: 1.2; }
+
+.home-gallery { min-width: 0; border-top: 2px solid var(--line); padding-top: 16px; }
+.home-gallery__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.home-gallery__head h2 { margin: 0; font-size: 1rem; font-weight: 400; }
+.home-gallery__head a { font-size: 0.8rem; color: var(--muted); }
+.home-gallery figure { margin: 0; }
+.home-gallery__image { display: block; aspect-ratio: 3 / 1; background: #050505; }
+.home-gallery__image img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+.home-gallery figcaption { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; height: 3.5em; padding-top: 8px; color: var(--muted); font-size: 0.82rem; }
+[data-gallery-title] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.home-gallery__controls { display: flex; justify-content: flex-end; gap: 8px; }
+.home-gallery__controls .icon-button { width: 36px; height: 32px; min-height: 32px; padding: 0; }
+.wind-button { font-size: 0.78rem; padding: 6px 10px; min-width: 0; }
+.motion-control { display: inline-flex; align-items: center; gap: 6px; margin-left: 18px; white-space: nowrap; }
+.motion-control input { accent-color: var(--pink); }
+.pixel-petals { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 35; image-rendering: pixelated; }
+[data-wind-toggle][hidden], [data-motion-controls][hidden], [data-gallery-controls][hidden], .home-gallery figure[hidden] { display: none; }
+[data-wind-toggle]:disabled { opacity: 0.5; cursor: default; }
+[data-boot-line] { min-height: 1.65em; }
+[data-typing]::after { content: ''; display: inline-block; width: 7px; height: 12px; margin-left: 4px; background: var(--yellow); animation: boot-cursor 320ms steps(2, end) 3; }
+[data-boot-link] { color: var(--green); }
+[data-booting] [data-boot-link] { animation: boot-connect 950ms steps(3, end) 1; }
+@keyframes boot-cursor { 50% { opacity: 0; } }
+@keyframes boot-connect { from { color: var(--dim); } to { color: var(--green); } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  [data-typing]::after { display: none; }
+  [data-booting] [data-boot-link] { animation: none; }
+}
+@media (max-width: 560px) {
+  .motion-control { display: flex; margin: 12px 0 0; justify-content: center; }
+  .home-gallery__image { aspect-ratio: 5 / 3; }
+  .site-header__inner { gap: 8px; }
+  .brand { gap: 8px; font-size: 0.85rem; }
+  .wind-button { padding-inline: 4px; }
+}
+@media (max-width: 760px) {
+  .rpg-status .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rpg-status .rpg-status__top { flex-direction: row; gap: 12px; }
+  .rpg-status .rpg-avatar { width: 64px; height: 64px; }
+  .rpg-status .section-title { font-size: 1.4rem; overflow-wrap: anywhere; }
+  .rpg-status .stat { padding: 10px 6px; }
 }
 
 .rpg-status__top {
@@ -429,12 +474,14 @@ button {
 
 .terminal-panel {
   padding: 18px;
+  display: flex;
 }
 
 .terminal-screen {
-  height: min(540px, 62dvh);
+  height: min(680px, 75dvh);
   min-height: 320px;
-  max-height: 540px;
+  max-height: 680px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1346,21 +1393,11 @@ button {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   .site-header__inner {
     min-height: auto;
     padding: 14px 0;
     align-items: start;
-  }
-
-  .prose table {
-    display: block;
-    overflow-x: auto;
-  }
-
-  .prose th,
-  .prose td {
-    min-width: 120px;
   }
 
   .site-nav {
@@ -1387,6 +1424,11 @@ button {
   .mobile-menu-button {
     display: inline-flex;
   }
+}
+
+@media (max-width: 760px) {
+  .prose table { display: block; overflow-x: auto; }
+  .prose th, .prose td { min-width: 120px; }
 
   .stat-grid,
   .search-form,

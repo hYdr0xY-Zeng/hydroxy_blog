@@ -4,17 +4,19 @@ export const prerender = false;
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import RpgStatus from '@/components/RpgStatus.astro';
 import MiniShell from '@/components/MiniShell.astro';
-import { documentHref, getEngagementTotals, getLearnTree, getProfile, listDocuments, listTags } from '@/lib/cms';
+import HomeGallery from '@/components/HomeGallery.astro';
+import { documentHref, getEngagementTotals, getHomeGallery, getLearnTree, getProfile, listDocuments, listTags } from '@/lib/cms';
 import { renderMarkdown } from '@/lib/markdown';
 import { formatDate } from '@/utils/site';
 
-const [learn, essays, profile, tags, tree, engagement] = await Promise.all([
+const [learn, essays, profile, tags, tree, engagement, gallery] = await Promise.all([
   listDocuments(Astro.locals, { kind: 'learn' }),
   listDocuments(Astro.locals, { kind: 'essay' }),
   getProfile(Astro.locals),
   listTags(Astro.locals),
   getLearnTree(Astro.locals),
-  getEngagementTotals(Astro.locals)
+  getEngagementTotals(Astro.locals),
+  getHomeGallery(Astro.locals).catch((error) => { console.error('Home Gallery unavailable', error); return []; })
 ]);
 const recent = [...learn, ...essays].sort((a, b) => Date.parse(b.published_at ?? b.updated_at) - Date.parse(a.published_at ?? a.updated_at)).slice(0, 6);
 const profileRendered = profile ? await renderMarkdown(profile.body_markdown) : null;
@@ -25,7 +27,7 @@ const shellTree = tree.roots.map(function toShellNode(node): { path: string; lab
 
 <BaseLayout>
   <div class="home-grid">
-    <RpgStatus learnCount={learn.length} essayCount={essays.length} tagCount={tags.length} />
+    <RpgStatus learnCount={learn.length} essayCount={essays.length} tagCount={tags.length}><HomeGallery images={gallery} /></RpgStatus>
     <MiniShell tree={shellTree} recent={recent.map((entry) => ({ title: entry.title, href: documentHref(entry) }))} tags={tags.slice(0, 18)} engagement={engagement} contentCount={learn.length + essays.length} />
   </div>
   <section class="dashboard" aria-label="Hydroxy Wiki dashboard">
