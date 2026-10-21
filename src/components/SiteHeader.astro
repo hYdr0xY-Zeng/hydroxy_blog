@@ -25,7 +25,7 @@ function isCurrent(href: string) {
     </nav>
 
     <div style="display: flex; gap: 8px;">
-      {!/^\/(?:admin|api)(?:\/|$)/.test(currentPath) && <button class="text-button wind-button" type="button" data-wind-toggle aria-label="Mysterious wind" aria-pressed="false" title="Mysterious wind" hidden>WIND</button>}
+      {!/^\/(?:admin|api)(?:\/|$)/.test(currentPath) && <button class="text-button wind-button" type="button" data-wind-toggle aria-label="Mysterious wind" title="Mysterious wind" hidden>WIND</button>}
       <button class="icon-button" type="button" data-search-open aria-label="Open search" title="Search">
         /
       </button>

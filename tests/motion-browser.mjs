@@ -33,7 +33,7 @@ const baseName = (await readdir(join(worker, 'chunks'))).find((name) => /^BaseLa
 const base = (await import(pathToFileURL(join(worker, 'chunks', baseName)).href)).$;
 const styles = assets.filter((name) => name.endsWith('.css')).map((name) => `<link rel="stylesheet" href="/_astro/${name}">`).join('');
 const image = await readFile(join(root, 'public/images/profile/avatar.jpg'));
-const photos = Array.from({ length: 6 }, (_, i) => ({ title: `Gallery ${i} ` + (i ? 'long-title-'.repeat(8) : ''), alt: `Photo ${i}`, media_key: `test-${i}.png` }));
+const photos = Array.from({ length: 6 }, (_, i) => ({ title: `Gallery ${i} ` + (i ? 'long-title-'.repeat(8) : ''), alt: i === 1 ? 'Long description '+ '花瓣与风 '.repeat(60) : i === 2 ? '' : `Photo ${i}`, media_key: `test-${i}.png` }));
 function locals(rows) {
   return { runtime: { env: { HYDROXY_MEDIA: {}, HYDROXY_DB: { prepare(query) {
     const adapter = {
@@ -50,7 +50,12 @@ for (const [variant, rows] of [['home', photos], ['single', photos.slice(0, 1)],
   pages.set('/'+variant+'/', html.replace('</head>', styles+'</head>'));
 }
 for (const path of ['/learn/example/', '/admin/']) {
-  const html = await container.renderToString(base, { request: new Request('https://fixture.invalid'+path), slots: { default: '<article class="prose"><h1>Static article</h1><p>Readable content.</p></article>' } });
+  const html = await container.renderToString(base, { request: new Request('https://fixture.invalid'+path), slots: { default: '<header class="article-hero pixel-panel"><h1 class="section-title">长篇标题与像素世界：公开文章的主标题保持完整排版和可访问名称</h1></header><article class="prose"><h1>Static article</h1><p>Readable content.</p></article>' } });
+  pages.set(path, html.replace('</head>', styles+'</head>'));
+}
+for (const [path, file] of [['/about/', 'about.astro.mjs'], ['/learn/', 'learn.astro.mjs']]) {
+  const route = (await import(pathToFileURL(join(worker, 'pages', file)).href)).page().default;
+  const html = await container.renderToString(route, { request: new Request('https://fixture.invalid'+path), locals: locals([]) });
   pages.set(path, html.replace('</head>', styles+'</head>'));
 }
 assert.ok(!pages.get('/admin/').includes('data-wind-toggle'));
@@ -85,12 +90,18 @@ try {
   const context = await browser.newContext();
   await context.route('**/*', (route) => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    const clear = CanvasRenderingContext2D.prototype.clearRect, fill = CanvasRenderingContext2D.prototype.fillRect;
+    CanvasRenderingContext2D.prototype.clearRect = function(...args) { if (this.canvas.className === 'pixel-petals') window.__windDraws = []; return clear.apply(this, args); };
+    CanvasRenderingContext2D.prototype.fillRect = function(...args) { if (this.canvas.className === 'pixel-petals') (window.__windDraws ??= []).push(args); return fill.apply(this, args); };
+  });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const ready = async () => {
     await page.locator('[data-wind-toggle]:not([hidden])').waitFor();
     await page.waitForFunction(() => !document.querySelector('[data-booting]'));
   };
+  const settled = () => page.waitForFunction(() => [...document.querySelectorAll('.home-gallery__image img')].every((img) => img.getAnimations().length === 0));
   for (const width of [1920, 1440, 768, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(origin+'/home/'); await ready();
@@ -98,7 +109,7 @@ try {
     assert.equal(await page.locator('[data-gallery-image]').evaluate((img) => getComputedStyle(img).objectFit), 'contain');
     const frame = await page.locator('[data-gallery-link]').boundingBox();
     assert.ok(Math.abs(frame.width / frame.height - (width <= 560 ? 5 / 3 : 3)) < 0.02, 'Stable responsive image frame');
-    await page.screenshot({ path: join(screenshots, `home-${width}.png`), fullPage: true });
+    if (width === 1440 || width === 390) await page.screenshot({ path: join(screenshots, `home-${width}.png`), fullPage: true });
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.clock.install();
@@ -108,17 +119,18 @@ try {
   await page.waitForTimeout(150);
   assert.deepEqual([...new Set(requests.filter((path) => path.startsWith('/media/')))].sort(), ['/media/test-0.png', '/media/test-1.png']);
   assert.ok(!requests.some((path) => /petals\..*\.js/.test(path)), 'Petals are not eagerly loaded');
-  await page.clock.runFor(8200);
+  await page.clock.runFor(4100);
   assert.match(await page.locator('[data-gallery-count]').innerText(), /^2 /);
   await page.locator('[data-gallery-prev]').click();
   await page.waitForFunction(() => document.querySelector('[data-gallery-count]').textContent.startsWith('1 /'));
   assert.match(await page.locator('[data-gallery-count]').innerText(), /^1 /);
+  await settled();
   await page.mouse.move(0, 0);
   await page.clock.runFor(9000);
   assert.match(await page.locator('[data-gallery-count]').innerText(), /^1 /, 'Manual selection stays paused');
   await page.locator('[data-gallery-play]').click();
   await page.mouse.move(0, 0);
-  await page.clock.runFor(8200);
+  await page.clock.runFor(4100);
   assert.match(await page.locator('[data-gallery-count]').innerText(), /^2 /);
   await page.locator('[data-gallery-image]').hover();
   await page.clock.runFor(9000);
@@ -127,9 +139,20 @@ try {
   await page.locator('[data-gallery-prev]').focus();
   await page.clock.runFor(9000);
   assert.match(await page.locator('[data-gallery-count]').innerText(), /^2 /, 'Keyboard focus stops slideshow');
-  await page.locator('[data-wind-toggle]').click();
+  let resolvePetals;
+  const heldPetals = new Promise((resolve) => { resolvePetals = resolve; });
+  const holdPetals = (route) => resolvePetals(route);
+  await context.route('**/petals.*.js', holdPetals);
+  await page.evaluate(() => { for (let i = 0; i < 6; i++) window.dispatchEvent(new Event('hydroxy:wind')); });
+  const petalRoute = await heldPetals;
+  assert.equal(await page.locator('.pixel-petals').count(), 0);
+  await petalRoute.continue();
+  await context.unroute('**/petals.*.js', holdPetals);
   await page.locator('.pixel-petals').waitFor();
+  await page.clock.runFor(80);
+  assert.ok(await page.evaluate(() => window.__windDraws.every(([x]) => x < innerWidth * 0.08)), 'Petals enter at the left edge');
   await page.clock.runFor(500);
+  assert.ok(await page.evaluate(() => window.__windDraws.length <= 240), 'Lazy import queue is capped to four gusts');
   assert.equal(await page.locator('.pixel-petals').count(), 1);
   assert.ok(await page.locator('.pixel-petals').evaluate((canvas) => {
     const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
@@ -138,11 +161,12 @@ try {
   assert.equal(await page.locator('.pixel-petals').evaluate((canvas) => getComputedStyle(canvas).pointerEvents), 'none');
   await page.screenshot({ path: join(screenshots, 'petals-desktop.png') });
   await page.locator('[data-wind-toggle]').click();
-  assert.equal(await page.locator('.pixel-petals').count(), 0);
+  assert.equal(await page.locator('.pixel-petals').count(), 1, 'Repeated triggers do not stop active gusts');
+  assert.equal(await page.locator('[data-wind-toggle]').getAttribute('aria-pressed'), null);
   const input = page.locator('[data-shell-input]');
   await input.fill('mysterious-wind'); await input.press('Enter');
   await page.locator('.pixel-petals').waitFor();
-  await page.clock.runFor(12200);
+  await page.clock.runFor(3000);
   assert.equal(await page.locator('.pixel-petals').count(), 0, 'Petals expire');
   await input.fill('help'); await input.press('Enter');
   assert.ok((await page.locator('[data-shell-output]').innerText()).includes('mysterious-wind'));
@@ -167,7 +191,7 @@ try {
   const holdNext = (route) => { heldImage = route; };
   await context.route('**/media/test-1.png', holdNext);
   await page.goto(origin+'/home/', { waitUntil: 'domcontentloaded' }); await ready();
-  await page.clock.runFor(8100);
+  await page.clock.runFor(4100);
   assert.match(await page.locator('[data-gallery-count]').innerText(), /^1 /, 'Slow next image leaves current photo visible');
   assert.ok(heldImage);
   await page.locator('[data-motion-toggle]').uncheck();
@@ -197,11 +221,63 @@ try {
   await page.locator('[data-wind-toggle]').click(); await page.locator('.pixel-petals').waitFor();
   await page.goto(origin+'/admin/');
   assert.equal(await page.locator('.pixel-petals, [data-wind-toggle], [data-motion-toggle]').count(), 0);
+  assert.equal(await page.locator('.typewriter').count(), 0, 'Admin headings stay static');
+  await page.goto(origin+'/learn/example/', { waitUntil: 'domcontentloaded' });
+  const heading = page.locator('.article-hero h1');
+  await heading.locator('.typewriter__visual').waitFor({ state: 'attached' });
+  await page.evaluate(() => document.fonts.ready);
+  const headingBefore = await heading.boundingBox();
+  const headingText = '长篇标题与像素世界：公开文章的主标题保持完整排版和可访问名称';
+  assert.equal(await page.getByRole('heading', { name: headingText, exact: true }).count(), 1, 'Heading name stays complete during typing');
+  assert.equal(await page.locator('.prose .typewriter').count(), 0);
+  await page.clock.runFor(1300);
+  const headingAfter = await heading.boundingBox();
+  assert.equal(await heading.locator('.typewriter__visual').count(), 0);
+  assert.ok(Math.abs(headingBefore.height - headingAfter.height) < 1 && Math.abs(headingBefore.width - headingAfter.width) < 1, 'Typing does not resize heading');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.evaluate(() => window.scrollTo(0, 0));
+  assert.equal(await heading.locator('.typewriter__visual').count(), 0, 'Heading does not repeat when scrolling back');
+  for (const path of ['/about/', '/learn/']) {
+    await page.goto(origin+path, { waitUntil: 'domcontentloaded' });
+    await page.locator('h1.section-title .typewriter__visual').waitFor({ state: 'attached' });
+    await page.clock.runFor(1300);
+    assert.equal(await page.locator('h1.section-title .typewriter__visual').count(), 0, 'Public page and directory headings finish once');
+  }
+  await page.goto(origin+'/home/'); await ready();
+  const captionFrame = await page.locator('.home-gallery figcaption').boundingBox();
+  await page.locator('[data-gallery-next]').click();
+  await page.waitForFunction(() => document.querySelector('[data-gallery-count]').textContent.startsWith('2 /'));
+  assert.equal(await page.locator('[data-gallery-description]').getAttribute('title'), photos[1].alt);
+  assert.equal(await page.locator('[data-gallery-image]').getAttribute('alt'), photos[1].alt);
+  const fades = await page.locator('.home-gallery__image img').evaluateAll((images) => images.flatMap((img) => img.getAnimations().map((animation) => ({ duration: animation.effect.getTiming().duration, frames: animation.effect.getKeyframes().map((key) => key.opacity) }))));
+  assert.equal(fades.length, 2, 'Two decoded images crossfade together');
+  assert.ok(fades.every((fade) => fade.duration === 400));
+  assert.equal(await page.locator('[data-gallery-description] .typewriter__visual').getAttribute('aria-hidden'), 'true');
+  await page.locator('[data-gallery-next]').click();
+  await page.waitForFunction(() => document.querySelector('[data-gallery-count]').textContent.startsWith('3 /'));
+  await page.clock.runFor(1600);
+  assert.equal(await page.locator('[data-gallery-description]').innerText(), photos[2].title, 'Rapid switches cancel old caption and empty Alt falls back to title');
+  const captionAfter = await page.locator('.home-gallery figcaption').boundingBox();
+  assert.ok(Math.abs(captionFrame.height - captionAfter.height) < 1, 'Long Alt does not resize caption frame');
+  await page.locator('[data-gallery-prev]').click();
+  await page.waitForFunction(() => document.querySelector('[data-gallery-count]').textContent.startsWith('2 /'));
+  await page.locator('[data-motion-toggle]').uncheck();
+  assert.equal(await page.locator('[data-gallery-description]').textContent(), photos[1].alt, 'Disabling motion completes the current caption');
+  assert.equal(await page.locator('.typewriter').count(), 0);
+  assert.equal(await page.locator('.home-gallery__image img').evaluateAll((images) => images.reduce((sum, img) => sum + img.getAnimations().length, 0)), 0);
+  await page.locator('[data-motion-toggle]').check();
+  await page.locator('[data-gallery-play]').click();
+  await page.mouse.move(0, 0);
+  await settled();
+  await page.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide')); window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })); });
+  await page.clock.runFor(4100);
+  await page.waitForFunction(() => document.querySelector('[data-gallery-count]').textContent.startsWith('3 /'));
   const noScript = await browser.newContext({ javaScriptEnabled: false });
   const staticPage = await noScript.newPage();
   await staticPage.goto(origin+'/home/');
   assert.equal(await staticPage.locator('[data-gallery-image]').count(), 1);
   assert.equal(await staticPage.locator('[data-boot-line]').first().innerText(), 'HYDROXY SHELL v0.2');
+  assert.equal(await staticPage.locator('[data-gallery-description]').innerText(), photos[0].alt);
   assert.equal(await staticPage.locator('[data-wind-toggle]').isVisible(), false);
   await noScript.close();
   const storageBlocked = await browser.newContext();
@@ -225,7 +301,7 @@ try {
   await savingPage.waitForFunction(() => document.querySelector('[data-gallery-count]').textContent.startsWith('2 /'));
   assert.equal(savingMedia.length, 2);
   await dataSaver.close();
-  const effectAssets = assets.filter((name) => /^(HomeGallery\.astro_|PublicEffects\.astro_|MiniShell\.astro_|motion-state\.|petals\.|preload-helper\.)/.test(name));
+  const effectAssets = assets.filter((name) => /^(HomeGallery\.astro_|PublicEffects\.astro_|MiniShell\.astro_|motion-state\.|typewriter\.|petals\.|preload-helper\.)/.test(name));
   let bytes = 0;
   for (const name of effectAssets) bytes += gzipSync(await readFile(join(root, 'dist/_astro', name))).length;
   assert.ok(bytes < 12 * 1024, `Effects bundle budget: ${bytes}`);

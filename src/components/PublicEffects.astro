@@ -5,17 +5,19 @@
 
 <script>
   import { motionAllowed, setMotionEnabled } from '@/scripts/motion-state';
+  import { initPageTitles } from '@/scripts/typewriter';
   const toggle = document.querySelector<HTMLInputElement>('[data-motion-toggle]');
   const wind = document.querySelector<HTMLButtonElement>('[data-wind-toggle]');
-  let stop: (() => void) | undefined;
-  let pending = false;
+  let engine: ReturnType<typeof import('@/scripts/petals').createPetalWind> | undefined;
+  let pending = 0;
+  let loading = false;
   let generation = 0;
   function resetWind() {
     generation++;
-    pending = false;
-    stop?.();
-    stop = undefined;
-    wind?.setAttribute('aria-pressed', 'false');
+    pending = 0;
+    loading = false;
+    engine?.stop();
+    engine = undefined;
   }
   function sync() {
     const allowed = motionAllowed();
@@ -30,16 +32,20 @@
   wind?.removeAttribute('hidden');
   toggle?.addEventListener('change', () => { setMotionEnabled(toggle.checked); sync(); });
   async function summonWind() {
-    if (pending || stop) { resetWind(); return; }
     if (!motionAllowed() || document.hidden) return;
-    pending = true;
+    if (engine) { engine.gust(); return; }
+    pending = Math.min(4, pending + 1);
+    if (loading) return;
+    loading = true;
     const ticket = ++generation;
-    wind?.setAttribute('aria-pressed', 'true');
     try {
-      const { startPetals } = await import('@/scripts/petals');
+      const { createPetalWind } = await import('@/scripts/petals');
       if (ticket !== generation || !motionAllowed() || document.hidden) return;
-      pending = false;
-      stop = startPetals(() => { stop = undefined; wind?.setAttribute('aria-pressed', 'false'); });
+      loading = false;
+      engine = createPetalWind(() => { engine = undefined; });
+      const count = pending;
+      pending = 0;
+      for (let i = 0; i < count; i++) engine?.gust();
     } catch { if (ticket === generation) resetWind(); }
   }
   wind?.addEventListener('click', () => void summonWind());
@@ -48,4 +54,5 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) resetWind(); });
   window.addEventListener('pagehide', resetWind);
   sync();
+  initPageTitles();
 </script>

@@ -366,9 +366,15 @@ button {
 .home-gallery__head h2 { margin: 0; font-size: 1rem; font-weight: 400; }
 .home-gallery__head a { font-size: 0.8rem; color: var(--muted); }
 .home-gallery figure { margin: 0; }
-.home-gallery__image { display: block; aspect-ratio: 3 / 1; background: #050505; }
-.home-gallery__image img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
-.home-gallery figcaption { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; height: 3.5em; padding-top: 8px; color: var(--muted); font-size: 0.82rem; }
+.home-gallery__image { position: relative; display: block; aspect-ratio: 3 / 1; background: #050505; overflow: hidden; }
+.home-gallery__image img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; opacity: 0; }
+.home-gallery__image img.is-current { opacity: 1; }
+.home-gallery figcaption { padding-top: 8px; color: var(--muted); font-size: 0.82rem; }
+.home-gallery__meta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; height: 3em; }
+.home-gallery__description { margin: 4px 0 10px; height: 4.5em; line-height: 1.5; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; color: var(--text); }
+.typewriter { position: relative; }
+.typewriter > .typewriter__source { opacity: 0; }
+.typewriter > .typewriter__visual { position: absolute; inset: 0; pointer-events: none; }
 [data-gallery-title] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .home-gallery__controls { display: flex; justify-content: flex-end; gap: 8px; }
 .home-gallery__controls .icon-button { width: 36px; height: 32px; min-height: 32px; padding: 0; }
